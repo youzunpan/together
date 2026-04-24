@@ -29,7 +29,7 @@ export default function ApplyForm() {
       <div className="text-center space-y-2">
         <p style={{ fontSize: "1rem", color: "#edecea" }}>申請已送出。</p>
         <p style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.6 }}>
-          老師審核通過後，<br />就可以用你填的 email 和密碼登入。
+          審核通過後，<br />就可以用你填的 email 和密碼登入。
         </p>
       </div>
     );
