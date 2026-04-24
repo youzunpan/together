@@ -166,7 +166,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
 
   // 左右卡片交替深淺
   const isLight = isLeft;
-  const cardBg = isLight ? "#abb8c3" : "#2c2c2a";
+  const cardBg = isLight ? "#e8e8e8" : "#2c2c2a";
   const cardBorder = isLight ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.05)";
   const nameColor = isLight ? "#1a1b18" : "#edecea";
   const reflectionColor = isLight ? "rgba(26,27,24,0.78)" : "rgba(237,236,234,0.88)";
