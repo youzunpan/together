@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { playBell, createBellContext } from "@/components/BellSound";
 
-type Step = "pick" | "timer" | "record" | "manual";
+type Step = "pick" | "prepare" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
 
 const inputStyle = {
@@ -30,6 +30,8 @@ export default function SitFlow() {
   const [manualMin, setManualMin] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [earlyEnd, setEarlyEnd] = useState(false);
+  const [prepareLeft, setPrepareLeft] = useState(5);
+  const prepareMinRef = useRef(0);
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
@@ -38,9 +40,27 @@ export default function SitFlow() {
     setTimeout(() => setStep("record"), 1500);
   }, []);
 
-  function startTimer(min: number) {
+  function beginPrepare(min: number) {
     // 必須在 user gesture 內建 AudioContext，之後的鐘才能在 iOS 上發聲
     if (!audioCtxRef.current) audioCtxRef.current = createBellContext();
+    prepareMinRef.current = min;
+    setPrepareLeft(5);
+    setStep("prepare");
+  }
+
+  // 倒數緩衝：5 → 0，到 0 時敲開始鐘、進入計時
+  useEffect(() => {
+    if (step !== "prepare") return;
+    if (prepareLeft === 0) {
+      startTimer(prepareMinRef.current);
+      return;
+    }
+    const t = setTimeout(() => setPrepareLeft(n => n - 1), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, prepareLeft]);
+
+  function startTimer(min: number) {
     playBell(audioCtxRef.current); // 開始鐘
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
@@ -150,7 +170,7 @@ export default function SitFlow() {
         )}
 
         <div className="mt-8 space-y-4">
-          <button onClick={() => { if (mins >= 1 && mins <= 240) startTimer(mins); }}
+          <button onClick={() => { if (mins >= 1 && mins <= 240) beginPrepare(mins); }}
             disabled={mins < 1 || mins > 240}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             開始靜心
@@ -160,6 +180,47 @@ export default function SitFlow() {
             我已經坐完了 →
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // ── Step 1.5: 倒數緩衝 ──────────────────────────
+  if (step === "prepare") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.3em", color: "rgba(237,236,234,0.3)", marginBottom: "3rem" }}>
+          準備
+        </p>
+        <div
+          key={prepareLeft}
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "5rem",
+            color: "#BEC23F",
+            letterSpacing: "-0.02em",
+            animation: "prepareFade 1s ease-out",
+          }}
+        >
+          {prepareLeft || ""}
+        </div>
+        <p style={{ fontFamily: "var(--font-noto-serif)", fontSize: "0.95rem", color: "rgba(237,236,234,0.5)", marginTop: "3rem", letterSpacing: "0.08em" }}>
+          調整姿勢，幾次呼吸
+        </p>
+        <button
+          onClick={() => setStep("pick")}
+          className="btn-ghost"
+          style={{ letterSpacing: "0.12em", marginTop: "4rem" }}
+        >
+          CANCEL
+        </button>
+
+        <style>{`
+          @keyframes prepareFade {
+            0%   { opacity: 0; transform: scale(0.8); }
+            20%  { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.4; transform: scale(1); }
+          }
+        `}</style>
       </div>
     );
   }
