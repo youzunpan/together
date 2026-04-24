@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
-import HeartButtonClient from "./HeartButton";
+import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 
@@ -246,11 +246,18 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
             className="flex items-center gap-2 mt-2"
             style={{ justifyContent: isLeft ? "flex-start" : "flex-end" }}
           >
-            <HeartButtonClient
+            <ReactionBar
               sitId={sit.id}
-              count={Number(sit.heart_count)}
-              hearted={Boolean(sit.hearted_by_me)}
-              isSelf={isSelf}
+              counts={{
+                sit: Number(sit.sit_count ?? 0),
+                heart: Number(sit.heart_count ?? 0),
+                smile: Number(sit.smile_count ?? 0),
+              }}
+              mine={{
+                sit: Boolean(sit.sit_by_me),
+                heart: Boolean(sit.heart_by_me),
+                smile: Boolean(sit.smile_by_me),
+              }}
               lightBg={isLight}
             />
             <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: agoColor }}>
