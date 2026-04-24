@@ -53,7 +53,7 @@ export default function ReactionBar({
   const countColor  = lightBg ? "#6b6a66" : "#9B9891";
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       {/* 靜坐剪影 */}
       <ReactionButton
         onClick={() => toggle("sit")}
@@ -125,8 +125,8 @@ function ReactionButton({
       className="flex items-center gap-1 transition-opacity cursor-pointer"
     >
       <svg
-        width="20"
-        height="20"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill={active ? activeColor : idleColor}
         color={active ? activeColor : idleColor}
