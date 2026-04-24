@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
@@ -36,31 +36,54 @@ const navItems = [
   },
 ];
 
+// 必須在 Link 的子元件內呼叫 useLinkStatus，才能拿到該 Link 的 pending 狀態
+function TabContent({
+  label,
+  icon,
+  active,
+}: {
+  label: string;
+  icon: (active: boolean) => React.ReactNode;
+  active: boolean;
+}) {
+  const { pending } = useLinkStatus();
+  // 點下去的瞬間就視覺上變成 active，等伺服器渲染時不顯得遲鈍
+  const lit = active || pending;
+  return (
+    <div
+      className="flex flex-col items-center gap-0.5 min-w-[56px]"
+      style={{
+        color: lit ? "#BEC23F" : "rgba(237,236,234,0.3)",
+        transition: "color 0.1s",
+      }}
+    >
+      {icon(lit)}
+      <span style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>{label}</span>
+    </div>
+  );
+}
+
 export default function BottomNav() {
   const pathname = usePathname();
   const hideOn = ["/login", "/apply"];
   if (hideOn.some((p) => pathname.startsWith(p))) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50"
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50"
       style={{
         background: "rgba(26,27,24,0.92)",
         backdropFilter: "blur(12px)",
         borderTop: "1px solid rgba(255,255,255,0.06)",
         paddingBottom: "env(safe-area-inset-bottom)",
-      }}>
+      }}
+    >
       <div className="flex items-center justify-around max-w-md mx-auto h-14 px-4">
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== "/" && pathname.startsWith(href));
           return (
-            <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] transition-all duration-150"
-              style={{ color: active ? "#BEC23F" : "rgba(237,236,234,0.3)" }}
-            >
-              {icon(active)}
-              <span style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>{label}</span>
+            <Link key={href} href={href} prefetch>
+              <TabContent label={label} icon={icon} active={active} />
             </Link>
           );
         })}
