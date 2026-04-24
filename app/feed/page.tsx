@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import HeartButtonClient from "./HeartButton";
 import Avatar from "@/components/Avatar";
+import LiveSitters from "./LiveSitters";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -63,6 +64,9 @@ export default async function FeedPage() {
             </div>
           )}
         </div>
+
+        {/* 正在靜坐的人 */}
+        <LiveSitters currentUserId={user!.id} />
 
         {/* 社群摘要 */}
         {summary && summary.member_count > 0 && (

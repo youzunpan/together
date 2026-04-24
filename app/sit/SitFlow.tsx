@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { playBell, createBellContext } from "@/components/BellSound";
+import { createClient as createSupabase } from "@/lib/supabase-browser";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 type Step = "pick" | "prepare" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
@@ -25,6 +27,7 @@ export default function SitFlow() {
   const endTimeRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const presenceRef = useRef<RealtimeChannel | null>(null);
   const [reflection, setReflection] = useState("");
   const [satAt, setSatAt] = useState("");
   const [manualMin, setManualMin] = useState("");
@@ -35,8 +38,38 @@ export default function SitFlow() {
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
+  async function joinLiveSitters() {
+    try {
+      const supabase = createSupabase();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const ch = supabase.channel("live-sits", {
+        config: { presence: { key: user.id } },
+      });
+      presenceRef.current = ch;
+      ch.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await ch.track({ at: Date.now() });
+        }
+      });
+    } catch { /* 靜默失敗，不影響計時 */ }
+  }
+
+  function leaveLiveSitters() {
+    if (presenceRef.current) {
+      presenceRef.current.unsubscribe();
+      presenceRef.current = null;
+    }
+  }
+
+  // 離開頁面自動退出 presence
+  useEffect(() => {
+    return () => leaveLiveSitters();
+  }, []);
+
   const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
     clearTimer(); playBell(audioCtxRef.current); setActualMin(durationMin);
+    leaveLiveSitters();
     setTimeout(() => setStep("record"), 1500);
   }, []);
 
@@ -62,6 +95,7 @@ export default function SitFlow() {
 
   function startTimer(min: number) {
     playBell(audioCtxRef.current); // 開始鐘
+    joinLiveSitters(); // 加入「正在靜坐的人」
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
     endTimeRef.current = now + min * 60 * 1000;
@@ -80,6 +114,7 @@ export default function SitFlow() {
 
   function handleEarlyEnd() {
     clearTimer();
+    leaveLiveSitters();
     const elapsed = Math.floor((Date.now() - (actualStart?.getTime() ?? Date.now())) / 60000);
     if (elapsed < 3) { setEarlyEnd(true); setTimeout(() => { setEarlyEnd(false); setStep("pick"); }, 2500); }
     else { setActualMin(elapsed); setStep("record"); }
