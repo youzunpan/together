@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_TC, Noto_Serif_TC, Space_Mono } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import Splash from "@/components/Splash";
 
 const notoSans = Noto_Sans_TC({
   variable: "--font-noto-sans",
@@ -50,6 +51,7 @@ export default function RootLayout({
       className={`${notoSans.variable} ${notoSerif.variable} ${spaceMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
+        <Splash />
         <main
           className="flex-1"
           style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
