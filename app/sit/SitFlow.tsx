@@ -44,7 +44,7 @@ export default function SitFlow() {
     // 必須在 user gesture 內建 AudioContext，之後的鐘才能在 iOS 上發聲
     if (!audioCtxRef.current) audioCtxRef.current = createBellContext();
     prepareMinRef.current = min;
-    setPrepareLeft(5);
+    setPrepareLeft(10);
     setStep("prepare");
   }
 
