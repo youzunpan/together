@@ -1,0 +1,248 @@
+import { createClient } from "@/lib/supabase-server";
+import WelcomeCard from "./WelcomeCard";
+import HeartButtonClient from "./HeartButton";
+import Avatar from "@/components/Avatar";
+
+export default async function FeedPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: summary } = await supabase.rpc("today_summary");
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const { data: todaySit } = await supabase
+    .from("sits")
+    .select("duration_min")
+    .eq("user_id", user!.id)
+    .gte("sat_at", today.toISOString())
+    .order("sat_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  const { data: sits } = await supabase
+    .from("sits_with_stats")
+    .select("*")
+    .order("sat_at", { ascending: false })
+    .limit(30);
+
+  const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric" });
+
+  return (
+    <div className="max-w-md mx-auto px-4">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-10 pt-4 pb-3"
+        style={{ background: "rgba(26,27,24,0.92)", backdropFilter: "blur(12px)" }}>
+
+        {/* 品牌標 */}
+        <p className="text-center mb-3" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.25)" }}>
+          同在 · TOGETHER
+        </p>
+
+        {/* 狀態卡 */}
+        <div style={{ background: "#202220", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
+          <p style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.3)", fontFamily: "var(--font-space-mono)", marginBottom: "0.5rem" }}>
+            TODAY · {dateStr.toUpperCase()}
+          </p>
+          {todaySit ? (
+            <div className="flex items-center justify-between">
+              <p style={{ fontSize: "0.9rem", color: "#edecea" }}>今天你坐了 <span style={{ fontFamily: "var(--font-space-mono)", color: "#BEC23F" }}>{todaySit.duration_min}</span> 分鐘。</p>
+              <a href="/sit" style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)" }} className="hover:text-[#BEC23F] transition-colors">
+                再坐一次 →
+              </a>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜坐</p>
+              <a href="/sit" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
+                記錄今天
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* 社群摘要 */}
+        {summary && summary.member_count > 0 && (
+          <p className="text-center mt-2" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", color: "rgba(237,236,234,0.2)" }}>
+            {summary.member_count} MEMBERS · {summary.total_minutes} MIN TODAY
+          </p>
+        )}
+      </header>
+
+      <WelcomeCard />
+
+      <div className="mt-4 pb-6">
+        {(!sits || sits.length === 0) && (
+          <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>
+            安靜的一天。第一個坐的人會在這裡出現。
+          </p>
+        )}
+        {sits && sits.length > 0 && <Timeline sits={sits} currentUserId={user!.id} />}
+      </div>
+    </div>
+  );
+}
+
+function groupByDate(sits: any[]) {
+  const groups: { label: string; items: any[] }[] = [];
+  const seen: Record<string, number> = {};
+  const now = new Date();
+  for (const sit of sits) {
+    const d = new Date(sit.sat_at);
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    let label = diffDays === 0 ? "今天" : diffDays === 1 ? "昨天" : diffDays <= 3 ? `${diffDays} 天前` : d.toLocaleDateString("zh-TW", { month: "long", day: "numeric" });
+    if (seen[label] === undefined) { seen[label] = groups.length; groups.push({ label, items: [] }); }
+    groups[seen[label]].items.push(sit);
+  }
+  return groups;
+}
+
+function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string }) {
+  const groups = groupByDate(sits);
+  // 跨組交替 side，保持流動感
+  let idx = 0;
+  return (
+    <div className="relative pt-2">
+      {/* 中央時間軸 */}
+      <div
+        aria-hidden
+        className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 pointer-events-none"
+        style={{
+          width: 1,
+          background:
+            "linear-gradient(to bottom, rgba(190,194,63,0.35) 0%, rgba(190,194,63,0.15) 60%, rgba(190,194,63,0.05) 100%)",
+        }}
+      />
+
+      {groups.map(({ label, items }) => (
+        <div key={label}>
+          {/* 日期 pill 坐在線上 */}
+          <div className="relative flex justify-center my-4">
+            <span
+              style={{
+                background: "#1a1b18",
+                padding: "0.3rem 0.75rem",
+                fontFamily: "var(--font-space-mono)",
+                fontSize: "0.6rem",
+                letterSpacing: "0.18em",
+                color: "rgba(237,236,234,0.4)",
+                border: "1px solid rgba(190,194,63,0.25)",
+              }}
+            >
+              {label.toUpperCase()}
+            </span>
+          </div>
+
+          {items.map((sit) => {
+            const side: "left" | "right" = idx % 2 === 0 ? "right" : "left";
+            idx++;
+            return <TimelineCard key={sit.id} sit={sit} side={side} currentUserId={currentUserId} />;
+          })}
+        </div>
+      ))}
+
+      {/* 線尾端點 */}
+      <div className="relative flex justify-center mt-2">
+        <div
+          aria-hidden
+          style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: "rgba(190,194,63,0.3)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "right"; currentUserId: string }) {
+  const isSelf = sit.user_id === currentUserId;
+  const href = isSelf ? "/me" : `/u/${sit.user_id}`;
+  const ago = (() => {
+    const mins = Math.floor((Date.now() - new Date(sit.sat_at).getTime()) / 60000);
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}d`;
+  })();
+  const isLeft = side === "left";
+
+  return (
+    <div className="relative my-3">
+      {/* 軸上的點 */}
+      <div
+        aria-hidden
+        className="absolute left-1/2 -translate-x-1/2"
+        style={{
+          top: "0.875rem",
+          width: 8, height: 8, borderRadius: "50%",
+          background: "#BEC23F",
+          boxShadow: "0 0 0 3px #1a1b18",
+        }}
+      />
+
+      <div className="flex" style={{ justifyContent: isLeft ? "flex-start" : "flex-end" }}>
+        <div
+          style={{
+            width: "46%",
+            background: "#202220",
+            border: "1px solid rgba(255,255,255,0.05)",
+            padding: "0.7rem 0.8rem",
+            marginRight: isLeft ? "0.75rem" : 0,
+            marginLeft: isLeft ? 0 : "0.75rem",
+          }}
+        >
+          <div
+            className="flex items-center gap-2"
+            style={{ flexDirection: isLeft ? "row-reverse" : "row" }}
+          >
+            <a href={href} className="flex-shrink-0">
+              <Avatar letter={sit.avatar_letter} color={sit.avatar_color} avatarUrl={sit.avatar_url} size={28} />
+            </a>
+            <div className="min-w-0 flex-1" style={{ textAlign: isLeft ? "right" : "left" }}>
+              <a
+                href={href}
+                style={{ fontSize: "0.82rem", color: "#edecea", display: "block" }}
+                className="hover:opacity-70 transition-opacity truncate"
+              >
+                {sit.display_name}
+              </a>
+              <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", color: "#BEC23F" }}>
+                {sit.duration_min}min
+              </span>
+            </div>
+          </div>
+
+          {sit.reflection && (
+            <p
+              className="reflection-text mt-2"
+              style={{
+                fontSize: "0.82rem",
+                color: "rgba(237,236,234,0.88)",
+                lineHeight: 1.55,
+                textAlign: isLeft ? "right" : "left",
+              }}
+            >
+              {sit.reflection}
+            </p>
+          )}
+
+          <div
+            className="flex items-center gap-2 mt-2"
+            style={{ justifyContent: isLeft ? "flex-start" : "flex-end" }}
+          >
+            <HeartButtonClient
+              sitId={sit.id}
+              count={Number(sit.heart_count)}
+              hearted={Boolean(sit.hearted_by_me)}
+              isSelf={isSelf}
+            />
+            <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.3)" }}>
+              {ago}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

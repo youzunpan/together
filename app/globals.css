@@ -1,0 +1,151 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-noto-sans);
+  --font-serif: var(--font-noto-serif);
+  --font-mono: var(--font-space-mono);
+  --font-heading: var(--font-noto-serif);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+}
+
+:root {
+  /* 序 SEQUENCE 品牌色系 */
+  --seq-dark:       #1a1b18;
+  --seq-black:      #2c2c2a;
+  --seq-white:      #edecea;
+  --seq-light-gray: #e4e3df;
+  --seq-gold:       #BEC23F;
+  --seq-gold-hover: #a8ac35;
+
+  /* App 語意層 */
+  --bg-page:     #1a1b18;
+  --bg-card:     #202220;
+  --bg-subtle:   #272725;
+  --text-primary:   #edecea;
+  --text-secondary: rgba(237,236,234,0.6);
+  --text-tertiary:  rgba(237,236,234,0.3);
+  --border-color:   rgba(255,255,255,0.06);
+  --heart-active:   #D65C6A;
+  --gold:           #BEC23F;
+
+  /* shadcn 系統變數 */
+  --background: #1a1b18;
+  --foreground: #edecea;
+  --card: #202220;
+  --card-foreground: #edecea;
+  --popover: #202220;
+  --popover-foreground: #edecea;
+  --primary: #BEC23F;
+  --primary-foreground: #1a1b18;
+  --secondary: #272725;
+  --secondary-foreground: #edecea;
+  --muted: #272725;
+  --muted-foreground: rgba(237,236,234,0.4);
+  --accent: #272725;
+  --accent-foreground: #edecea;
+  --destructive: #D65C6A;
+  --border: rgba(255,255,255,0.06);
+  --input: rgba(255,255,255,0.06);
+  --ring: #BEC23F;
+  --radius: 2px;
+
+  --sidebar: #1a1b18;
+  --sidebar-foreground: #edecea;
+  --sidebar-primary: #BEC23F;
+  --sidebar-primary-foreground: #1a1b18;
+  --sidebar-accent: #272725;
+  --sidebar-accent-foreground: #edecea;
+  --sidebar-border: rgba(255,255,255,0.06);
+  --sidebar-ring: #BEC23F;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-noto-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Avatar 顏色（配合深色背景降飽和）*/
+.avatar-purple  { background: #2A2840; color: #9B95D4; }
+.avatar-teal    { background: #162A24; color: #4DB896; }
+.avatar-coral   { background: #2E1A14; color: #C97A5A; }
+.avatar-blue    { background: #142030; color: #6AABDC; }
+.avatar-amber   { background: #2A2010; color: #C89A50; }
+.avatar-pink    { background: #2A1520; color: #C87AA0; }
+
+/* 心得文字使用襯線字 */
+.reflection-text {
+  font-family: var(--font-noto-serif), serif;
+}
+
+/* 數字使用 Space Mono */
+.mono {
+  font-family: var(--font-space-mono), monospace;
+}
+
+/* 品牌標籤樣式：小字 + 字距 */
+.seq-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  font-family: var(--font-space-mono), monospace;
+}
+
+/* 主按鈕：金色，無圓角 */
+.btn-primary {
+  background: var(--seq-gold);
+  color: var(--seq-dark);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 2rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-primary:hover { background: var(--seq-gold-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; transform: none; cursor: default; }
+
+/* 次要按鈕：透明 + 邊框 */
+.btn-ghost {
+  background: transparent;
+  color: rgba(237,236,234,0.5);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 0;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--seq-white); }
