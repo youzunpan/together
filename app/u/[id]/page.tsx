@@ -67,13 +67,13 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="grid grid-cols-2 gap-px mb-8" style={{ background: "rgba(255,255,255,0.04)" }}>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
+        <div style={{ background: "#15171e", padding: "1.25rem 1rem" }}>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
             {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
           </p>
         </div>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
+        <div style={{ background: "#15171e", padding: "1.25rem 1rem" }}>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>THIS MONTH</p>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
             {monthDays}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>days</span>
@@ -104,7 +104,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
           const isFirstOfDay = dateKey !== prevDate;
           const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
           return (
-            <div key={i} id={isFirstOfDay ? `day-${dateKey}` : undefined} style={{ background: "#202220", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
+            <div key={i} id={isFirstOfDay ? `day-${dateKey}` : undefined} style={{ background: "#282b34", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
               <div className="flex items-center justify-between">
                 <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.75rem", color: "#BEC23F" }}>
                   {sit.duration_min}min

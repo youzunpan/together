@@ -16,7 +16,7 @@ function handleClick(date: string) {
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.style.transition = "background 0.3s";
     el.style.background = "#2a2c28";
-    setTimeout(() => { el.style.background = "#202220"; }, 1200);
+    setTimeout(() => { el.style.background = "#282b34"; }, 1200);
   }
 }
 
@@ -62,7 +62,7 @@ function MonthGrid({ year, month, dataByDate }: { year: number; month: number; d
               borderRadius: 3,
               fontFamily: "var(--font-space-mono)",
               fontSize: "0.65rem",
-              color: c.minutes >= 60 ? "#1a1b18" : c.minutes > 0 ? "#1a1b18" : "rgba(237,236,234,0.3)",
+              color: c.minutes >= 60 ? "#15171e" : c.minutes > 0 ? "#15171e" : "rgba(237,236,234,0.3)",
               fontWeight: c.minutes > 0 ? 600 : 400,
             }}
           >

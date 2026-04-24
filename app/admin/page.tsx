@@ -76,7 +76,7 @@ export default async function AdminPage() {
       </header>
 
       <Tabs defaultValue="applications">
-        <TabsList className="w-full mb-6" style={{ background: "#202220", borderRadius: 0, padding: 0, gap: "1px" }}>
+        <TabsList className="w-full mb-6" style={{ background: "#282b34", borderRadius: 0, padding: 0, gap: "1px" }}>
           <TabsTrigger value="applications" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
             APPLICATIONS{pendingCount > 0 ? ` (${pendingCount})` : ""}
           </TabsTrigger>
@@ -98,7 +98,7 @@ export default async function AdminPage() {
               <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.2)", textAlign: "center", padding: "3rem 0" }}>還沒有成員。</p>
             )}
             {members?.map((m) => (
-              <Link key={m.id} href={`/u/${m.id}`} style={{ background: "#202220", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.875rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
+              <Link key={m.id} href={`/u/${m.id}`} style={{ background: "#282b34", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.875rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
                 <div className={`avatar-${m.avatar_color} flex-shrink-0 flex items-center justify-center font-medium`}
                   style={{ width: 32, height: 32, fontSize: "0.8rem" }}>
                   {m.avatar_letter}
@@ -120,7 +120,7 @@ export default async function AdminPage() {
           </p>
           <div className="space-y-px mb-6">
             {daily.map(d => (
-              <div key={d.date} style={{ background: "#202220", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
+              <div key={d.date} style={{ background: "#282b34", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-baseline gap-3">
                     <span style={{ fontSize: "0.875rem", color: "#edecea" }}>{d.label}</span>
@@ -151,7 +151,7 @@ export default async function AdminPage() {
           )}
           <div className="space-y-px">
             {leaderboard.map((u, i) => (
-              <Link key={u.user_id} href={`/u/${u.user_id}`} style={{ background: "#202220", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
+              <Link key={u.user_id} href={`/u/${u.user_id}`} style={{ background: "#282b34", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
                 <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.7rem", color: "rgba(237,236,234,0.3)", width: "1.5rem" }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>

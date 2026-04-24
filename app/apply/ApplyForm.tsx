@@ -4,7 +4,7 @@ import { useState } from "react";
 import { submitApplication } from "@/lib/actions/applications";
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", background: "#202220", border: "1px solid rgba(255,255,255,0.08)",
+  width: "100%", background: "#282b34", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
 };
 

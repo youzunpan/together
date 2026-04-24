@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#1a1b18",
+  themeColor: "#15171e",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover" as const,
@@ -49,7 +49,7 @@ export default function RootLayout({
       lang="zh-TW"
       className={`${notoSans.variable} ${notoSerif.variable} ${spaceMono.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
+      <body className="min-h-full flex flex-col" style={{ background: "#15171e" }}>
         <main className="flex-1 pb-16">{children}</main>
         <BottomNav />
       </body>

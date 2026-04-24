@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase-server";
-import WelcomeCard from "./WelcomeCard";
 import HeartButtonClient from "./HeartButton";
 import Avatar from "@/components/Avatar";
 
@@ -32,7 +31,7 @@ export default async function FeedPage() {
     <div className="max-w-md mx-auto px-4">
       {/* Sticky header */}
       <header className="sticky top-0 z-10 pt-4 pb-3"
-        style={{ background: "rgba(26,27,24,0.92)", backdropFilter: "blur(12px)" }}>
+        style={{ background: "rgba(21,23,30,0.92)", backdropFilter: "blur(12px)" }}>
 
         {/* 品牌標 */}
         <p className="text-center mb-3" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.25)" }}>
@@ -40,7 +39,7 @@ export default async function FeedPage() {
         </p>
 
         {/* 狀態卡 */}
-        <div style={{ background: "#202220", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
+        <div style={{ background: "#282b34", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
           <p style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.3)", fontFamily: "var(--font-space-mono)", marginBottom: "0.5rem" }}>
             TODAY · {dateStr.toUpperCase()}
           </p>
@@ -68,8 +67,6 @@ export default async function FeedPage() {
           </p>
         )}
       </header>
-
-      <WelcomeCard />
 
       <div className="mt-4 pb-6">
         {(!sits || sits.length === 0) && (
@@ -120,7 +117,7 @@ function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string 
           <div className="relative flex justify-center my-4">
             <span
               style={{
-                background: "#1a1b18",
+                background: "#15171e",
                 padding: "0.3rem 0.75rem",
                 fontFamily: "var(--font-space-mono)",
                 fontSize: "0.6rem",
@@ -177,7 +174,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
           top: "0.875rem",
           width: 8, height: 8, borderRadius: "50%",
           background: "#BEC23F",
-          boxShadow: "0 0 0 3px #1a1b18",
+          boxShadow: "0 0 0 3px #15171e",
         }}
       />
 
@@ -185,7 +182,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
         <div
           style={{
             width: "46%",
-            background: "#202220",
+            background: "#282b34",
             border: "1px solid rgba(255,255,255,0.05)",
             padding: "0.7rem 0.8rem",
             marginRight: isLeft ? "0.75rem" : 0,

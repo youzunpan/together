@@ -8,7 +8,7 @@ type Step = "pick" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
 
 const inputStyle = {
-  width: "100%", background: "#202220", border: "1px solid rgba(255,255,255,0.08)",
+  width: "100%", background: "#282b34", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
 };
 
@@ -92,7 +92,7 @@ export default function SitFlow() {
     return (
       <div className="max-w-md mx-auto px-4 py-10">
         {earlyEnd && (
-          <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "#1a1b18" }}>
+          <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "#15171e" }}>
             <p style={{ fontSize: "1rem", color: "rgba(237,236,234,0.4)", letterSpacing: "0.05em" }}>
               這次沒有記錄。下次再坐。
             </p>
@@ -113,8 +113,8 @@ export default function SitFlow() {
                 padding: "0.75rem 0",
                 fontSize: "0.875rem",
                 fontFamily: "var(--font-space-mono)",
-                background: (!showCustom && selectedMin === m) ? "#BEC23F" : "#202220",
-                color: (!showCustom && selectedMin === m) ? "#1a1b18" : "rgba(237,236,234,0.5)",
+                background: (!showCustom && selectedMin === m) ? "#BEC23F" : "#282b34",
+                color: (!showCustom && selectedMin === m) ? "#15171e" : "rgba(237,236,234,0.5)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -126,8 +126,8 @@ export default function SitFlow() {
             style={{
               padding: "0.75rem 0", fontSize: "0.75rem",
               fontFamily: "var(--font-space-mono)",
-              background: showCustom ? "#BEC23F" : "#202220",
-              color: showCustom ? "#1a1b18" : "rgba(237,236,234,0.3)",
+              background: showCustom ? "#BEC23F" : "#282b34",
+              color: showCustom ? "#15171e" : "rgba(237,236,234,0.3)",
               border: "none", cursor: "pointer", transition: "all 0.15s",
               letterSpacing: "0.05em",
             }}>
@@ -167,7 +167,7 @@ export default function SitFlow() {
     const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
     const ss = String(remaining % 60).padStart(2, "0");
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#15171e" }}>
         <div className="relative mb-12">
           <svg width="220" height="220" className="rotate-[-90deg]">
             <circle cx="110" cy="110" r="100" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />

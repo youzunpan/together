@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 const COLORS = ["purple", "teal", "coral", "blue", "amber", "pink"] as const;
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", background: "#202220", border: "1px solid rgba(255,255,255,0.08)",
+  width: "100%", background: "#282b34", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
 };
 
@@ -63,7 +63,7 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
       {/* Email (唯讀) */}
       <div>
         <label className="seq-label block mb-1.5">EMAIL</label>
-        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.8rem", color: "rgba(237,236,234,0.5)", padding: "0.75rem 1rem", background: "#1a1b18", border: "1px solid rgba(255,255,255,0.04)" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.8rem", color: "rgba(237,236,234,0.5)", padding: "0.75rem 1rem", background: "#15171e", border: "1px solid rgba(255,255,255,0.04)" }}>
           {email}
         </p>
       </div>
