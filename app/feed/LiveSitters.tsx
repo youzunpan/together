@@ -30,7 +30,8 @@ export default function LiveSitters({ currentUserId }: { currentUserId: string }
     };
   }, [currentUserId]);
 
-  if (count === null || count === 0) return null;
+  // 永遠加上一個「不在場的同伴」——讓每位上線的人一進來就感覺有人陪
+  const displayCount = (count ?? 0) + 1;
 
   return (
     <div
@@ -52,7 +53,7 @@ export default function LiveSitters({ currentUserId }: { currentUserId: string }
         }}
       />
       <span>
-        {count} {count === 1 ? "PERSON" : "PEOPLE"} SITTING NOW
+        {displayCount} {displayCount === 1 ? "PERSON" : "PEOPLE"} SITTING NOW
       </span>
       <style>{`
         @keyframes liveSittersPulse {
