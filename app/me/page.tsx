@@ -42,7 +42,13 @@ export default async function MePage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6">
       <header className="mb-8 flex items-center justify-between">
-        <span style={{ width: "3rem" }} />
+        {profile.role === "admin" ? (
+          <a href="/admin" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left" }}>
+            ADMIN
+          </a>
+        ) : (
+          <span style={{ width: "3rem" }} />
+        )}
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)" }}>
           PROFILE
         </p>
