@@ -8,14 +8,22 @@ export default function Icon() {
     (
       <div
         style={{
-          width: "100%", height: "100%",
+          width: "100%",
+          height: "100%",
           background: "#1a1b18",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 340, color: "#edecea",
-          fontFamily: "serif",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        同
+        <div
+          style={{
+            width: 180,
+            height: 180,
+            borderRadius: "50%",
+            background: "#BEC23F",
+          }}
+        />
       </div>
     ),
     size
