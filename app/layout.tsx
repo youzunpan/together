@@ -54,7 +54,10 @@ export default function RootLayout({
         <Splash />
         <main
           className="flex-1"
-          style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+          style={{
+            paddingTop: "env(safe-area-inset-top)",
+            paddingBottom: "calc(4rem + env(safe-area-inset-bottom))",
+          }}
         >
           {children}
         </main>

@@ -30,8 +30,12 @@ export default async function FeedPage() {
   return (
     <div className="max-w-md mx-auto px-4">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 pt-4 pb-3"
-        style={{ background: "rgba(26,27,24,0.92)", backdropFilter: "blur(12px)" }}>
+      <header className="sticky z-10 pt-4 pb-3"
+        style={{
+          top: "env(safe-area-inset-top)",
+          background: "rgba(26,27,24,0.92)",
+          backdropFilter: "blur(12px)",
+        }}>
 
         {/* 品牌標 */}
         <p className="text-center mb-3" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.25)" }}>
