@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
-import { playBell } from "@/components/BellSound";
+import { playBell, createBellContext } from "@/components/BellSound";
 
 type Step = "pick" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
@@ -24,6 +24,7 @@ export default function SitFlow() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const endTimeRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const [reflection, setReflection] = useState("");
   const [satAt, setSatAt] = useState("");
   const [manualMin, setManualMin] = useState("");
@@ -33,11 +34,14 @@ export default function SitFlow() {
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
   const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
-    clearTimer(); playBell(); setActualMin(durationMin);
+    clearTimer(); playBell(audioCtxRef.current); setActualMin(durationMin);
     setTimeout(() => setStep("record"), 1500);
   }, []);
 
   function startTimer(min: number) {
+    // 必須在 user gesture 內建 AudioContext，之後的鐘才能在 iOS 上發聲
+    if (!audioCtxRef.current) audioCtxRef.current = createBellContext();
+    playBell(audioCtxRef.current); // 開始鐘
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
     endTimeRef.current = now + min * 60 * 1000;
