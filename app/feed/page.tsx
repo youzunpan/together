@@ -183,12 +183,13 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
 
   return (
     <div className="relative my-3">
-      {/* 軸上的點 */}
+      {/* 軸上的點：垂直置中對齊卡片 */}
       <div
         aria-hidden
-        className="absolute left-1/2 -translate-x-1/2"
+        className="absolute left-1/2"
         style={{
-          top: "0.875rem",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
           width: 8, height: 8, borderRadius: "50%",
           background: "#BEC23F",
           boxShadow: "0 0 0 3px #1a1b18",
