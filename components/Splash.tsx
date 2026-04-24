@@ -20,8 +20,8 @@ export default function Splash() {
     sessionStorage.setItem("splashed", "1");
 
     setShow(true);
-    const t1 = setTimeout(() => setFade(true), 900);
-    const t2 = setTimeout(() => setShow(false), 1500);
+    const t1 = setTimeout(() => setFade(true), 2400);
+    const t2 = setTimeout(() => setShow(false), 3000);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
