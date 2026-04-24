@@ -52,7 +52,7 @@ export default async function FeedPage() {
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜坐</p>
+              <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜心</p>
               <a href="/sit" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
                 記錄今天
               </a>
@@ -166,7 +166,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
 
   // 左右卡片交替深淺
   const isLight = isLeft;
-  const cardBg = isLight ? "#e4e3df" : "#2c2c2a";
+  const cardBg = isLight ? "#abb8c3" : "#2c2c2a";
   const cardBorder = isLight ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.05)";
   const nameColor = isLight ? "#1a1b18" : "#edecea";
   const reflectionColor = isLight ? "rgba(26,27,24,0.78)" : "rgba(237,236,234,0.88)";

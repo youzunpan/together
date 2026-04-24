@@ -149,7 +149,7 @@ export default function SitFlow() {
           <button onClick={() => { if (mins >= 1 && mins <= 240) startTimer(mins); }}
             disabled={mins < 1 || mins > 240}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
-            開始靜坐
+            開始靜心
           </button>
           <button onClick={() => { setStep("manual"); setSatAt(new Date().toISOString().slice(0, 16)); setManualMin(String(mins || 20)); }}
             className="btn-ghost w-full" style={{ letterSpacing: "0.1em" }}>
@@ -244,7 +244,7 @@ export default function SitFlow() {
       <div className="max-w-md mx-auto px-4 py-10">
         <button onClick={() => setStep("pick")} className="btn-ghost mb-6" style={{ letterSpacing: "0.1em" }}>← BACK</button>
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)", marginBottom: "1rem" }}>MANUAL ENTRY</p>
-        <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", marginBottom: "2rem", fontWeight: 400 }}>記錄這次靜坐</h1>
+        <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", marginBottom: "2rem", fontWeight: 400 }}>記錄這次靜心</h1>
         <div className="space-y-3">
           <div>
             <label className="seq-label block mb-1.5">DURATION (MIN)</label>

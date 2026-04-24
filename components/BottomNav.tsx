@@ -16,7 +16,7 @@ const navItems = [
   },
   {
     href: "/sit",
-    label: "靜坐",
+    label: "靜心",
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 1.5 : 1} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
