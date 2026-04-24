@@ -188,24 +188,33 @@ export default function SitFlow() {
   if (step === "prepare") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
-        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.3em", color: "rgba(237,236,234,0.3)", marginBottom: "3rem" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.3em", color: "rgba(237,236,234,0.3)", marginBottom: "3.5rem" }}>
           準備
         </p>
+
+        {/* 呼吸圓點（與啟動動畫一致） */}
         <div
-          key={prepareLeft}
           style={{
-            fontFamily: "var(--font-space-mono)",
-            fontSize: "5rem",
-            color: "#BEC23F",
-            letterSpacing: "-0.02em",
-            animation: "prepareFade 1s ease-out",
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            background: "#BEC23F",
+            animation: "prepareBreathe 4s ease-in-out infinite",
+          }}
+        />
+
+        <p
+          style={{
+            fontFamily: "var(--font-noto-serif)",
+            fontSize: "0.95rem",
+            color: "rgba(237,236,234,0.5)",
+            marginTop: "3.5rem",
+            letterSpacing: "0.08em",
           }}
         >
-          {prepareLeft || ""}
-        </div>
-        <p style={{ fontFamily: "var(--font-noto-serif)", fontSize: "0.95rem", color: "rgba(237,236,234,0.5)", marginTop: "3rem", letterSpacing: "0.08em" }}>
           調整姿勢，幾次呼吸
         </p>
+
         <button
           onClick={() => setStep("pick")}
           className="btn-ghost"
@@ -215,10 +224,9 @@ export default function SitFlow() {
         </button>
 
         <style>{`
-          @keyframes prepareFade {
-            0%   { opacity: 0; transform: scale(0.8); }
-            20%  { opacity: 1; transform: scale(1); }
-            100% { opacity: 0.4; transform: scale(1); }
+          @keyframes prepareBreathe {
+            0%, 100% { opacity: 0.25; transform: scale(1); }
+            50%      { opacity: 1;    transform: scale(2.2); }
           }
         `}</style>
       </div>
