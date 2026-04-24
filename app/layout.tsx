@@ -50,7 +50,12 @@ export default function RootLayout({
       className={`${notoSans.variable} ${notoSerif.variable} ${spaceMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
-        <main className="flex-1 pb-16">{children}</main>
+        <main
+          className="flex-1"
+          style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+        >
+          {children}
+        </main>
         <BottomNav />
       </body>
     </html>

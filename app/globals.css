@@ -93,6 +93,17 @@
     color: var(--text-primary);
     font-family: var(--font-noto-sans), -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+  }
+  html {
+    background: var(--bg-page);
+  }
+  /* 讓輸入框可選，其餘預設不選 */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
 
