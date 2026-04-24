@@ -22,17 +22,30 @@ export default function HeartButtonClient({
 
   async function toggle() {
     const next = !hearted;
+    // 樂觀更新
     setHearted(next);
     setCount(c => c + (next ? 1 : -1));
     setAnimating(true);
     setTimeout(() => setAnimating(false), 300);
 
     const supabase = createClient();
-    if (next) {
-      await supabase.from("hearts").insert({ sit_id: sitId });
-    } else {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) await supabase.from("hearts").delete().eq("sit_id", sitId).eq("user_id", user.id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      // 回退
+      setHearted(!next);
+      setCount(c => c + (next ? -1 : 1));
+      return;
+    }
+
+    const { error } = next
+      ? await supabase.from("hearts").insert({ sit_id: sitId, user_id: user.id })
+      : await supabase.from("hearts").delete().eq("sit_id", sitId).eq("user_id", user.id);
+
+    if (error) {
+      // 寫入失敗：回退 UI
+      console.error("heart toggle failed", error);
+      setHearted(!next);
+      setCount(c => c + (next ? -1 : 1));
     }
   }
 
