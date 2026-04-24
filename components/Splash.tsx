@@ -3,23 +3,22 @@
 import { useEffect, useState } from "react";
 
 export default function Splash() {
-  const [show, setShow] = useState(false);
+  // 一開始就 render 覆蓋層（SSR 也會輸出），避免先閃一下網頁才蓋上來
+  const [show, setShow] = useState(true);
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
-    // 只在安裝後的 standalone 模式顯示（一般瀏覽器不打擾）
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      // iOS Safari
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
 
-    if (!isStandalone) return;
-
-    // 同一 session 內只播一次
-    if (sessionStorage.getItem("splashed")) return;
+    // 瀏覽器分頁或同一 session 看過就直接收掉，不做動畫
+    if (!isStandalone || sessionStorage.getItem("splashed")) {
+      setShow(false);
+      return;
+    }
     sessionStorage.setItem("splashed", "1");
 
-    setShow(true);
     const t1 = setTimeout(() => setFade(true), 2400);
     const t2 = setTimeout(() => setShow(false), 3000);
     return () => {
@@ -48,7 +47,6 @@ export default function Splash() {
         pointerEvents: fade ? "none" : "auto",
       }}
     >
-      {/* 呼吸圓點 */}
       <div
         style={{
           width: 10,
@@ -59,7 +57,6 @@ export default function Splash() {
         }}
       />
 
-      {/* 品牌字 */}
       <div
         style={{
           fontFamily: "var(--font-noto-serif)",
