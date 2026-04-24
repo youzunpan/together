@@ -43,7 +43,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50"
-      style={{ background: "rgba(0,18,51,0.92)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      style={{ background: "rgba(26,27,24,0.92)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div className="flex items-center justify-around max-w-md mx-auto h-14 px-4">
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== "/" && pathname.startsWith(href));

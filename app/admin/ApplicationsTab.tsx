@@ -33,14 +33,14 @@ export default function ApplicationsTab({ applications }: { applications: Applic
 
   return (
     <div>
-      <div className="flex gap-1 mb-4" style={{ background: "#5C677D", padding: "2px" }}>
+      <div className="flex gap-1 mb-4" style={{ background: "#2c2c2a", padding: "2px" }}>
         {(["pending", "all"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             style={{
               flex: 1, padding: "0.5rem", fontFamily: "var(--font-space-mono)", fontSize: "0.65rem",
               letterSpacing: "0.12em", border: "none", cursor: "pointer",
               background: filter === f ? "#BEC23F" : "transparent",
-              color: filter === f ? "#001233" : "rgba(237,236,234,0.4)",
+              color: filter === f ? "#1a1b18" : "rgba(237,236,234,0.4)",
             }}>
             {f === "pending" ? "待審" : "全部"}
           </button>
@@ -58,7 +58,7 @@ export default function ApplicationsTab({ applications }: { applications: Applic
           const status = STATUS_STYLE[app.status];
           const isBusy = busyId === app.id && pending;
           return (
-            <div key={app.id} style={{ background: "#5C677D", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "1rem" }}>
+            <div key={app.id} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "1rem" }}>
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex-1 min-w-0">
                   <p style={{ fontSize: "0.95rem", color: "#edecea" }}>{app.display_name}</p>

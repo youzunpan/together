@@ -35,7 +35,7 @@
 
 :root {
   /* 序 SEQUENCE 品牌色系 */
-  --seq-dark:       #001233;
+  --seq-dark:       #1a1b18;
   --seq-black:      #2c2c2a;
   --seq-white:      #edecea;
   --seq-light-gray: #e4e3df;
@@ -43,8 +43,8 @@
   --seq-gold-hover: #a8ac35;
 
   /* App 語意層 */
-  --bg-page:     #001233;
-  --bg-card:     #5C677D;
+  --bg-page:     #1a1b18;
+  --bg-card:     #2c2c2a;
   --bg-subtle:   #272725;
   --text-primary:   #edecea;
   --text-secondary: rgba(237,236,234,0.6);
@@ -54,14 +54,14 @@
   --gold:           #BEC23F;
 
   /* shadcn 系統變數 */
-  --background: #001233;
+  --background: #1a1b18;
   --foreground: #edecea;
-  --card: #5C677D;
+  --card: #2c2c2a;
   --card-foreground: #edecea;
-  --popover: #5C677D;
+  --popover: #2c2c2a;
   --popover-foreground: #edecea;
   --primary: #BEC23F;
-  --primary-foreground: #001233;
+  --primary-foreground: #1a1b18;
   --secondary: #272725;
   --secondary-foreground: #edecea;
   --muted: #272725;
@@ -74,10 +74,10 @@
   --ring: #BEC23F;
   --radius: 2px;
 
-  --sidebar: #001233;
+  --sidebar: #1a1b18;
   --sidebar-foreground: #edecea;
   --sidebar-primary: #BEC23F;
-  --sidebar-primary-foreground: #001233;
+  --sidebar-primary-foreground: #1a1b18;
   --sidebar-accent: #272725;
   --sidebar-accent-foreground: #edecea;
   --sidebar-border: rgba(255,255,255,0.06);

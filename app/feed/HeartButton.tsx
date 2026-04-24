@@ -8,11 +8,13 @@ export default function HeartButtonClient({
   count: initialCount,
   hearted: initialHearted,
   isSelf,
+  lightBg = false,
 }: {
   sitId: string;
   count: number;
   hearted: boolean;
   isSelf: boolean;
+  lightBg?: boolean;
 }) {
   const [hearted, setHearted] = useState(initialHearted);
   const [count, setCount] = useState(initialCount);
@@ -43,7 +45,7 @@ export default function HeartButtonClient({
         width="20"
         height="20"
         viewBox="0 0 24 24"
-        fill={hearted ? "#BEC23F" : "#9B9891"}
+        fill={hearted ? (lightBg ? "#6d7220" : "#BEC23F") : (lightBg ? "#6b6a66" : "#9B9891")}
         className={`transition-transform duration-200 ${animating ? "scale-125" : "scale-100"}`}
         style={{ opacity: hearted ? 1 : 0.55 }}
       >
@@ -52,7 +54,7 @@ export default function HeartButtonClient({
         <path d="M 9.2 8.4 Q 8 11 8 13.5 L 6 15.2 Q 5.6 15.8 6 16 L 18 16 Q 18.4 15.8 18 15.2 L 16 13.5 Q 16 11 14.8 8.4 Z" />
         <ellipse cx="12" cy="17.8" rx="7.2" ry="1.8" />
       </svg>
-      {count > 0 && <span className="text-[12px] text-[#9B9891]">{count}</span>}
+      {count > 0 && <span className="text-[12px]" style={{ color: lightBg ? "#6b6a66" : "#9B9891" }}>{count}</span>}
     </button>
   );
 }

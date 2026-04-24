@@ -94,7 +94,7 @@ export async function approveApplication(id: string) {
     to: application.email,
     subject: "同在 · 你的申請已通過",
     html: `
-      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#001233;">
+      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1b18;">
         <h2 style="font-weight:normal;">${application.display_name}，歡迎來到同在。</h2>
         <p>你的申請已通過審核。</p>
         <p>現在可以用你申請時填的 email 和密碼登入：</p>

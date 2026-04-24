@@ -31,7 +31,7 @@ export default async function FeedPage() {
     <div className="max-w-md mx-auto px-4">
       {/* Sticky header */}
       <header className="sticky top-0 z-10 pt-4 pb-3"
-        style={{ background: "rgba(0,18,51,0.92)", backdropFilter: "blur(12px)" }}>
+        style={{ background: "rgba(26,27,24,0.92)", backdropFilter: "blur(12px)" }}>
 
         {/* 品牌標 */}
         <p className="text-center mb-3" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.25)" }}>
@@ -39,7 +39,7 @@ export default async function FeedPage() {
         </p>
 
         {/* 狀態卡 */}
-        <div style={{ background: "#5C677D", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
+        <div style={{ background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
           <p style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.3)", fontFamily: "var(--font-space-mono)", marginBottom: "0.5rem" }}>
             TODAY · {dateStr.toUpperCase()}
           </p>
@@ -117,7 +117,7 @@ function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string 
           <div className="relative flex justify-center my-4">
             <span
               style={{
-                background: "#001233",
+                background: "#1a1b18",
                 padding: "0.3rem 0.75rem",
                 fontFamily: "var(--font-space-mono)",
                 fontSize: "0.6rem",
@@ -164,6 +164,15 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
   })();
   const isLeft = side === "left";
 
+  // 左右卡片交替深淺
+  const isLight = isLeft;
+  const cardBg = isLight ? "#e4e3df" : "#2c2c2a";
+  const cardBorder = isLight ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.05)";
+  const nameColor = isLight ? "#1a1b18" : "#edecea";
+  const reflectionColor = isLight ? "rgba(26,27,24,0.78)" : "rgba(237,236,234,0.88)";
+  const agoColor = isLight ? "rgba(26,27,24,0.35)" : "rgba(237,236,234,0.3)";
+  const durationColor = isLight ? "#6d7220" : "#BEC23F";
+
   return (
     <div className="relative my-3">
       {/* 軸上的點 */}
@@ -174,7 +183,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
           top: "0.875rem",
           width: 8, height: 8, borderRadius: "50%",
           background: "#BEC23F",
-          boxShadow: "0 0 0 3px #001233",
+          boxShadow: "0 0 0 3px #1a1b18",
         }}
       />
 
@@ -182,8 +191,8 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
         <div
           style={{
             width: "46%",
-            background: "#5C677D",
-            border: "1px solid rgba(255,255,255,0.05)",
+            background: cardBg,
+            border: cardBorder,
             padding: "0.7rem 0.8rem",
             marginRight: isLeft ? "0.75rem" : 0,
             marginLeft: isLeft ? 0 : "0.75rem",
@@ -199,12 +208,12 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
             <div className="min-w-0 flex-1" style={{ textAlign: isLeft ? "right" : "left" }}>
               <a
                 href={href}
-                style={{ fontSize: "0.82rem", color: "#edecea", display: "block" }}
+                style={{ fontSize: "0.82rem", color: nameColor, display: "block" }}
                 className="hover:opacity-70 transition-opacity truncate"
               >
                 {sit.display_name}
               </a>
-              <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", color: "#BEC23F" }}>
+              <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", color: durationColor }}>
                 {sit.duration_min}min
               </span>
             </div>
@@ -215,7 +224,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
               className="reflection-text mt-2"
               style={{
                 fontSize: "0.82rem",
-                color: "rgba(237,236,234,0.88)",
+                color: reflectionColor,
                 lineHeight: 1.55,
                 textAlign: isLeft ? "right" : "left",
               }}
@@ -233,8 +242,9 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
               count={Number(sit.heart_count)}
               hearted={Boolean(sit.hearted_by_me)}
               isSelf={isSelf}
+              lightBg={isLight}
             />
-            <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.3)" }}>
+            <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: agoColor }}>
               {ago}
             </span>
           </div>
