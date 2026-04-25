@@ -76,7 +76,7 @@ export default async function AdminPage() {
       </header>
 
       <Tabs defaultValue="applications">
-        <TabsList className="w-full mb-6" style={{ background: "#2c2c2a", borderRadius: 0, padding: 0, gap: "1px" }}>
+        <TabsList className="w-full mb-6" style={{ background: "#2c2c2a", borderRadius: 4, padding: 0, gap: "1px", overflow: "hidden" }}>
           <TabsTrigger value="applications" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
             APPLICATIONS{pendingCount > 0 ? ` (${pendingCount})` : ""}
           </TabsTrigger>
@@ -93,7 +93,7 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="members">
-          <div className="space-y-px">
+          <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
             {members?.length === 0 && (
               <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.2)", textAlign: "center", padding: "3rem 0" }}>還沒有成員。</p>
             )}
@@ -118,7 +118,7 @@ export default async function AdminPage() {
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(237,236,234,0.3)", marginBottom: "0.75rem" }}>
             LAST 7 DAYS · BY DAY
           </p>
-          <div className="space-y-px mb-6">
+          <div className="space-y-px mb-6" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
             {daily.map(d => (
               <div key={d.date} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
                 <div className="flex items-center justify-between">
@@ -149,7 +149,7 @@ export default async function AdminPage() {
               還沒有紀錄。
             </p>
           )}
-          <div className="space-y-px">
+          <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
             {leaderboard.map((u, i) => (
               <Link key={u.user_id} href={`/u/${u.user_id}`} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
                 <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.7rem", color: "rgba(237,236,234,0.3)", width: "1.5rem" }}>

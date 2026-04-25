@@ -71,7 +71,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-px mb-8" style={{ background: "rgba(255,255,255,0.04)" }}>
+      <div className="grid grid-cols-2 gap-px mb-8" style={{ background: "rgba(255,255,255,0.04)", borderRadius: "var(--r-cell)", overflow: "hidden" }}>
         <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
@@ -98,7 +98,8 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
         </p>
       )}
 
-      <div className="space-y-px pb-8">
+      <div className="pb-8" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
+      <div className="space-y-px">
         {sits?.map((sit, i) => {
           const d = new Date(new Date(sit.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
           const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -126,6 +127,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

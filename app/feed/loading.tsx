@@ -20,6 +20,7 @@ export default function Loading() {
             padding: "0.875rem 1rem",
             height: "3.5rem",
             opacity: 0.6,
+            borderRadius: "var(--r-card)",
           }}
         />
       </header>

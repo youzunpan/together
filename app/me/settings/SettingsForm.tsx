@@ -9,6 +9,7 @@ const COLORS = ["purple", "teal", "coral", "blue", "amber", "pink"] as const;
 const inputStyle: React.CSSProperties = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
+  borderRadius: 4,
 };
 
 type Props = { email: string; display_name: string; avatar_letter: string; avatar_color: string };
@@ -63,7 +64,7 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
       {/* Email (唯讀) */}
       <div>
         <label className="seq-label block mb-1.5">EMAIL</label>
-        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.8rem", color: "rgba(237,236,234,0.5)", padding: "0.75rem 1rem", background: "#1a1b18", border: "1px solid rgba(255,255,255,0.04)" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.8rem", color: "rgba(237,236,234,0.5)", padding: "0.75rem 1rem", background: "#1a1b18", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 4 }}>
           {email}
         </p>
       </div>
@@ -147,6 +148,7 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
           width: "100%", background: "transparent", border: "1px solid rgba(214,92,106,0.3)",
           color: "rgba(214,92,106,0.9)", padding: "0.75rem", fontFamily: "var(--font-space-mono)",
           fontSize: "0.75rem", letterSpacing: "0.12em", cursor: "pointer",
+          borderRadius: 4,
         }}>
         登出
       </button>

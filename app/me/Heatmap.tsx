@@ -59,7 +59,7 @@ function MonthGrid({ year, month, dataByDate }: { year: number; month: number; d
               border: "none",
               padding: 0,
               cursor: c.minutes > 0 ? "pointer" : "default",
-              borderRadius: 3,
+              borderRadius: 2,
               fontFamily: "var(--font-space-mono)",
               fontSize: "0.65rem",
               color: c.minutes >= 60 ? "#1a1b18" : c.minutes > 0 ? "#1a1b18" : "rgba(237,236,234,0.3)",

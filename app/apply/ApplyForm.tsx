@@ -6,6 +6,7 @@ import { submitApplication } from "@/lib/actions/applications";
 const inputStyle: React.CSSProperties = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
+  borderRadius: 4,
 };
 
 export default function ApplyForm() {

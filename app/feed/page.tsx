@@ -43,7 +43,7 @@ export default async function FeedPage() {
         </p>
 
         {/* 狀態卡 */}
-        <div style={{ background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem" }}>
+        <div style={{ background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.06)", padding: "0.875rem 1rem", borderRadius: "var(--r-card)" }}>
           <p style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.3)", fontFamily: "var(--font-space-mono)", marginBottom: "0.5rem" }}>
             TODAY · {dateStr.toUpperCase()}
           </p>
@@ -131,6 +131,7 @@ function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string 
                 letterSpacing: "0.18em",
                 color: "rgba(237,236,234,0.4)",
                 border: "1px solid rgba(190,194,63,0.25)",
+                borderRadius: "var(--r-pill)",
               }}
             >
               {label.toUpperCase()}
@@ -201,6 +202,7 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
             width: "46%",
             background: cardBg,
             border: cardBorder,
+            borderRadius: "var(--r-card)",
             padding: "0.7rem 0.8rem",
             marginRight: isLeft ? "0.75rem" : 0,
             marginLeft: isLeft ? 0 : "0.75rem",
@@ -247,16 +249,8 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
           >
             <ReactionBar
               sitId={sit.id}
-              counts={{
-                sit: Number(sit.sit_count ?? 0),
-                heart: Number(sit.heart_count ?? 0),
-                smile: Number(sit.smile_count ?? 0),
-              }}
-              mine={{
-                sit: Boolean(sit.sit_by_me),
-                heart: Boolean(sit.heart_by_me),
-                smile: Boolean(sit.smile_by_me),
-              }}
+              count={Number(sit.sit_count ?? 0)}
+              mine={Boolean(sit.sit_by_me)}
               lightBg={isLight}
             />
             <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: agoColor }}>

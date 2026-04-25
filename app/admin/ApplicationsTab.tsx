@@ -33,12 +33,12 @@ export default function ApplicationsTab({ applications }: { applications: Applic
 
   return (
     <div>
-      <div className="flex gap-1 mb-4" style={{ background: "#2c2c2a", padding: "2px" }}>
+      <div className="flex gap-1 mb-4" style={{ background: "#2c2c2a", padding: "2px", borderRadius: 4 }}>
         {(["pending", "all"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             style={{
               flex: 1, padding: "0.5rem", fontFamily: "var(--font-space-mono)", fontSize: "0.65rem",
-              letterSpacing: "0.12em", border: "none", cursor: "pointer",
+              letterSpacing: "0.12em", border: "none", cursor: "pointer", borderRadius: 3,
               background: filter === f ? "#BEC23F" : "transparent",
               color: filter === f ? "#1a1b18" : "rgba(237,236,234,0.4)",
             }}>
@@ -53,7 +53,7 @@ export default function ApplicationsTab({ applications }: { applications: Applic
         </p>
       )}
 
-      <div className="space-y-px">
+      <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
         {list.map(app => {
           const status = STATUS_STYLE[app.status];
           const isBusy = busyId === app.id && pending;
@@ -91,7 +91,7 @@ export default function ApplicationsTab({ applications }: { applications: Applic
                     style={{
                       flex: 1, background: "transparent", border: "1px solid rgba(214,92,106,0.4)",
                       color: "rgba(214,92,106,0.9)", padding: "0.55rem", fontFamily: "var(--font-space-mono)",
-                      fontSize: "0.7rem", letterSpacing: "0.1em", cursor: "pointer",
+                      fontSize: "0.7rem", letterSpacing: "0.1em", cursor: "pointer", borderRadius: 4,
                     }}>
                     拒絕
                   </button>

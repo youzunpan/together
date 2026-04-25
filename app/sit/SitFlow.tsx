@@ -13,6 +13,7 @@ const PRESETS = [5, 10, 15, 20, 30, 45, 60];
 const inputStyle = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
   padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
+  borderRadius: 4,
 };
 
 export default function SitFlow() {
@@ -180,6 +181,7 @@ export default function SitFlow() {
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
+                borderRadius: 4,
               }}>
               {m}
             </button>
@@ -192,6 +194,7 @@ export default function SitFlow() {
               color: showCustom ? "#1a1b18" : "rgba(237,236,234,0.3)",
               border: "none", cursor: "pointer", transition: "all 0.15s",
               letterSpacing: "0.05em",
+              borderRadius: 4,
             }}>
             OTHER
           </button>
