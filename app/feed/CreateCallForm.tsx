@@ -2,26 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { createCall } from "@/lib/actions/calls";
-import { taipeiDatetimeLocal } from "@/lib/tz";
 
 const DURATION_PRESETS = [10, 15, 20, 30, 45, 60];
 
-// 預設時間：今天/明天的下一個整點，至少 30 分鐘後
-function defaultScheduledLocal(): string {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 30);
-  // 進到下一個整點
-  if (now.getMinutes() > 0) {
-    now.setHours(now.getHours() + 1);
-    now.setMinutes(0);
-  }
-  now.setSeconds(0);
-  return taipeiDatetimeLocal(now);
-}
-
 export default function CreateCallForm() {
   const [open, setOpen] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState(defaultScheduledLocal());
+  const [scheduledAt, setScheduledAt] = useState("");
   const [durationMin, setDurationMin] = useState(20);
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
@@ -41,7 +27,7 @@ export default function CreateCallForm() {
       } else {
         setOpen(false);
         setMessage("");
-        setScheduledAt(defaultScheduledLocal());
+        setScheduledAt("");
         setDurationMin(20);
       }
     });
