@@ -4,6 +4,7 @@ import AvatarUpload from "./AvatarUpload";
 import Heatmap from "./Heatmap";
 import Lamp from "@/components/Lamp";
 import SitMark from "@/components/SitMark";
+import PersonalScroll from "@/components/PersonalScroll";
 
 function buildHeatmapDays(sits: { sat_at: string; duration_min: number }[]) {
   // Taipei 時區的最近 90 天
@@ -80,6 +81,9 @@ export default async function MePage() {
 
       {/* 一盞燈 */}
       <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
+
+      {/* 個人卷軸：過去 30 天 */}
+      <PersonalScroll sits={sits ?? []} />
 
       {/* 統計 */}
       <div className="grid grid-cols-2 gap-px mb-8 mt-2" style={{ background: "rgba(255,255,255,0.04)", borderRadius: "var(--r-cell)", overflow: "hidden" }}>

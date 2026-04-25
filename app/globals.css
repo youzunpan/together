@@ -172,3 +172,12 @@
   transition: color 0.2s;
 }
 .btn-ghost:hover { color: var(--seq-white); }
+
+/* 隱藏 scroll bar 但保留滾動 */
+.hide-scrollbar {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                  /* Safari/Chrome */
+}
