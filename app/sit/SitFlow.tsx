@@ -315,10 +315,10 @@ export default function SitFlow() {
           </div>
         </div>
 
-        {/* 同坐提示：有人就顯示金點＋人數，沒人就保留空間（透明）讓佈局穩定 */}
+        {/* 同坐提示：永遠 +1 個「不在場的同伴」，讓人一進來就感覺有人陪 */}
         <div
           className="flex items-center justify-center gap-2 mb-10"
-          style={{ height: "1.2rem", opacity: companions > 0 ? 1 : 0, transition: "opacity 600ms" }}
+          style={{ height: "1.2rem" }}
           aria-live="polite"
         >
           <span
@@ -339,7 +339,7 @@ export default function SitFlow() {
               color: "rgba(237,236,234,0.5)",
             }}
           >
-            此刻 {companions} 人陪你坐
+            此刻 {companions + 1} 人陪你坐
           </span>
         </div>
 
