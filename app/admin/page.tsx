@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ApplicationsTab from "./ApplicationsTab";
+import SitDeleteButton from "./SitDeleteButton";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -20,6 +21,12 @@ export default async function AdminPage() {
     .from("sits_with_stats").select("*")
     .gte("sat_at", since.toISOString())
     .order("sat_at", { ascending: false });
+
+  // 全部 sits（給管理員清理測試資料用）
+  const { data: allSits } = await supabase
+    .from("sits_with_stats").select("*")
+    .order("sat_at", { ascending: false })
+    .limit(500);
 
   const pendingCount = applications?.filter(a => a.status === "pending").length ?? 0;
 
@@ -170,6 +177,46 @@ export default async function AdminPage() {
                 </span>
               </Link>
             ))}
+          </div>
+
+          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(237,236,234,0.3)", marginTop: "1.5rem", marginBottom: "0.75rem" }}>
+            ALL SESSIONS · {allSits?.length ?? 0}
+          </p>
+          <p style={{ fontSize: "0.7rem", color: "rgba(237,236,234,0.3)", marginBottom: "0.75rem", lineHeight: 1.6 }}>
+            可以刪除任何人的紀錄（含測試資料）。最多顯示 500 筆。
+          </p>
+          {(!allSits || allSits.length === 0) && (
+            <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.2)", textAlign: "center", padding: "2rem 0" }}>
+              還沒有任何紀錄。
+            </p>
+          )}
+          <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
+            {allSits?.map((s) => {
+              const d = new Date(new Date(s.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+              const dateStr = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+              const label = `${s.display_name} · ${s.duration_min}min · ${dateStr}`;
+              return (
+                <div key={s.id} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }} className="flex items-center gap-3">
+                  <div className={`avatar-${s.avatar_color} flex-shrink-0 flex items-center justify-center font-medium`}
+                    style={{ width: 26, height: 26, fontSize: "0.7rem" }}>
+                    {s.avatar_letter}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span style={{ fontSize: "0.82rem", color: "#edecea" }} className="truncate">{s.display_name}</span>
+                      <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.7rem", color: "#BEC23F", flexShrink: 0 }}>
+                        {s.duration_min}<span style={{ fontSize: "0.55rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.15rem" }}>MIN</span>
+                      </span>
+                    </div>
+                    <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.3)", letterSpacing: "0.06em", marginTop: "0.15rem" }}>
+                      {dateStr}
+                      {s.reflection ? " · 有心得" : ""}
+                    </p>
+                  </div>
+                  <SitDeleteButton id={s.id} label={label} />
+                </div>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>
