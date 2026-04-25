@@ -89,10 +89,10 @@
   --r-pill: 4px;
   --r-tile: 2px;
 
-  /* 字體：Zen 系列（日本）優先，缺字時退回 Noto TC，再退到系統字
-     變數名沿用舊名 --font-noto-* 避免大量改動元件內 inline style */
-  --font-noto-serif: "Zen Old Mincho", var(--font-fallback-serif), "Songti TC", "PingFang TC", serif;
-  --font-noto-sans:  "Zen Kaku Gothic New", var(--font-fallback-sans), "PingFang TC", system-ui, sans-serif;
+  /* 字體：
+     - 襯線（顯示名、心得）→ 思源宋體 TW（Noto Serif TC），繁體最完整
+     - 黑體（一般 UI）→ Zen Kaku Gothic New 優先取得日式骨架，繁體缺字 fallback 思源黑體 */
+  --font-noto-sans: "Zen Kaku Gothic New", var(--font-fallback-sans), "PingFang TC", system-ui, sans-serif;
 }
 
 @layer base {
