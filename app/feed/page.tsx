@@ -3,6 +3,7 @@ import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import MonthlyCollage from "@/components/MonthlyCollage";
+import UpcomingCalls from "@/components/UpcomingCalls";
 import { taipeiTodayStartISO, taipeiDiffDays, taipeiMonthStartISO, taipeiMonthLabel, APP_TZ } from "@/lib/tz";
 
 export default async function FeedPage() {
@@ -85,6 +86,9 @@ export default async function FeedPage() {
       </header>
 
       <div className="mt-4 pb-6">
+        {/* 同心：未過期的呼喚 */}
+        <UpcomingCalls />
+
         {monthSits && monthSits.length > 0 && (
           <MonthlyCollage sits={monthSits} monthLabel={monthLabel} />
         )}

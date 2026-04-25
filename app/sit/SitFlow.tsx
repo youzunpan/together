@@ -41,6 +41,21 @@ export default function SitFlow() {
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
+  // 從 ?duration= 預填時長（給「同心」邀坐用），有值就自動進入 prepare
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const d = Number(params.get("duration"));
+    if (d >= 1 && d <= 240) {
+      setSelectedMin(d);
+      // 清掉 query string，避免 reload 又重觸
+      window.history.replaceState({}, "", "/sit");
+      // 進入 prepare（延一個 tick 讓 audioCtx 初始化完成）
+      setTimeout(() => beginPrepare(d), 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function joinLiveSitters() {
     try {
       const supabase = createSupabase();
