@@ -1,6 +1,10 @@
+"use client";
+
 // 個人卷軸：把過去 30 天每一天的 SitMark 排成一條水平時光帶。
 // 從左到右 = 舊到新；空白天保留為淡淡的空格，讓「坐 / 沒坐」的節奏自然浮現。
+// 進場時自動 scroll 到最右（今天），使用者會先看到「現在」再往左翻歷史。
 
+import { useEffect, useRef } from "react";
 import { computeBrushPaths } from "@/lib/sitMarkPath";
 import { taipeiDateKey } from "@/lib/tz";
 
@@ -32,6 +36,15 @@ export default function PersonalScroll({ sits }: { sits: Sit[] }) {
   }
 
   const totalSits = buckets.reduce((sum, b) => sum + b.entries.length, 0);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scrollRef.current) {
+      // 直接設到底，不做動畫（避免進站抖一下）
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, []);
+
   if (totalSits === 0) return null;
 
   return (
@@ -61,15 +74,13 @@ export default function PersonalScroll({ sits }: { sits: Sit[] }) {
 
       {/* 水平卷軸 */}
       <div
+        ref={scrollRef}
         className="hide-scrollbar"
         style={{
           overflowX: "auto",
           overflowY: "hidden",
           WebkitOverflowScrolling: "touch",
           paddingBottom: "0.25rem",
-          // 預設 scroll 至最右（最新）—— 透過 dir/scroll-behavior 在 client 不便，
-          // 但因為時間從左到右是「舊→新」，使用者進來看到的是舊的、滑到底是今天，
-          // 視覺隱喻：往未來（右）翻動卷軸
         }}
       >
         <div className="flex items-end" style={{ gap: 2, paddingRight: 4 }}>
