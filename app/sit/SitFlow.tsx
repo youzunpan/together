@@ -37,6 +37,7 @@ export default function SitFlow() {
   const [earlyEnd, setEarlyEnd] = useState(false);
   const [prepareLeft, setPrepareLeft] = useState(5);
   const prepareMinRef = useRef(0);
+  const [companions, setCompanions] = useState(0); // 此刻除自己外的同坐人數
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
@@ -49,6 +50,15 @@ export default function SitFlow() {
         config: { presence: { key: user.id } },
       });
       presenceRef.current = ch;
+
+      // 監聽 presence sync，計算除自己以外的同坐人數
+      ch.on("presence", { event: "sync" }, () => {
+        const state = ch.presenceState();
+        const sitters = Object.keys(state).filter((k) => !k.startsWith("viewer-"));
+        const others = sitters.filter((k) => k !== user.id).length;
+        setCompanions(others);
+      });
+
       ch.subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           await ch.track({ at: Date.now() });
@@ -62,6 +72,7 @@ export default function SitFlow() {
       presenceRef.current.unsubscribe();
       presenceRef.current = null;
     }
+    setCompanions(0);
   }
 
   // 離開頁面自動退出 presence
@@ -282,7 +293,7 @@ export default function SitFlow() {
     const ss = String(remaining % 60).padStart(2, "0");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
-        <div className="relative mb-12">
+        <div className="relative mb-8">
           <svg width="220" height="220" className="rotate-[-90deg]">
             <circle cx="110" cy="110" r="100" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
             <circle cx="110" cy="110" r="100" fill="none"
@@ -303,6 +314,35 @@ export default function SitFlow() {
             </span>
           </div>
         </div>
+
+        {/* 同坐提示：有人就顯示金點＋人數，沒人就保留空間（透明）讓佈局穩定 */}
+        <div
+          className="flex items-center justify-center gap-2 mb-10"
+          style={{ height: "1.2rem", opacity: companions > 0 ? 1 : 0, transition: "opacity 600ms" }}
+          aria-live="polite"
+        >
+          <span
+            aria-hidden
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: "50%",
+              background: "#BEC23F",
+              animation: "companionsBreathe 2.4s ease-in-out infinite",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.62rem",
+              letterSpacing: "0.18em",
+              color: "rgba(237,236,234,0.5)",
+            }}
+          >
+            此刻 {companions} 人陪你坐
+          </span>
+        </div>
+
         <div className="flex gap-10">
           <button onClick={handlePause} className="btn-ghost" style={{ letterSpacing: "0.12em" }}>
             {paused ? "RESUME" : "PAUSE"}
@@ -311,6 +351,13 @@ export default function SitFlow() {
             END
           </button>
         </div>
+
+        <style>{`
+          @keyframes companionsBreathe {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50%      { opacity: 1;   transform: scale(1.5); }
+          }
+        `}</style>
       </div>
     );
   }
