@@ -14,8 +14,16 @@ export default function SitMark({
   size?: number;
   color?: string;
 }) {
-  const d = new Date(satAt);
-  const hourFraction = (d.getHours() + d.getMinutes() / 60) / 24; // 0..1
+  // 用台北時區的小時分鐘決定起始角度，避免伺服器/瀏覽器時區差異
+  const tpe = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Taipei",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(satAt));
+  const hh = Number(tpe.find(p => p.type === "hour")?.value ?? "0") % 24;
+  const mm = Number(tpe.find(p => p.type === "minute")?.value ?? "0");
+  const hourFraction = (hh + mm / 60) / 24; // 0..1
   // SVG 0° 在右側，順時針為正；要讓「0:00 在正上」需要 -90° 偏移
   const startDeg = hourFraction * 360 - 90;
   const startRad = (startDeg * Math.PI) / 180;

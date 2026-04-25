@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
+import { taipeiTodayStartISO, taipeiDiffDays, APP_TZ } from "@/lib/tz";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -9,13 +10,11 @@ export default async function FeedPage() {
 
   const { data: summary } = await supabase.rpc("today_summary");
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const { data: todaySit } = await supabase
     .from("sits")
     .select("duration_min")
     .eq("user_id", user!.id)
-    .gte("sat_at", today.toISOString())
+    .gte("sat_at", taipeiTodayStartISO())
     .order("sat_at", { ascending: false })
     .limit(1)
     .single();
@@ -26,7 +25,7 @@ export default async function FeedPage() {
     .order("sat_at", { ascending: false })
     .limit(30);
 
-  const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric" });
+  const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
 
   return (
     <div className="max-w-md mx-auto px-4">
@@ -94,8 +93,8 @@ function groupByDate(sits: any[]) {
   const now = new Date();
   for (const sit of sits) {
     const d = new Date(sit.sat_at);
-    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
-    let label = diffDays === 0 ? "今天" : diffDays === 1 ? "昨天" : diffDays <= 3 ? `${diffDays} 天前` : d.toLocaleDateString("zh-TW", { month: "long", day: "numeric" });
+    const diffDays = taipeiDiffDays(now, d);
+    let label = diffDays === 0 ? "今天" : diffDays === 1 ? "昨天" : diffDays <= 3 ? `${diffDays} 天前` : d.toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
     if (seen[label] === undefined) { seen[label] = groups.length; groups.push({ label, items: [] }); }
     groups[seen[label]].items.push(sit);
   }

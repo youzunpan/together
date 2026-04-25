@@ -5,6 +5,7 @@ import { recordSit } from "@/lib/actions/sits";
 import { playBell, createBellContext } from "@/components/BellSound";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { taipeiDatetimeLocal } from "@/lib/tz";
 
 type Step = "pick" | "prepare" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
@@ -140,7 +141,9 @@ export default function SitFlow() {
     const isManual = step === "manual";
     fd.set("duration_min", isManual ? manualMin : String(actualMin || selectedMin));
     fd.set("reflection", reflection);
-    fd.set("sat_at", isManual && satAt ? satAt : (actualStart?.toISOString() ?? new Date().toISOString()));
+    // 手動輸入的 satAt 是台北牆上時間（YYYY-MM-DDTHH:mm），用 +08:00 解析後送 UTC ISO
+    const manualISO = isManual && satAt ? new Date(`${satAt}:00+08:00`).toISOString() : null;
+    fd.set("sat_at", manualISO ?? actualStart?.toISOString() ?? new Date().toISOString());
     await recordSit(fd);
   }
 
@@ -210,7 +213,7 @@ export default function SitFlow() {
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             開始靜心
           </button>
-          <button onClick={() => { setStep("manual"); setSatAt(new Date().toISOString().slice(0, 16)); setManualMin(String(mins || 20)); }}
+          <button onClick={() => { setStep("manual"); setSatAt(taipeiDatetimeLocal()); setManualMin(String(mins || 20)); }}
             className="btn-ghost w-full" style={{ letterSpacing: "0.1em" }}>
             我已經坐完了 →
           </button>

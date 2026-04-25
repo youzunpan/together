@@ -37,9 +37,15 @@ export default async function MePage() {
     .eq("user_id", user.id).order("sat_at", { ascending: false });
 
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const monthDays = new Set(sits?.filter(r => r.sat_at >= monthStart).map(r => r.sat_at.slice(0, 10))).size;
+  // 以台北時區計算「本月」與每日去重 key
+  const tpeNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+  const monthStart = new Date(`${tpeNow.getFullYear()}-${String(tpeNow.getMonth() + 1).padStart(2, "0")}-01T00:00:00+08:00`).toISOString();
+  const monthDays = new Set(
+    sits?.filter(r => r.sat_at >= monthStart).map(r => {
+      const d = new Date(new Date(r.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })
+  ).size;
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
