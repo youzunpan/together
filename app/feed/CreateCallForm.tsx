@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { createCall } from "@/lib/actions/calls";
-
-const DURATION_PRESETS = [10, 15, 20, 30, 45, 60];
+import { taipeiDateKey } from "@/lib/tz";
 
 export default function CreateCallForm() {
   const [open, setOpen] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [durationMin, setDurationMin] = useState(20);
+  const [date, setDate] = useState(taipeiDateKey()); // 預設今天
+  const [time, setTime] = useState(""); // 時間留空，使用者自填
+  const [duration, setDuration] = useState(""); // 時長自填
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -16,9 +16,20 @@ export default function CreateCallForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!date || !time) {
+      setError("請選擇日期與時間");
+      return;
+    }
+    const durNum = Number(duration);
+    if (!durNum || durNum < 1 || durNum > 240) {
+      setError("時長請填 1–240 分鐘");
+      return;
+    }
+
     const fd = new FormData();
-    fd.set("scheduled_at", scheduledAt);
-    fd.set("duration_min", String(durationMin));
+    fd.set("scheduled_at", `${date}T${time}`); // server action 會用 +08:00 解析
+    fd.set("duration_min", String(durNum));
     fd.set("message", message);
     start(async () => {
       const res = await createCall(fd);
@@ -27,8 +38,9 @@ export default function CreateCallForm() {
       } else {
         setOpen(false);
         setMessage("");
-        setScheduledAt("");
-        setDurationMin(20);
+        setDate(taipeiDateKey());
+        setTime("");
+        setDuration("");
       }
     });
   }
@@ -64,6 +76,27 @@ export default function CreateCallForm() {
     );
   }
 
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontFamily: "var(--font-space-mono)",
+    fontSize: "0.55rem",
+    letterSpacing: "0.15em",
+    color: "rgba(237,236,234,0.35)",
+    marginBottom: "0.3rem",
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "#1a1b18",
+    border: "1px solid rgba(255,255,255,0.08)",
+    padding: "0.6rem 0.75rem",
+    fontSize: "0.85rem",
+    color: "#edecea",
+    outline: "none",
+    borderRadius: 4,
+    fontFamily: "var(--font-space-mono)",
+  };
+
   return (
     <form
       onSubmit={submit}
@@ -86,104 +119,49 @@ export default function CreateCallForm() {
         開一場同心
       </p>
 
-      {/* 時間 */}
-      <label
-        style={{
-          display: "block",
-          fontFamily: "var(--font-space-mono)",
-          fontSize: "0.55rem",
-          letterSpacing: "0.15em",
-          color: "rgba(237,236,234,0.35)",
-          marginBottom: "0.3rem",
-        }}
-      >
-        WHEN
-      </label>
-      <input
-        type="datetime-local"
-        value={scheduledAt}
-        onChange={(e) => setScheduledAt(e.target.value)}
-        required
-        style={{
-          width: "100%",
-          background: "#1a1b18",
-          border: "1px solid rgba(255,255,255,0.08)",
-          padding: "0.6rem 0.75rem",
-          fontSize: "0.85rem",
-          color: "#edecea",
-          outline: "none",
-          borderRadius: 4,
-          fontFamily: "var(--font-space-mono)",
-          marginBottom: "0.875rem",
-        }}
-      />
-
-      {/* 時長 */}
-      <label
-        style={{
-          display: "block",
-          fontFamily: "var(--font-space-mono)",
-          fontSize: "0.55rem",
-          letterSpacing: "0.15em",
-          color: "rgba(237,236,234,0.35)",
-          marginBottom: "0.3rem",
-        }}
-      >
-        DURATION
-      </label>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4, marginBottom: "0.875rem" }}>
-        {DURATION_PRESETS.map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setDurationMin(m)}
-            style={{
-              padding: "0.5rem 0",
-              fontFamily: "var(--font-space-mono)",
-              fontSize: "0.7rem",
-              background: durationMin === m ? "#BEC23F" : "#1a1b18",
-              color: durationMin === m ? "#1a1b18" : "rgba(237,236,234,0.4)",
-              border: "none",
-              borderRadius: 3,
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-          >
-            {m}
-          </button>
-        ))}
+      {/* 日期 + 時間（拆開：日期預設今天、時間空白） */}
+      <label style={labelStyle}>WHEN</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 6, marginBottom: "0.875rem" }}>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          required
+          style={inputStyle}
+        />
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          required
+          placeholder="--:--"
+          style={inputStyle}
+        />
       </div>
 
+      {/* 時長：自填 */}
+      <label style={labelStyle}>DURATION · 分鐘</label>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={240}
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
+        placeholder="例如 20"
+        required
+        style={{ ...inputStyle, marginBottom: "0.875rem" }}
+      />
+
       {/* 一句話 */}
-      <label
-        style={{
-          display: "block",
-          fontFamily: "var(--font-space-mono)",
-          fontSize: "0.55rem",
-          letterSpacing: "0.15em",
-          color: "rgba(237,236,234,0.35)",
-          marginBottom: "0.3rem",
-        }}
-      >
-        MESSAGE · 選填
-      </label>
+      <label style={labelStyle}>MESSAGE · 選填</label>
       <input
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value.slice(0, 80))}
         placeholder="想說的話（選填）"
         maxLength={80}
-        style={{
-          width: "100%",
-          background: "#1a1b18",
-          border: "1px solid rgba(255,255,255,0.08)",
-          padding: "0.6rem 0.75rem",
-          fontSize: "0.85rem",
-          color: "#edecea",
-          outline: "none",
-          borderRadius: 4,
-          marginBottom: "0.875rem",
-        }}
+        style={{ ...inputStyle, fontFamily: "inherit", marginBottom: "0.875rem" }}
       />
 
       {error && (
