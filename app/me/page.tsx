@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import AvatarUpload from "./AvatarUpload";
 import Heatmap from "./Heatmap";
+import Lamp from "@/components/Lamp";
+import SitMark from "@/components/SitMark";
 
 function buildHeatmapDays(sits: { sat_at: string; duration_min: number }[]) {
   // Taipei 時區的最近 90 天
@@ -70,8 +72,11 @@ export default async function MePage() {
         </div>
       </div>
 
+      {/* 一盞燈 */}
+      <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
+
       {/* 統計 */}
-      <div className="grid grid-cols-2 gap-px mb-8" style={{ background: "rgba(255,255,255,0.04)" }}>
+      <div className="grid grid-cols-2 gap-px mb-8 mt-2" style={{ background: "rgba(255,255,255,0.04)" }}>
         <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
@@ -113,15 +118,18 @@ export default async function MePage() {
           return (
             <div key={i} id={isFirstOfDay ? `day-${dateKey}` : undefined} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
               <div className="flex items-center justify-between">
-                <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.75rem", color: "#BEC23F" }}>
-                  {sit.duration_min}min
-                </span>
+                <div className="flex items-center gap-3">
+                  <SitMark satAt={sit.sat_at} durationMin={sit.duration_min} size={26} />
+                  <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.75rem", color: "#BEC23F" }}>
+                    {sit.duration_min}min
+                  </span>
+                </div>
                 <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.25)", letterSpacing: "0.08em" }}>
                   {dateStr}
                 </span>
               </div>
               {sit.reflection && (
-                <p className="reflection-text mt-1" style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.6 }}>
+                <p className="reflection-text mt-1" style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.6, paddingLeft: "calc(26px + 0.75rem)" }}>
                   {sit.reflection}
                 </p>
               )}
