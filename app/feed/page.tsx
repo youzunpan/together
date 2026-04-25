@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase-server";
 import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
-import { taipeiTodayStartISO, taipeiDiffDays, APP_TZ } from "@/lib/tz";
+import MonthlyCollage from "@/components/MonthlyCollage";
+import { taipeiTodayStartISO, taipeiDiffDays, taipeiMonthStartISO, taipeiMonthLabel, APP_TZ } from "@/lib/tz";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -25,7 +26,15 @@ export default async function FeedPage() {
     .order("sat_at", { ascending: false })
     .limit(30);
 
+  // 月度共修圖：本月所有人的 sit
+  const { data: monthSits } = await supabase
+    .from("sits")
+    .select("sat_at, duration_min")
+    .gte("sat_at", taipeiMonthStartISO())
+    .order("sat_at", { ascending: true });
+
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
+  const monthLabel = taipeiMonthLabel();
 
   return (
     <div className="max-w-md mx-auto px-4">
@@ -76,6 +85,10 @@ export default async function FeedPage() {
       </header>
 
       <div className="mt-4 pb-6">
+        {monthSits && monthSits.length > 0 && (
+          <MonthlyCollage sits={monthSits} monthLabel={monthLabel} />
+        )}
+
         {(!sits || sits.length === 0) && (
           <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>
             安靜的一天。第一個坐的人會在這裡出現。

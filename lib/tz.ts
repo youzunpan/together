@@ -40,6 +40,28 @@ export function taipeiTodayStartISO(): string {
   return new Date(`${key}T00:00:00+08:00`).toISOString();
 }
 
+// 台北本月 1 號 00:00 對應的 UTC ISO（給 sat_at >= ... 查詢用）
+export function taipeiMonthStartISO(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TZ,
+    year: "numeric",
+    month: "2-digit",
+  });
+  const parts: Record<string, string> = {};
+  for (const p of fmt.formatToParts(new Date())) {
+    if (p.type !== "literal") parts[p.type] = p.value;
+  }
+  return new Date(`${parts.year}-${parts.month}-01T00:00:00+08:00`).toISOString();
+}
+
+// 台北本月的中文月份標籤（如「四月」）
+export function taipeiMonthLabel(d: Date = new Date()): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: APP_TZ,
+    month: "long",
+  }).format(d);
+}
+
 // 兩個日期在「台北日」上的差距（整數天），a 較新時為正
 export function taipeiDiffDays(a: Date, b: Date): number {
   const ka = taipeiDateKey(a);
