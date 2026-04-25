@@ -29,7 +29,42 @@ export default function SitFlow() {
   const endTimeRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const presenceRef = useRef<RealtimeChannel | null>(null);
+
+  // Screen Wake Lock：計時中鎖住螢幕不熄屏，避免 AudioContext 被 suspend 而結束鐘無聲。
+  async function acquireWakeLock() {
+    try {
+      if (navigator.wakeLock && !wakeLockRef.current) {
+        wakeLockRef.current = await navigator.wakeLock.request("screen");
+        // 切到背景再回來時，wakeLock 會自動釋放，這裡監聽以便重拿
+        wakeLockRef.current?.addEventListener("release", () => {
+          wakeLockRef.current = null;
+        });
+      }
+    } catch {
+      // 不支援或被拒：靜默失敗，不影響計時
+    }
+  }
+  function releaseWakeLock() {
+    try {
+      wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    } catch {}
+  }
+  // 從背景回前景時，若 wakeLock 已被釋放且還在計時，自動重拿
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible" && step === "timer" && !paused) {
+        acquireWakeLock();
+        // 順便嘗試 resume AudioContext（被背景 suspend 的話）
+        audioCtxRef.current?.resume().catch(() => {});
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, paused]);
   const [reflection, setReflection] = useState("");
   const [satAt, setSatAt] = useState("");
   const [manualMin, setManualMin] = useState("");
@@ -90,15 +125,28 @@ export default function SitFlow() {
     setCompanions(0);
   }
 
-  // 離開頁面自動退出 presence
+  // 離開頁面自動退出 presence + 釋放 wakeLock
   useEffect(() => {
-    return () => leaveLiveSitters();
+    return () => {
+      leaveLiveSitters();
+      releaseWakeLock();
+    };
   }, []);
 
   const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
-    clearTimer(); playBell(audioCtxRef.current); setActualMin(durationMin);
+    clearTimer();
+    // 結束時敲 3 下（間隔 0.9s），加震動，三重保險避免錯過
+    audioCtxRef.current?.resume().catch(() => {});
+    playBell(audioCtxRef.current);
+    setTimeout(() => playBell(audioCtxRef.current), 900);
+    setTimeout(() => playBell(audioCtxRef.current), 1800);
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate([300, 150, 300, 150, 300]);
+    }
+    setActualMin(durationMin);
     leaveLiveSitters();
-    setTimeout(() => setStep("record"), 1500);
+    releaseWakeLock();
+    setTimeout(() => setStep("record"), 2400);
   }, []);
 
   function beginPrepare(min: number) {
@@ -123,6 +171,7 @@ export default function SitFlow() {
 
   function startTimer(min: number) {
     playBell(audioCtxRef.current); // 開始鐘
+    acquireWakeLock(); // 計時中鎖住螢幕，避免 AudioContext 被背景 suspend
     joinLiveSitters(); // 加入「正在靜坐的人」
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
@@ -143,6 +192,7 @@ export default function SitFlow() {
   function handleEarlyEnd() {
     clearTimer();
     leaveLiveSitters();
+    releaseWakeLock();
     const elapsed = Math.floor((Date.now() - (actualStart?.getTime() ?? Date.now())) / 60000);
     if (elapsed < 3) { setEarlyEnd(true); setTimeout(() => { setEarlyEnd(false); setStep("pick"); }, 2500); }
     else { setActualMin(elapsed); setStep("record"); }
