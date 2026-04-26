@@ -38,6 +38,10 @@ export default function SitFlow() {
   const activeBellAudioRef = useRef<HTMLAudioElement | null>(null);
   // 結束鈴推播 job id（鎖屏靜默時靠它喚醒；前景自然結束會 cancel 掉）
   const pushJobRef = useRef<string | null>(null);
+  // 從背景回前景且時間已到 → 顯示「輕觸鳴鐘」覆蓋層（iOS 要求 user gesture 才能播放音訊）
+  const [awaitingEndTap, setAwaitingEndTap] = useState(false);
+  // 這次 sit 期間是否有進過背景（鎖屏 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
+  const wasHiddenRef = useRef(false);
 
   // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 鎖屏皆可），
   // 失敗時 fallback 到原本的 Web Audio 即時合成。
@@ -107,6 +111,7 @@ export default function SitFlow() {
       if (document.visibilityState === "hidden") {
         // 鎖屏 / 切到背景：主動把進行中的鈴聲暫停 + AudioContext suspend，
         // 避免 iOS 直接中斷音訊 session 而發出系統「逼」聲。
+        if (step === "timer") wasHiddenRef.current = true;
         const a = activeBellAudioRef.current;
         if (a) {
           try { a.pause(); } catch {}
@@ -119,6 +124,7 @@ export default function SitFlow() {
       if (step !== "timer" || paused) return;
       audioCtxRef.current?.resume().catch(() => {});
       if (Date.now() >= endTimeRef.current && actualStart) {
+        // 時間已到：交給 handleTimerEnd（內部會因 wasHiddenRef=true 改走輕觸鳴鐘）
         handleTimerEnd(actualStart, selectedMin);
       } else {
         acquireWakeLock();
@@ -203,18 +209,35 @@ export default function SitFlow() {
       cancelPushJob(pushJobRef.current).catch(() => {});
       pushJobRef.current = null;
     }
-    // 結束鐘：一聲就好，自然漸弱
+    setActualMin(durationMin);
+    // 期間有進過背景 → 過了 iOS gesture window，自動 play 會被擋。改顯示「輕觸鳴鐘」。
+    if (wasHiddenRef.current) {
+      setAwaitingEndTap(true);
+      return;
+    }
+    // 全程前景：照常響鈴 + 進記錄頁
     audioCtxRef.current?.resume().catch(() => {});
     ringBell();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(400);
     }
-    setActualMin(durationMin);
     leaveLiveSitters();
     releaseWakeLock();
-    // 等鈴聲尾音收乾再進記錄頁
     setTimeout(() => setStep("record"), 4500);
   }, []);
+
+  // 使用者點「輕觸鳴鐘」覆蓋層 → 這次點擊就是 user gesture，可以播音了
+  function confirmEndTap() {
+    setAwaitingEndTap(false);
+    audioCtxRef.current?.resume().catch(() => {});
+    ringBell();
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(400);
+    }
+    leaveLiveSitters();
+    releaseWakeLock();
+    setTimeout(() => setStep("record"), 4500);
+  }
 
   function beginPrepare(min: number) {
     // 必須在 user gesture 內建 AudioContext，之後的鐘才能在 iOS 上發聲
@@ -239,6 +262,7 @@ export default function SitFlow() {
   }, [step, prepareLeft]);
 
   function startTimer(min: number) {
+    wasHiddenRef.current = false; // 新的 sit，重置背景旗標
     ringBell(); // 開始鐘（優先走 <audio>，繞過 iOS 靜音鍵）
     acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
@@ -436,6 +460,56 @@ export default function SitFlow() {
     const progress = total > 0 ? (total - remaining) / total : 0;
     const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
     const ss = String(remaining % 60).padStart(2, "0");
+
+    // 從通知打開回來，時間已到 → 等使用者輕觸（這就是 user gesture，可以播音）
+    if (awaitingEndTap) {
+      return (
+        <button
+          onClick={confirmEndTap}
+          className="min-h-screen w-full flex flex-col items-center justify-center"
+          style={{ background: "#1a1b18", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          <div
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background: "#BEC23F",
+              animation: "endTapBreathe 2.4s ease-in-out infinite",
+              marginBottom: "3rem",
+            }}
+          />
+          <p
+            style={{
+              fontFamily: "var(--font-noto-serif)",
+              fontSize: "1.25rem",
+              color: "#edecea",
+              letterSpacing: "0.08em",
+              marginBottom: "0.75rem",
+            }}
+          >
+            時間到了
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.7rem",
+              letterSpacing: "0.2em",
+              color: "rgba(237,236,234,0.4)",
+            }}
+          >
+            TAP TO RING
+          </p>
+          <style>{`
+            @keyframes endTapBreathe {
+              0%, 100% { opacity: 0.3; transform: scale(1); }
+              50%      { opacity: 1;   transform: scale(1.8); }
+            }
+          `}</style>
+        </button>
+      );
+    }
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
         <div className="relative mb-8">
