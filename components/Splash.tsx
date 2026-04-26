@@ -6,6 +6,8 @@ export default function Splash() {
   // 一開始就 render 覆蓋層（SSR 也會輸出），避免先閃一下網頁才蓋上來
   const [show, setShow] = useState(true);
   const [fade, setFade] = useState(false);
+  // 等字體載完才顯示文字，避免 FOUT 造成版面跳動（最多等 200ms）
+  const [fontsReady, setFontsReady] = useState(false);
 
   useEffect(() => {
     const isStandalone =
@@ -19,9 +21,25 @@ export default function Splash() {
     }
     sessionStorage.setItem("splashed", "1");
 
+    // 等字體 ready，最多等 200ms 就先放行
+    let cancelled = false;
+    const fallback = setTimeout(() => {
+      if (!cancelled) setFontsReady(true);
+    }, 200);
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) {
+          clearTimeout(fallback);
+          setFontsReady(true);
+        }
+      }).catch(() => {});
+    }
+
     const t1 = setTimeout(() => setFade(true), 2400);
     const t2 = setTimeout(() => setShow(false), 3000);
     return () => {
+      cancelled = true;
+      clearTimeout(fallback);
       clearTimeout(t1);
       clearTimeout(t2);
     };
@@ -64,12 +82,12 @@ export default function Splash() {
           color: "#edecea",
           letterSpacing: "0.4em",
           paddingLeft: "0.4em",
-          // 固定盒高，避免字體載入完成時版面跳動
           lineHeight: 1,
           height: "1.8rem",
           display: "flex",
           alignItems: "center",
-          animation: "splashFadeIn 0.9s ease-out",
+          opacity: fontsReady ? 1 : 0,
+          transition: "opacity 0.55s ease-out",
         }}
       >
         同在
@@ -84,7 +102,8 @@ export default function Splash() {
           height: "0.6rem",
           display: "flex",
           alignItems: "center",
-          animation: "splashFadeIn 1.2s ease-out",
+          opacity: fontsReady ? 1 : 0,
+          transition: "opacity 0.85s ease-out",
         }}
       >
         TOGETHER
