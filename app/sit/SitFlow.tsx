@@ -93,19 +93,24 @@ export default function SitFlow() {
       wakeLockRef.current = null;
     } catch {}
   }
-  // 從背景回前景時，若 wakeLock 已被釋放且還在計時，自動重拿
+  // 從背景回前景：補拿 wakeLock + resume AudioContext
+  // 關鍵：若計時器在背景已過期（iOS 鎖屏 JS 被凍結），立刻在這個 tick 收尾響鈴。
+  // 不能等 setInterval 下一次跑（可能已過了 user gesture window，iOS 會擋音）。
   useEffect(() => {
     function onVisible() {
-      if (document.visibilityState === "visible" && step === "timer" && !paused) {
+      if (document.visibilityState !== "visible") return;
+      if (step !== "timer" || paused) return;
+      audioCtxRef.current?.resume().catch(() => {});
+      if (Date.now() >= endTimeRef.current && actualStart) {
+        handleTimerEnd(actualStart, selectedMin);
+      } else {
         acquireWakeLock();
-        // 順便嘗試 resume AudioContext（被背景 suspend 的話）
-        audioCtxRef.current?.resume().catch(() => {});
       }
     }
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, paused]);
+  }, [step, paused, actualStart, selectedMin]);
   const [reflection, setReflection] = useState("");
   const [satAt, setSatAt] = useState("");
   const [manualMin, setManualMin] = useState("");
