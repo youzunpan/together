@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
-import { playBell, createBellContext } from "@/components/BellSound";
+import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { taipeiDatetimeLocal } from "@/lib/tz";
@@ -33,6 +33,46 @@ export default function SitFlow() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const noSleepRef = useRef<NoSleep | null>(null);
   const presenceRef = useRef<RealtimeChannel | null>(null);
+  // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 鎖屏）
+  const bellUrlRef = useRef<string | null>(null);
+
+  // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 鎖屏皆可），
+  // 失敗時 fallback 到原本的 Web Audio 即時合成。
+  function ringBell() {
+    const url = bellUrlRef.current;
+    if (url) {
+      try {
+        const a = new Audio(url);
+        a.preload = "auto";
+        a.play().catch(() => {
+          // play 被擋（少見），fallback Web Audio
+          playBell(audioCtxRef.current);
+        });
+        return;
+      } catch {
+        // 落到下面 fallback
+      }
+    }
+    playBell(audioCtxRef.current);
+  }
+
+  // 預先合成銅缽 WAV，cache 給 ringBell 用。可在 user gesture 外呼叫（OfflineAudioContext 不需 gesture）。
+  async function ensureBellPreloaded() {
+    if (bellUrlRef.current) return;
+    const url = await renderBellWavUrl();
+    if (url) bellUrlRef.current = url;
+  }
+
+  // 進站就先合成（頁面開啟即觸發，使用者按開始時已經 ready）
+  useEffect(() => {
+    ensureBellPreloaded();
+    return () => {
+      if (bellUrlRef.current) {
+        try { URL.revokeObjectURL(bellUrlRef.current); } catch {}
+        bellUrlRef.current = null;
+      }
+    };
+  }, []);
 
   // 雙保險防鎖屏 / 防靜音：
   // 1. Screen Wake Lock：標準 API，避免螢幕熄屏
@@ -149,7 +189,7 @@ export default function SitFlow() {
     audioCtxRef.current?.resume().catch(() => {});
     const ringOnce = () => {
       audioCtxRef.current?.resume().catch(() => {});
-      playBell(audioCtxRef.current);
+      ringBell();
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate(400);
       }
@@ -187,7 +227,7 @@ export default function SitFlow() {
   }, [step, prepareLeft]);
 
   function startTimer(min: number) {
-    playBell(audioCtxRef.current); // 開始鐘
+    ringBell(); // 開始鐘（優先走 <audio>，繞過 iOS 靜音鍵）
     acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
     const now = Date.now(); const start = new Date();

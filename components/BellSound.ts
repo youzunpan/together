@@ -1,7 +1,13 @@
 // 大型銅缽聲：低基頻 + 多非整數倍泛音 + 長尾殘響。
 // AudioContext 必須在 user gesture 內建立（iOS 限制），由呼叫端持有並重用。
+//
+// 兩種播放路徑：
+// 1. playBell(ctx)：即時 Web Audio 合成。在 iOS 上會被靜音鍵擋、鎖屏後 suspend。
+// 2. renderBellWavBlob() + HTMLAudioElement：先用 OfflineAudioContext 合成成 WAV，
+//    再透過 <audio> 播。iOS 視為媒體播放，靜音鍵 + 鎖屏皆可繞過（搭配 NoSleep）。
 
 type Ctx = AudioContext;
+type OfflineCtx = OfflineAudioContext;
 
 export function createBellContext(): Ctx | null {
   try {
@@ -113,5 +119,143 @@ export function playBell(ctx: Ctx | null) {
     });
   } catch {
     // 音頻不可用時靜默失敗
+  }
+}
+
+// ── 離線合成成 WAV blob，給 HTMLAudioElement 用（繞過 iOS 靜音鍵 + 鎖屏限制） ──
+
+function buildBellOnContext(ctx: Ctx | OfflineCtx, t0: number) {
+  // 殘響
+  const rate = ctx.sampleRate;
+  const length = Math.floor(rate * 4);
+  const convolver = ctx.createConvolver();
+  const impulse = ctx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = impulse.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 1.8);
+    }
+  }
+  convolver.buffer = impulse;
+
+  const wetGain = ctx.createGain();
+  wetGain.gain.value = 0.55;
+  convolver.connect(wetGain);
+  wetGain.connect(ctx.destination);
+
+  const dryGain = ctx.createGain();
+  dryGain.gain.value = 0.9;
+  dryGain.connect(ctx.destination);
+
+  const lowpass = ctx.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.value = 4500;
+  lowpass.Q.value = 0.4;
+  lowpass.connect(dryGain);
+  lowpass.connect(convolver);
+
+  // 攻擊噪音
+  const noiseBuf = ctx.createBuffer(1, Math.floor(rate * 0.15), rate);
+  const noiseData = noiseBuf.getChannelData(0);
+  for (let i = 0; i < noiseData.length; i++) {
+    noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseData.length, 3);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuf;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.08, t0);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+  const noiseBp = ctx.createBiquadFilter();
+  noiseBp.type = "bandpass";
+  noiseBp.frequency.value = 2200;
+  noiseBp.Q.value = 0.8;
+  noise.connect(noiseBp);
+  noiseBp.connect(noiseGain);
+  noiseGain.connect(lowpass);
+  noise.start(t0);
+
+  // Partials
+  PARTIALS.forEach(({ ratio, gain, decay, detune }) => {
+    const freq = FUNDAMENTAL * ratio;
+    [0, 1].forEach((i) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.995, t0 + decay);
+      osc.detune.value = detune + (i === 0 ? -1.5 : 1.5);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain / 2, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + decay);
+      osc.connect(g);
+      g.connect(lowpass);
+      osc.start(t0);
+      osc.stop(t0 + decay + 0.1);
+    });
+  });
+}
+
+// AudioBuffer → 16-bit PCM WAV Blob
+function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length;
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = length * blockAlign;
+
+  const buf = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buf);
+
+  function writeStr(off: number, s: string) {
+    for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+  }
+
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bytesPerSample * 8, true);
+  writeStr(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  const channels: Float32Array[] = [];
+  for (let ch = 0; ch < numChannels; ch++) channels.push(buffer.getChannelData(ch));
+
+  let offset = 44;
+  for (let i = 0; i < length; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const s = Math.max(-1, Math.min(1, channels[ch][i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      offset += 2;
+    }
+  }
+
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+// 把銅缽聲離線合成一份固定的 WAV，回傳 object URL。呼叫一次即可，cache 起來重用。
+export async function renderBellWavUrl(): Promise<string | null> {
+  try {
+    const OfflineCtor =
+      (typeof window !== "undefined" && window.OfflineAudioContext) ||
+      ((typeof window !== "undefined" && (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext) as typeof OfflineAudioContext | undefined);
+    if (!OfflineCtor) return null;
+    const sampleRate = 44100;
+    const duration = 8.5;
+    const offline = new OfflineCtor(2, Math.floor(sampleRate * duration), sampleRate);
+    buildBellOnContext(offline, 0);
+    const rendered = await offline.startRendering();
+    const blob = audioBufferToWavBlob(rendered);
+    return URL.createObjectURL(blob);
+  } catch {
+    return null;
   }
 }
