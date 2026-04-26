@@ -17,6 +17,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   savePushSubscription,
   deletePushSubscription,
+  sendTestPush,
 } from "@/lib/actions/push";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
@@ -237,8 +238,36 @@ export default function PushToggle() {
           </button>
         )}
       </div>
+      {status === "subscribed" && (
+        <button
+          onClick={() => {
+            setError(null);
+            start(async () => {
+              const r = await sendTestPush();
+              if ("error" in r) setError(r.error);
+              else setError(`已送出（成功 ${r.sent} 台）`);
+            });
+          }}
+          disabled={pending}
+          style={{
+            marginTop: "0.6rem",
+            background: "transparent",
+            border: "1px dashed rgba(190,194,63,0.3)",
+            color: "rgba(190,194,63,0.7)",
+            padding: "0.4rem 0.8rem",
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.65rem",
+            letterSpacing: "0.12em",
+            borderRadius: "var(--r-card)",
+            cursor: "pointer",
+            width: "100%",
+          }}
+        >
+          {pending ? "..." : "送一則測試通知"}
+        </button>
+      )}
       {error && (
-        <p style={{ fontSize: "0.7rem", color: "#D65C6A", marginTop: "0.5rem" }}>{error}</p>
+        <p style={{ fontSize: "0.7rem", color: error.startsWith("已送出") ? "#BEC23F" : "#D65C6A", marginTop: "0.5rem" }}>{error}</p>
       )}
     </div>
   );
