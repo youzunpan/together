@@ -216,7 +216,7 @@ export default function PushToggle() {
         <p style={{ ...hintStyle, flex: 1 }}>
           {status === "subscribed"
             ? "靜坐結束、同心開始時會推播通知。"
-            : "開啟後，鎖屏時也能收到結束鈴聲與同心提醒。"}
+            : "開啟後，螢幕鎖定時也能收到結束鈴聲與同心提醒。"}
         </p>
         {status === "subscribed" ? (
           <button

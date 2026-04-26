@@ -32,18 +32,22 @@ export default function SitFlow() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const presenceRef = useRef<RealtimeChannel | null>(null);
-  // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 鎖屏）
+  // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 螢幕鎖定）
   const bellUrlRef = useRef<string | null>(null);
-  // 目前正在播放的 <audio>（用來在鎖屏時主動暫停，避免 iOS 中斷音訊 session 的「逼」聲）
+  // 目前正在播放的 <audio>（用來在螢幕鎖定時主動暫停，避免 iOS 中斷音訊 session 的「逼」聲）
   const activeBellAudioRef = useRef<HTMLAudioElement | null>(null);
-  // 結束鈴推播 job id（鎖屏靜默時靠它喚醒；前景自然結束會 cancel 掉）
+  // 結束鈴推播 job id（螢幕鎖定靜默時靠它喚醒；前景自然結束會 cancel 掉）
   const pushJobRef = useRef<string | null>(null);
   // 覆蓋層出現的時間戳，用來忽略前 600ms 的點擊（避免 iOS 把通知的 tap 當作畫面點擊）
   const awaitingShownAtRef = useRef(0);
-  // 這次 sit 期間是否有進過背景（鎖屏 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
+  // 這次 sit 期間是否有進過背景（螢幕鎖定 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
   const wasHiddenRef = useRef(false);
+  // 第一次按「開始靜心」前要不要先問通知權限
+  const [pushPromptOpen, setPushPromptOpen] = useState(false);
+  const [pushPromptBusy, setPushPromptBusy] = useState(false);
+  const pendingMinRef = useRef(0);
 
-  // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 鎖屏皆可），
+  // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 螢幕鎖定皆可），
   // 失敗時 fallback 到原本的 Web Audio 即時合成。
   function ringBell() {
     const url = bellUrlRef.current;
@@ -86,7 +90,7 @@ export default function SitFlow() {
   }, []);
 
   // Screen Wake Lock：避免在前景時螢幕自動熄屏。
-  // 鎖屏（使用者按電源鍵）時 JS 會被 iOS 凍結，那個 case 由 Web Push 處理（見 scheduleSitEndPush）。
+  // 螢幕鎖定（使用者按電源鍵）時 JS 會被 iOS 凍結，那個 case 由 Web Push 處理（見 scheduleSitEndPush）。
   async function acquireWakeLock() {
     try {
       if (navigator.wakeLock && !wakeLockRef.current) {
@@ -104,12 +108,12 @@ export default function SitFlow() {
     } catch {}
   }
   // 從背景回前景：補拿 wakeLock + resume AudioContext
-  // 關鍵：若計時器在背景已過期（iOS 鎖屏 JS 被凍結），立刻在這個 tick 收尾響鈴。
+  // 關鍵：若計時器在背景已過期（iOS 螢幕鎖定 JS 被凍結），立刻在這個 tick 收尾響鈴。
   // 不能等 setInterval 下一次跑（可能已過了 user gesture window，iOS 會擋音）。
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState === "hidden") {
-        // 鎖屏 / 切到背景：主動把進行中的鈴聲暫停 + AudioContext suspend，
+        // 螢幕鎖定 / 切到背景：主動把進行中的鈴聲暫停 + AudioContext suspend，
         // 避免 iOS 直接中斷音訊 session 而發出系統「逼」聲。
         if (step === "timer") wasHiddenRef.current = true;
         const a = activeBellAudioRef.current;
@@ -214,7 +218,7 @@ export default function SitFlow() {
     setActualMin(durationMin);
     // 判斷是不是「從背景回來」：若 handleTimerEnd 被呼叫時，時間已超過 endTime 超過 1 秒，
     // 代表 iOS 凍結 JS 之後才解凍處理，過了 gesture window，自動 play 一定被擋。
-    // 用時間差比 wasHiddenRef 更可靠（iOS 鎖屏時 visibility hidden 事件可能根本沒跑到）。
+    // 用時間差比 wasHiddenRef 更可靠（iOS 螢幕鎖定時 visibility hidden 事件可能根本沒跑到）。
     const lateBy = Date.now() - endTimeRef.current;
     if (wasHiddenRef.current || lateBy > 1000) {
       awaitingShownAtRef.current = Date.now();
@@ -257,6 +261,87 @@ export default function SitFlow() {
     setStep("prepare");
   }
 
+  // 點「開始靜心」進來這裡：判斷要不要先跳通知權限卡
+  function tryStart(min: number) {
+    if (typeof window === "undefined") {
+      beginPrepare(min);
+      return;
+    }
+    const supported = "serviceWorker" in navigator && "PushManager" in window;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone =
+      // @ts-expect-error iOS 自家屬性
+      window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    const asked = localStorage.getItem("push-asked") === "1";
+    const canAsk =
+      supported &&
+      (!isIOS || isStandalone) &&
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default" &&
+      !asked;
+
+    if (canAsk) {
+      pendingMinRef.current = min;
+      setPushPromptOpen(true);
+    } else {
+      beginPrepare(min);
+    }
+  }
+
+  // 在卡片裡按「打開通知」：觸發 requestPermission + subscribe + 上傳訂閱
+  async function enablePushFromPrompt() {
+    setPushPromptBusy(true);
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          // VAPID public key (base64url) → ArrayBuffer
+          const base64url = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+          const padding = "=".repeat((4 - (base64url.length % 4)) % 4);
+          const base64 = (base64url + padding).replace(/-/g, "+").replace(/_/g, "/");
+          const raw = atob(base64);
+          const buf = new ArrayBuffer(raw.length);
+          const view = new Uint8Array(buf);
+          for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: buf,
+          });
+        }
+        const json = sub.toJSON() as {
+          endpoint?: string;
+          keys?: { p256dh?: string; auth?: string };
+        };
+        if (json.endpoint && json.keys?.p256dh && json.keys?.auth) {
+          const { savePushSubscription } = await import("@/lib/actions/push");
+          await savePushSubscription(
+            { endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } },
+            navigator.userAgent
+          );
+        }
+      }
+    } catch {
+      // 訂閱失敗也不擋使用者，繼續進靜坐
+    } finally {
+      localStorage.setItem("push-asked", "1");
+      setPushPromptBusy(false);
+      setPushPromptOpen(false);
+      beginPrepare(pendingMinRef.current);
+    }
+  }
+
+  function dismissPushPrompt() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("push-asked", "1");
+    }
+    setPushPromptOpen(false);
+    beginPrepare(pendingMinRef.current);
+  }
+
   // 倒數緩衝：5 → 0，到 0 時敲開始鐘、進入計時
   useEffect(() => {
     if (step !== "prepare") return;
@@ -274,7 +359,7 @@ export default function SitFlow() {
     ringBell(); // 開始鐘（優先走 <audio>，繞過 iOS 靜音鍵）
     acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
-    // 排「結束鈴」推播：iOS 鎖屏 / 應用被殺時，這個負責喚醒
+    // 排「結束鈴」推播：iOS 螢幕鎖定 / 應用被殺時，這個負責喚醒
     scheduleSitEndPush(min)
       .then((r) => {
         if ("id" in r) pushJobRef.current = r.id;
@@ -399,7 +484,7 @@ export default function SitFlow() {
         )}
 
         <div className="mt-8 space-y-4">
-          <button onClick={() => { if (mins >= 1 && mins <= 240) beginPrepare(mins); }}
+          <button onClick={() => { if (mins >= 1 && mins <= 240) tryStart(mins); }}
             disabled={mins < 1 || mins > 240}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             開始靜心
@@ -409,6 +494,76 @@ export default function SitFlow() {
             我已經坐完了 →
           </button>
         </div>
+
+        {pushPromptOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+            style={{ background: "rgba(26,27,24,0.92)" }}
+          >
+            <div
+              style={{
+                background: "#2c2c2a",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "var(--r-card)",
+                padding: "1.5rem 1.25rem",
+                maxWidth: 360,
+                width: "100%",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-space-mono)",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.2em",
+                  color: "rgba(237,236,234,0.35)",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                NOTIFICATIONS
+              </p>
+              <h2
+                style={{
+                  fontFamily: "var(--font-noto-serif)",
+                  fontSize: "1.15rem",
+                  color: "#edecea",
+                  fontWeight: 400,
+                  marginBottom: "0.85rem",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                螢幕鎖定時通知喚醒
+              </h2>
+              <p
+                style={{
+                  fontSize: "0.82rem",
+                  color: "rgba(237,236,234,0.6)",
+                  lineHeight: 1.7,
+                  marginBottom: "1.25rem",
+                }}
+              >
+                靜坐中如果你把螢幕關上，計時聲會被系統暫停。打開通知，時間到了會用一則安靜的訊息把你喚醒。
+              </p>
+              <div className="space-y-2.5">
+                <button
+                  onClick={enablePushFromPrompt}
+                  disabled={pushPromptBusy}
+                  className="btn-primary w-full"
+                  style={{ letterSpacing: "0.12em" }}
+                >
+                  {pushPromptBusy ? "..." : "好，打開通知"}
+                </button>
+                <button
+                  onClick={dismissPushPrompt}
+                  disabled={pushPromptBusy}
+                  className="btn-ghost w-full"
+                  style={{ letterSpacing: "0.1em" }}
+                >
+                  以後再說
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

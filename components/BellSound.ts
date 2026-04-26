@@ -2,9 +2,9 @@
 // AudioContext 必須在 user gesture 內建立（iOS 限制），由呼叫端持有並重用。
 //
 // 兩種播放路徑：
-// 1. playBell(ctx)：即時 Web Audio 合成。在 iOS 上會被靜音鍵擋、鎖屏後 suspend。
+// 1. playBell(ctx)：即時 Web Audio 合成。在 iOS 上會被靜音鍵擋、螢幕鎖定後 suspend。
 // 2. renderBellWavBlob() + HTMLAudioElement：先用 OfflineAudioContext 合成成 WAV，
-//    再透過 <audio> 播。iOS 視為媒體播放，靜音鍵 + 鎖屏皆可繞過（搭配 NoSleep）。
+//    再透過 <audio> 播。iOS 視為媒體播放，靜音鍵 + 螢幕鎖定皆可繞過（搭配 NoSleep）。
 
 type Ctx = AudioContext;
 type OfflineCtx = OfflineAudioContext;
@@ -122,7 +122,7 @@ export function playBell(ctx: Ctx | null) {
   }
 }
 
-// ── 離線合成成 WAV blob，給 HTMLAudioElement 用（繞過 iOS 靜音鍵 + 鎖屏限制） ──
+// ── 離線合成成 WAV blob，給 HTMLAudioElement 用（繞過 iOS 靜音鍵 + 螢幕鎖定限制） ──
 
 function buildBellOnContext(ctx: Ctx | OfflineCtx, t0: number) {
   // 殘響
@@ -249,7 +249,7 @@ export async function renderBellWavUrl(): Promise<string | null> {
       ((typeof window !== "undefined" && (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext) as typeof OfflineAudioContext | undefined);
     if (!OfflineCtor) return null;
     const sampleRate = 44100;
-    // 4 秒：保留主體 + 短尾韻，避免使用者一鎖屏鈴聲還沒播完，
+    // 4 秒：保留主體 + 短尾韻，避免使用者一螢幕鎖定鈴聲還沒播完，
     // iOS 中斷音訊 session 而觸發系統「逼」聲。
     const duration = 4;
     const offline = new OfflineCtor(2, Math.floor(sampleRate * duration), sampleRate);
