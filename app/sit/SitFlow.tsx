@@ -114,6 +114,8 @@ export default function SitFlow() {
         if (step === "timer") wasHiddenRef.current = true;
         const a = activeBellAudioRef.current;
         if (a) {
+          // 先把 volume 拉到 0 再 pause：避免直接 pause 在某些情境下出現 click
+          try { a.volume = 0; } catch {}
           try { a.pause(); } catch {}
           activeBellAudioRef.current = null;
         }

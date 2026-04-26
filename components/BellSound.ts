@@ -249,7 +249,9 @@ export async function renderBellWavUrl(): Promise<string | null> {
       ((typeof window !== "undefined" && (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext) as typeof OfflineAudioContext | undefined);
     if (!OfflineCtor) return null;
     const sampleRate = 44100;
-    const duration = 8.5;
+    // 4 秒：保留主體 + 短尾韻，避免使用者一鎖屏鈴聲還沒播完，
+    // iOS 中斷音訊 session 而觸發系統「逼」聲。
+    const duration = 4;
     const offline = new OfflineCtor(2, Math.floor(sampleRate * duration), sampleRate);
     buildBellOnContext(offline, 0);
     const rendered = await offline.startRendering();
