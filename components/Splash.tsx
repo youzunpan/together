@@ -64,6 +64,11 @@ export default function Splash() {
           color: "#edecea",
           letterSpacing: "0.4em",
           paddingLeft: "0.4em",
+          // 固定盒高，避免字體載入完成時版面跳動
+          lineHeight: 1,
+          height: "1.8rem",
+          display: "flex",
+          alignItems: "center",
           animation: "splashFadeIn 0.9s ease-out",
         }}
       >
@@ -75,6 +80,10 @@ export default function Splash() {
           fontSize: "0.6rem",
           letterSpacing: "0.35em",
           color: "rgba(237,236,234,0.3)",
+          lineHeight: 1,
+          height: "0.6rem",
+          display: "flex",
+          alignItems: "center",
           animation: "splashFadeIn 1.2s ease-out",
         }}
       >
