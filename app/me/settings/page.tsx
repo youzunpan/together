@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import SettingsForm from "./SettingsForm";
+import PushToggle from "@/components/PushToggle";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -29,6 +30,10 @@ export default async function SettingsPage() {
         avatar_letter={profile.avatar_letter}
         avatar_color={profile.avatar_color}
       />
+
+      <div className="mt-6">
+        <PushToggle />
+      </div>
     </div>
   );
 }
