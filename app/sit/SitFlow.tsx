@@ -7,7 +7,6 @@ import { playBell, createBellContext, renderBellWavUrl } from "@/components/Bell
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { taipeiDatetimeLocal } from "@/lib/tz";
-import NoSleep from "nosleep.js";
 
 type Step = "pick" | "prepare" | "timer" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
@@ -32,7 +31,6 @@ export default function SitFlow() {
   const pausedAtRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-  const noSleepRef = useRef<NoSleep | null>(null);
   const presenceRef = useRef<RealtimeChannel | null>(null);
   // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 鎖屏）
   const bellUrlRef = useRef<string | null>(null);
@@ -77,10 +75,8 @@ export default function SitFlow() {
     };
   }, []);
 
-  // 雙保險防鎖屏 / 防靜音：
-  // 1. Screen Wake Lock：標準 API，避免螢幕熄屏
-  // 2. NoSleep.js：背景播放極短靜音 loop，保住 audio session 活著，
-  //    即使 iOS 鎖屏，結束鐘仍能從喇叭響出來
+  // Screen Wake Lock：避免在前景時螢幕自動熄屏。
+  // 鎖屏（使用者按電源鍵）時 JS 會被 iOS 凍結，那個 case 由 Web Push 處理（見 scheduleSitEndPush）。
   async function acquireWakeLock() {
     try {
       if (navigator.wakeLock && !wakeLockRef.current) {
@@ -90,19 +86,11 @@ export default function SitFlow() {
         });
       }
     } catch {}
-    // NoSleep 必須在 user gesture 內 enable，否則 iOS 會擋
-    try {
-      if (!noSleepRef.current) noSleepRef.current = new NoSleep();
-      await noSleepRef.current.enable();
-    } catch {}
   }
   function releaseWakeLock() {
     try {
       wakeLockRef.current?.release();
       wakeLockRef.current = null;
-    } catch {}
-    try {
-      noSleepRef.current?.disable();
     } catch {}
   }
   // 從背景回前景時，若 wakeLock 已被釋放且還在計時，自動重拿
