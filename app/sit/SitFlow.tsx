@@ -135,23 +135,30 @@ export default function SitFlow() {
 
   const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
     clearTimer();
-    // 結束時敲 3 下（間隔 0.9s），加震動，三重保險避免錯過
+    // 結束鐘：敲 3 下，間隔 5 秒，每聲自然漸弱（缽聲本身的長尾衰減）
     audioCtxRef.current?.resume().catch(() => {});
-    playBell(audioCtxRef.current);
-    setTimeout(() => playBell(audioCtxRef.current), 900);
-    setTimeout(() => playBell(audioCtxRef.current), 1800);
-    if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate([300, 150, 300, 150, 300]);
-    }
+    const ringOnce = () => {
+      audioCtxRef.current?.resume().catch(() => {});
+      playBell(audioCtxRef.current);
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(400);
+      }
+    };
+    ringOnce();
+    setTimeout(ringOnce, 5000);
+    setTimeout(ringOnce, 10000);
     setActualMin(durationMin);
     leaveLiveSitters();
     releaseWakeLock();
-    setTimeout(() => setStep("record"), 2400);
+    // 三聲打完再進記錄頁（10s + 約 4s 尾音）
+    setTimeout(() => setStep("record"), 14000);
   }, []);
 
   function beginPrepare(min: number) {
     // 必須在 user gesture 內建 AudioContext，之後的鐘才能在 iOS 上發聲
     if (!audioCtxRef.current) audioCtxRef.current = createBellContext();
+    // wakeLock 也在 user gesture 內請求：iOS Safari 比較會核准
+    acquireWakeLock();
     prepareMinRef.current = min;
     setPrepareLeft(10);
     setStep("prepare");
@@ -171,7 +178,7 @@ export default function SitFlow() {
 
   function startTimer(min: number) {
     playBell(audioCtxRef.current); // 開始鐘
-    acquireWakeLock(); // 計時中鎖住螢幕，避免 AudioContext 被背景 suspend
+    acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
