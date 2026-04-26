@@ -8,7 +8,7 @@ import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { taipeiDatetimeLocal } from "@/lib/tz";
 
-type Step = "pick" | "prepare" | "timer" | "record" | "manual";
+type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record" | "manual";
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
 
 const inputStyle = {
@@ -38,8 +38,6 @@ export default function SitFlow() {
   const activeBellAudioRef = useRef<HTMLAudioElement | null>(null);
   // 結束鈴推播 job id（鎖屏靜默時靠它喚醒；前景自然結束會 cancel 掉）
   const pushJobRef = useRef<string | null>(null);
-  // 從背景回前景且時間已到 → 顯示「輕觸鳴鐘」覆蓋層（iOS 要求 user gesture 才能播放音訊）
-  const [awaitingEndTap, setAwaitingEndTap] = useState(false);
   // 覆蓋層出現的時間戳，用來忽略前 600ms 的點擊（避免 iOS 把通知的 tap 當作畫面點擊）
   const awaitingShownAtRef = useRef(0);
   // 這次 sit 期間是否有進過背景（鎖屏 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
@@ -220,7 +218,8 @@ export default function SitFlow() {
     const lateBy = Date.now() - endTimeRef.current;
     if (wasHiddenRef.current || lateBy > 1000) {
       awaitingShownAtRef.current = Date.now();
-      setAwaitingEndTap(true);
+      // 用獨立 step 而不是疊加 flag，避免任何殘留 setTimeout 干擾
+      setStep("tap_to_end");
       return;
     }
     // 全程前景：照常響鈴 + 進記錄頁
@@ -238,7 +237,6 @@ export default function SitFlow() {
   function confirmEndTap() {
     // 忽略前 600ms 的點擊，避開 iOS 通知 tap 被傳遞到剛揭曉的畫面
     if (Date.now() - awaitingShownAtRef.current < 600) return;
-    setAwaitingEndTap(false);
     audioCtxRef.current?.resume().catch(() => {});
     ringBell();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -464,61 +462,61 @@ export default function SitFlow() {
     );
   }
 
+  // ── Step 2.5: 從背景回來，時間到了 → 等使用者輕觸（user gesture 才能播音）──
+  if (step === "tap_to_end") {
+    return (
+      <button
+        onClick={confirmEndTap}
+        className="min-h-screen w-full flex flex-col items-center justify-center"
+        style={{ background: "#1a1b18", border: "none", cursor: "pointer", padding: 0 }}
+      >
+        <div
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            background: "#BEC23F",
+            animation: "endTapBreathe 2.4s ease-in-out infinite",
+            marginBottom: "3rem",
+          }}
+        />
+        <p
+          style={{
+            fontFamily: "var(--font-noto-serif)",
+            fontSize: "1.25rem",
+            color: "#edecea",
+            letterSpacing: "0.08em",
+            marginBottom: "0.75rem",
+          }}
+        >
+          時間到了
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.7rem",
+            letterSpacing: "0.2em",
+            color: "rgba(237,236,234,0.4)",
+          }}
+        >
+          TAP TO RING
+        </p>
+        <style>{`
+          @keyframes endTapBreathe {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50%      { opacity: 1;   transform: scale(1.8); }
+          }
+        `}</style>
+      </button>
+    );
+  }
+
   // ── Step 2: 計時中 ──────────────────────────────
   if (step === "timer") {
     const total = selectedMin * 60;
     const progress = total > 0 ? (total - remaining) / total : 0;
     const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
     const ss = String(remaining % 60).padStart(2, "0");
-
-    // 從通知打開回來，時間已到 → 等使用者輕觸（這就是 user gesture，可以播音）
-    if (awaitingEndTap) {
-      return (
-        <button
-          onClick={confirmEndTap}
-          className="min-h-screen w-full flex flex-col items-center justify-center"
-          style={{ background: "#1a1b18", border: "none", cursor: "pointer", padding: 0 }}
-        >
-          <div
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: "50%",
-              background: "#BEC23F",
-              animation: "endTapBreathe 2.4s ease-in-out infinite",
-              marginBottom: "3rem",
-            }}
-          />
-          <p
-            style={{
-              fontFamily: "var(--font-noto-serif)",
-              fontSize: "1.25rem",
-              color: "#edecea",
-              letterSpacing: "0.08em",
-              marginBottom: "0.75rem",
-            }}
-          >
-            時間到了
-          </p>
-          <p
-            style={{
-              fontFamily: "var(--font-space-mono)",
-              fontSize: "0.7rem",
-              letterSpacing: "0.2em",
-              color: "rgba(237,236,234,0.4)",
-            }}
-          >
-            TAP TO RING
-          </p>
-          <style>{`
-            @keyframes endTapBreathe {
-              0%, 100% { opacity: 0.3; transform: scale(1); }
-              50%      { opacity: 1;   transform: scale(1.8); }
-            }
-          `}</style>
-        </button>
-      );
-    }
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
