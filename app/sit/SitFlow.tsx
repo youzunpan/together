@@ -193,23 +193,17 @@ export default function SitFlow() {
       cancelPushJob(pushJobRef.current).catch(() => {});
       pushJobRef.current = null;
     }
-    // 結束鐘：敲 3 下，間隔 5 秒，每聲自然漸弱（缽聲本身的長尾衰減）
+    // 結束鐘：一聲就好，自然漸弱
     audioCtxRef.current?.resume().catch(() => {});
-    const ringOnce = () => {
-      audioCtxRef.current?.resume().catch(() => {});
-      ringBell();
-      if (typeof navigator !== "undefined" && navigator.vibrate) {
-        navigator.vibrate(400);
-      }
-    };
-    ringOnce();
-    setTimeout(ringOnce, 5000);
-    setTimeout(ringOnce, 10000);
+    ringBell();
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(400);
+    }
     setActualMin(durationMin);
     leaveLiveSitters();
     releaseWakeLock();
-    // 三聲打完再進記錄頁（10s + 約 4s 尾音）
-    setTimeout(() => setStep("record"), 14000);
+    // 等鈴聲尾音收乾再進記錄頁
+    setTimeout(() => setStep("record"), 4500);
   }, []);
 
   function beginPrepare(min: number) {
