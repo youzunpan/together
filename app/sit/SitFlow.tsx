@@ -40,6 +40,8 @@ export default function SitFlow() {
   const pushJobRef = useRef<string | null>(null);
   // 從背景回前景且時間已到 → 顯示「輕觸鳴鐘」覆蓋層（iOS 要求 user gesture 才能播放音訊）
   const [awaitingEndTap, setAwaitingEndTap] = useState(false);
+  // 覆蓋層出現的時間戳，用來忽略前 600ms 的點擊（避免 iOS 把通知的 tap 當作畫面點擊）
+  const awaitingShownAtRef = useRef(0);
   // 這次 sit 期間是否有進過背景（鎖屏 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
   const wasHiddenRef = useRef(false);
 
@@ -212,8 +214,12 @@ export default function SitFlow() {
       pushJobRef.current = null;
     }
     setActualMin(durationMin);
-    // 期間有進過背景 → 過了 iOS gesture window，自動 play 會被擋。改顯示「輕觸鳴鐘」。
-    if (wasHiddenRef.current) {
+    // 判斷是不是「從背景回來」：若 handleTimerEnd 被呼叫時，時間已超過 endTime 超過 1 秒，
+    // 代表 iOS 凍結 JS 之後才解凍處理，過了 gesture window，自動 play 一定被擋。
+    // 用時間差比 wasHiddenRef 更可靠（iOS 鎖屏時 visibility hidden 事件可能根本沒跑到）。
+    const lateBy = Date.now() - endTimeRef.current;
+    if (wasHiddenRef.current || lateBy > 1000) {
+      awaitingShownAtRef.current = Date.now();
       setAwaitingEndTap(true);
       return;
     }
@@ -230,6 +236,8 @@ export default function SitFlow() {
 
   // 使用者點「輕觸鳴鐘」覆蓋層 → 這次點擊就是 user gesture，可以播音了
   function confirmEndTap() {
+    // 忽略前 600ms 的點擊，避開 iOS 通知 tap 被傳遞到剛揭曉的畫面
+    if (Date.now() - awaitingShownAtRef.current < 600) return;
     setAwaitingEndTap(false);
     audioCtxRef.current?.resume().catch(() => {});
     ringBell();
