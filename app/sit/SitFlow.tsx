@@ -34,6 +34,8 @@ export default function SitFlow() {
   const presenceRef = useRef<RealtimeChannel | null>(null);
   // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 鎖屏）
   const bellUrlRef = useRef<string | null>(null);
+  // 目前正在播放的 <audio>（用來在鎖屏時主動暫停，避免 iOS 中斷音訊 session 的「逼」聲）
+  const activeBellAudioRef = useRef<HTMLAudioElement | null>(null);
   // 結束鈴推播 job id（鎖屏靜默時靠它喚醒；前景自然結束會 cancel 掉）
   const pushJobRef = useRef<string | null>(null);
 
@@ -45,6 +47,10 @@ export default function SitFlow() {
       try {
         const a = new Audio(url);
         a.preload = "auto";
+        a.addEventListener("ended", () => {
+          if (activeBellAudioRef.current === a) activeBellAudioRef.current = null;
+        });
+        activeBellAudioRef.current = a;
         a.play().catch(() => {
           // play 被擋（少見），fallback Web Audio
           playBell(audioCtxRef.current);
@@ -98,6 +104,17 @@ export default function SitFlow() {
   // 不能等 setInterval 下一次跑（可能已過了 user gesture window，iOS 會擋音）。
   useEffect(() => {
     function onVisible() {
+      if (document.visibilityState === "hidden") {
+        // 鎖屏 / 切到背景：主動把進行中的鈴聲暫停 + AudioContext suspend，
+        // 避免 iOS 直接中斷音訊 session 而發出系統「逼」聲。
+        const a = activeBellAudioRef.current;
+        if (a) {
+          try { a.pause(); } catch {}
+          activeBellAudioRef.current = null;
+        }
+        audioCtxRef.current?.suspend().catch(() => {});
+        return;
+      }
       if (document.visibilityState !== "visible") return;
       if (step !== "timer" || paused) return;
       audioCtxRef.current?.resume().catch(() => {});
