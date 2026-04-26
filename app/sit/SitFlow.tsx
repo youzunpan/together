@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
+import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -35,6 +36,8 @@ export default function SitFlow() {
   const presenceRef = useRef<RealtimeChannel | null>(null);
   // 鈴聲：HTMLAudioElement 路徑（繞過 iOS 靜音鍵 + 鎖屏）
   const bellUrlRef = useRef<string | null>(null);
+  // 結束鈴推播 job id（鎖屏靜默時靠它喚醒；前景自然結束會 cancel 掉）
+  const pushJobRef = useRef<string | null>(null);
 
   // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 鎖屏皆可），
   // 失敗時 fallback 到原本的 Web Audio 即時合成。
@@ -185,6 +188,11 @@ export default function SitFlow() {
 
   const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
     clearTimer();
+    // 前景自然結束 → 取消推播 job，避免重複響
+    if (pushJobRef.current) {
+      cancelPushJob(pushJobRef.current).catch(() => {});
+      pushJobRef.current = null;
+    }
     // 結束鐘：敲 3 下，間隔 5 秒，每聲自然漸弱（缽聲本身的長尾衰減）
     audioCtxRef.current?.resume().catch(() => {});
     const ringOnce = () => {
@@ -230,6 +238,12 @@ export default function SitFlow() {
     ringBell(); // 開始鐘（優先走 <audio>，繞過 iOS 靜音鍵）
     acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
+    // 排「結束鈴」推播：iOS 鎖屏 / 應用被殺時，這個負責喚醒
+    scheduleSitEndPush(min)
+      .then((r) => {
+        if ("id" in r) pushJobRef.current = r.id;
+      })
+      .catch(() => {});
     const now = Date.now(); const start = new Date();
     setActualStart(start); setRemaining(min * 60);
     endTimeRef.current = now + min * 60 * 1000;
@@ -250,6 +264,11 @@ export default function SitFlow() {
     clearTimer();
     leaveLiveSitters();
     releaseWakeLock();
+    // 提前結束 → 取消推播
+    if (pushJobRef.current) {
+      cancelPushJob(pushJobRef.current).catch(() => {});
+      pushJobRef.current = null;
+    }
     const elapsed = Math.floor((Date.now() - (actualStart?.getTime() ?? Date.now())) / 60000);
     if (elapsed < 3) { setEarlyEnd(true); setTimeout(() => { setEarlyEnd(false); setStep("pick"); }, 2500); }
     else { setActualMin(elapsed); setStep("record"); }

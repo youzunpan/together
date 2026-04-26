@@ -82,6 +82,50 @@ export async function sendTestPush(): Promise<
   return { ok: true, sent: r.sent, removed: r.removed };
 }
 
+// ─── 排程通知 ──────────────────────────────────────────
+// 計時器開始 → 排「結束鈴」；計時器自然結束/取消 → cancel
+// 加入同心    → 排「同心開始」；取消加入 → cancel
+
+export async function scheduleSitEndPush(
+  durationMin: number
+): Promise<{ id: string } | { error: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  if (!Number.isFinite(durationMin) || durationMin < 1 || durationMin > 240) {
+    return { error: "duration 不正確" };
+  }
+  const fireAt = new Date(Date.now() + durationMin * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("push_jobs")
+    .insert({
+      user_id: user.id,
+      fire_at: fireAt,
+      kind: "sit_end",
+      payload: {
+        title: "同在",
+        body: "時間到了，輕輕睜眼。",
+        url: "/sit",
+        tag: "sit_end",
+        renotify: true,
+      },
+    })
+    .select("id")
+    .single();
+  if (error || !data) return { error: error?.message ?? "排程失敗" };
+  return { id: data.id };
+}
+
+export async function cancelPushJob(jobId: string): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  // RLS 限制：只能刪自己的、未送出的
+  const { error } = await supabase.from("push_jobs").delete().eq("id", jobId);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
 // 給 client 用：查詢這個 endpoint 是否已存在於 DB（判斷「已訂閱」狀態）
 export async function hasPushSubscription(endpoint: string): Promise<boolean> {
   const supabase = await createClient();
