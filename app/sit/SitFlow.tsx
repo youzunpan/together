@@ -13,7 +13,8 @@ const PRESETS = [6, 12, 18, 24, 36, 60];
 
 const inputStyle = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
-  padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea", outline: "none",
+  // fontSize 必須 ≥ 16px，否則 iOS Safari 點進去會自動放大畫面而且不會自己縮回
+  padding: "0.75rem 1rem", fontSize: "16px", color: "#edecea", outline: "none",
   borderRadius: 4,
 };
 

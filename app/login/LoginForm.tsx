@@ -12,7 +12,8 @@ const URL_ERROR_MESSAGES: Record<string, string> = {
 
 const inputStyle: React.CSSProperties = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
-  padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#edecea",
+  // fontSize 必須 ≥ 16px，否則 iOS Safari 點進去會自動放大畫面
+  padding: "0.75rem 1rem", fontSize: "16px", color: "#edecea",
   outline: "none", fontFamily: "var(--font-space-mono)",
   borderRadius: 4,
 };
