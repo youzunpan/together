@@ -31,7 +31,7 @@ export default function Loading() {
             height: 8,
             borderRadius: "50%",
             background: "#BEC23F",
-            animation: "feedLoadingPulse 1.6s ease-in-out infinite",
+            animation: "feedLoadingPulse 4s ease-in-out infinite",
           }}
         />
       </div>

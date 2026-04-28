@@ -49,7 +49,7 @@ export default function LiveSitters({ currentUserId }: { currentUserId: string }
           height: 6,
           borderRadius: "50%",
           background: "#BEC23F",
-          animation: "liveSittersPulse 1.6s ease-in-out infinite",
+          animation: "liveSittersPulse 4s ease-in-out infinite",
         }}
       />
       <span>

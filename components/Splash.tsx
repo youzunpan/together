@@ -71,7 +71,7 @@ export default function Splash() {
           height: 10,
           borderRadius: "50%",
           background: "#BEC23F",
-          animation: "splashPulse 1.6s ease-in-out infinite",
+          animation: "splashPulse 4s ease-in-out infinite",
         }}
       />
 

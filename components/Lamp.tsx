@@ -33,7 +33,7 @@ export default function Lamp({ lastSatAt }: { lastSatAt: string | null }) {
           background: "#BEC23F",
           opacity,
           boxShadow: pulse ? "0 0 24px rgba(190,194,63,0.45)" : "none",
-          animation: pulse ? "lampBreathe 12s ease-in-out infinite" : "none",
+          animation: pulse ? "lampBreathe 4s ease-in-out infinite" : "none",
           transition: "opacity 0.6s",
         }}
       />
