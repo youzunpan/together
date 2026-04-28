@@ -586,7 +586,7 @@ export default function SitFlow() {
             height: 14,
             borderRadius: "50%",
             background: "#BEC23F",
-            animation: "prepareBreathe 4s ease-in-out infinite",
+            animation: "prepareBreathe 6s ease-in-out infinite",
           }}
         />
 
@@ -634,7 +634,7 @@ export default function SitFlow() {
             height: 14,
             borderRadius: "50%",
             background: "#BEC23F",
-            animation: "endTapBreathe 4s ease-in-out infinite",
+            animation: "endTapBreathe 6s ease-in-out infinite",
             marginBottom: "3rem",
           }}
         />
@@ -713,7 +713,7 @@ export default function SitFlow() {
               height: 5,
               borderRadius: "50%",
               background: "#BEC23F",
-              animation: "companionsBreathe 4s ease-in-out infinite",
+              animation: "companionsBreathe 6s ease-in-out infinite",
             }}
           />
           <span

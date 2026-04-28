@@ -19,7 +19,7 @@ export default function Loading() {
           height: 8,
           borderRadius: "50%",
           background: "#BEC23F",
-          animation: "meLoadingPulse 4s ease-in-out infinite",
+          animation: "meLoadingPulse 6s ease-in-out infinite",
         }}
       />
       <style>{`

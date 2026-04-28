@@ -194,7 +194,7 @@ export default async function UpcomingCalls() {
                     height: 6,
                     borderRadius: "50%",
                     background: "#BEC23F",
-                    animation: "callPulse 4s ease-in-out infinite",
+                    animation: "callPulse 6s ease-in-out infinite",
                   }}
                 />
               )}
