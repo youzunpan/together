@@ -9,7 +9,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { taipeiDatetimeLocal } from "@/lib/tz";
 
 type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record" | "manual";
-const PRESETS = [5, 10, 15, 20, 30, 45, 60];
+const PRESETS = [6, 12, 18, 24, 36, 60];
 
 const inputStyle = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
@@ -19,7 +19,7 @@ const inputStyle = {
 
 export default function SitFlow() {
   const [step, setStep] = useState<Step>("pick");
-  const [selectedMin, setSelectedMin] = useState(20);
+  const [selectedMin, setSelectedMin] = useState(18);
   const [customMin, setCustomMin] = useState("");
   const [showCustom, setShowCustom] = useState(false);
   const [remaining, setRemaining] = useState(0);
@@ -426,7 +426,7 @@ export default function SitFlow() {
   // ── Step 1: 選時間 ──────────────────────────────
   if (step === "pick") {
     return (
-      <div className="max-w-md mx-auto px-4 py-10">
+      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col justify-center pb-8">
         {earlyEnd && (
           <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "#1a1b18" }}>
             <p style={{ fontSize: "1rem", color: "rgba(237,236,234,0.4)", letterSpacing: "0.05em" }}>
@@ -442,7 +442,7 @@ export default function SitFlow() {
           今天想坐多久？
         </h1>
 
-        <div className="grid grid-cols-4 gap-1.5 mb-3">
+        <div className="grid grid-cols-3 gap-1.5 mb-1.5">
           {PRESETS.map(m => (
             <button key={m} onClick={() => { setSelectedMin(m); setShowCustom(false); }}
               style={{
@@ -459,19 +459,21 @@ export default function SitFlow() {
               {m}
             </button>
           ))}
-          <button onClick={() => setShowCustom(true)}
-            style={{
-              padding: "0.75rem 0", fontSize: "0.75rem",
-              fontFamily: "var(--font-space-mono)",
-              background: showCustom ? "#BEC23F" : "#2c2c2a",
-              color: showCustom ? "#1a1b18" : "rgba(237,236,234,0.3)",
-              border: "none", cursor: "pointer", transition: "all 0.15s",
-              letterSpacing: "0.05em",
-              borderRadius: 4,
-            }}>
-            OTHER
-          </button>
         </div>
+        <button onClick={() => setShowCustom(true)}
+          style={{
+            width: "100%",
+            padding: "0.75rem 0", fontSize: "0.75rem",
+            fontFamily: "var(--font-space-mono)",
+            background: showCustom ? "#BEC23F" : "#2c2c2a",
+            color: showCustom ? "#1a1b18" : "rgba(237,236,234,0.3)",
+            border: "none", cursor: "pointer", transition: "all 0.15s",
+            letterSpacing: "0.05em",
+            borderRadius: 4,
+            marginBottom: "0.75rem",
+          }}>
+          OTHER
+        </button>
 
         {showCustom && (
           <input type="number" min={1} max={240} value={customMin}
