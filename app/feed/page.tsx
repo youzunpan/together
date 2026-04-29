@@ -4,7 +4,8 @@ import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import MonthlyCollage from "@/components/MonthlyCollage";
 import UpcomingCalls from "@/components/UpcomingCalls";
-import { taipeiTodayStartISO, taipeiDiffDays, taipeiMonthStartISO, taipeiMonthLabel, APP_TZ } from "@/lib/tz";
+import { taipeiTodayStartISO, taipeiDiffDays, taipeiMonthStartISO, taipeiMonthLabel, taipeiDateKey, APP_TZ } from "@/lib/tz";
+import { compute21Day } from "@/lib/streak";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -27,12 +28,32 @@ export default async function FeedPage() {
     .order("sat_at", { ascending: false })
     .limit(30);
 
-  // 月度共修圖：本月所有人的 sit
-  const { data: monthSits } = await supabase
+  // 本月全社群完成的 21 天圓：撈所有成員的 sit，per user 算 streak、
+  // 統計 completion date 落在本月的圓數。
+  const { data: allSits } = await supabase
     .from("sits")
-    .select("sat_at, duration_min")
-    .gte("sat_at", taipeiMonthStartISO())
+    .select("user_id, sat_at")
     .order("sat_at", { ascending: true });
+
+  const monthStartKey = taipeiDateKey(new Date(taipeiMonthStartISO()));
+  // 下個月起點 (台北日 key)
+  const tpeNow = new Date(new Date().toLocaleString("en-US", { timeZone: APP_TZ }));
+  const nextMonth = new Date(tpeNow.getFullYear(), tpeNow.getMonth() + 1, 1);
+  const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const byUser = new Map<string, { sat_at: string }[]>();
+  for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
+    const arr = byUser.get(s.user_id) ?? [];
+    arr.push({ sat_at: s.sat_at });
+    byUser.set(s.user_id, arr);
+  }
+  let monthCircles = 0;
+  for (const userSits of byUser.values()) {
+    const { completions } = compute21Day(userSits);
+    for (const day of completions) {
+      if (day >= monthStartKey && day < nextMonthKey) monthCircles += 1;
+    }
+  }
 
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
   const monthLabel = taipeiMonthLabel();
@@ -89,9 +110,7 @@ export default async function FeedPage() {
         {/* 同心：未過期的呼喚 */}
         <UpcomingCalls />
 
-        {monthSits && monthSits.length > 0 && (
-          <MonthlyCollage sits={monthSits} monthLabel={monthLabel} />
-        )}
+        <MonthlyCollage circles={monthCircles} monthLabel={monthLabel} />
 
         {(!sits || sits.length === 0) && (
           <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>

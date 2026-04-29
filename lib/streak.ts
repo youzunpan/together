@@ -4,19 +4,26 @@
 
 import { taipeiDateKey } from "@/lib/tz";
 
-export function compute21Day(
-  sits: { sat_at: string }[],
-): { circles: number; streak: number } {
-  if (!sits.length) return { circles: 0, streak: 0 };
+export type StreakResult = {
+  /** 已完成的圓數量 */
+  circles: number;
+  /** 當前進行中的圓累積到第幾天（0–20） */
+  streak: number;
+  /** 每個圓完成那天的台北日 key (YYYY-MM-DD)，依時間升冪 */
+  completions: string[];
+};
+
+export function compute21Day(sits: { sat_at: string }[]): StreakResult {
+  if (!sits.length) return { circles: 0, streak: 0, completions: [] };
 
   // 蒐集有坐的台北日 key（去重，升冪）
   const keys = new Set<string>();
   for (const s of sits) keys.add(taipeiDateKey(new Date(s.sat_at)));
   const sorted = [...keys].sort();
 
-  let circles = 0;
   let streak = 0;
   let prev: string | null = null;
+  const completions: string[] = [];
   for (const day of sorted) {
     if (prev) {
       const da = new Date(`${prev}T00:00:00+08:00`).getTime();
@@ -26,8 +33,8 @@ export function compute21Day(
     }
     streak += 1;
     if (streak === 21) {
-      circles += 1;
-      streak = 0; // 完成一個圓，重新開始
+      completions.push(day); // 當天完成一個圓
+      streak = 0; // 重新開始
     }
     prev = day;
   }
@@ -41,5 +48,5 @@ export function compute21Day(
     if (prev !== todayKey && prev !== yestKey) streak = 0;
   }
 
-  return { circles, streak };
+  return { circles: completions.length, streak, completions };
 }
