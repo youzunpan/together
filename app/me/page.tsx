@@ -1,28 +1,49 @@
 import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import AvatarUpload from "./AvatarUpload";
-import Heatmap from "./Heatmap";
 import Lamp from "@/components/Lamp";
 import SitMark from "@/components/SitMark";
-import PersonalScroll from "@/components/PersonalScroll";
+import TwentyOneCircle from "@/components/TwentyOneCircle";
+import { taipeiDateKey } from "@/lib/tz";
 
-function buildHeatmapDays(sits: { sat_at: string; duration_min: number }[]) {
-  // Taipei 時區的最近 90 天
-  const totals = new Map<string, number>();
-  for (const s of sits) {
-    const d = new Date(new Date(s.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    totals.set(key, (totals.get(key) ?? 0) + s.duration_min);
+// 21 天連續靜心：每連續 21 天 = +1 圓，漏一天歸零。
+// 連續判定以台北時區的「日」為單位：那一天有任何一筆 sit 即算 ✓
+function compute21Day(sits: { sat_at: string }[]): { circles: number; streak: number } {
+  if (!sits.length) return { circles: 0, streak: 0 };
+
+  // 蒐集有坐的台北日 key（去重，升冪）
+  const keys = new Set<string>();
+  for (const s of sits) keys.add(taipeiDateKey(new Date(s.sat_at)));
+  const sorted = [...keys].sort();
+
+  let circles = 0;
+  let streak = 0;
+  let prev: string | null = null;
+  for (const day of sorted) {
+    if (prev) {
+      const da = new Date(`${prev}T00:00:00+08:00`).getTime();
+      const db = new Date(`${day}T00:00:00+08:00`).getTime();
+      const diff = Math.round((db - da) / 86400000);
+      if (diff > 1) streak = 0; // 漏一天 → 歸零
+    }
+    streak += 1;
+    if (streak === 21) {
+      circles += 1;
+      streak = 0; // 完成一個圓，重新開始
+    }
+    prev = day;
   }
-  const days: { date: string; minutes: number }[] = [];
-  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    days.push({ date: key, minutes: totals.get(key) ?? 0 });
+
+  // 連續是否還活著：last day 必須是今天或昨天，否則中斷
+  if (prev) {
+    const todayKey = taipeiDateKey(new Date());
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yestKey = taipeiDateKey(yest);
+    if (prev !== todayKey && prev !== yestKey) streak = 0;
   }
-  return days;
+
+  return { circles, streak };
 }
 
 export default async function MePage() {
@@ -38,15 +59,7 @@ export default async function MePage() {
     .eq("user_id", user.id).order("sat_at", { ascending: false });
 
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
-  // 以台北時區計算「本月」與每日去重 key
-  const tpeNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-  const monthStart = new Date(`${tpeNow.getFullYear()}-${String(tpeNow.getMonth() + 1).padStart(2, "0")}-01T00:00:00+08:00`).toISOString();
-  const monthDays = new Set(
-    sits?.filter(r => r.sat_at >= monthStart).map(r => {
-      const d = new Date(new Date(r.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    })
-  ).size;
+  const { circles, streak } = compute21Day(sits ?? []);
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -82,27 +95,16 @@ export default async function MePage() {
       {/* 一盞燈 */}
       <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
 
-      {/* 個人卷軸：過去 30 天 */}
-      <PersonalScroll sits={sits ?? []} />
+      {/* 21 天連續靜心圓圈 */}
+      <TwentyOneCircle circles={circles} streak={streak} />
 
-      {/* 統計 */}
-      <div className="grid grid-cols-2 gap-px mb-8 mt-2" style={{ background: "rgba(255,255,255,0.04)", borderRadius: "var(--r-cell)", overflow: "hidden" }}>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
-            {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
-          </p>
-        </div>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>THIS MONTH</p>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
-            {monthDays}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>days</span>
-          </p>
-        </div>
+      {/* 總分鐘 */}
+      <div className="mb-8" style={{ background: "#1a1b18", padding: "1.25rem 1rem", borderRadius: "var(--r-cell)" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
+          {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
+        </p>
       </div>
-
-      {/* 熱度圖 */}
-      <Heatmap days={buildHeatmapDays(sits ?? [])} />
 
       {/* 紀錄 */}
       <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(237,236,234,0.2)", marginBottom: "0.75rem" }}>
