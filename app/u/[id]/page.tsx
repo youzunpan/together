@@ -17,7 +17,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
   if (!profile) notFound();
 
   const { data: sits } = await supabase
-    .from("sits").select("id, duration_min, sat_at, reflection")
+    .from("sits").select("duration_min, sat_at")
     .eq("user_id", id).order("sat_at", { ascending: false });
 
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
@@ -58,47 +58,6 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
         </p>
       </div>
 
-      <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(237,236,234,0.2)", marginBottom: "0.75rem" }}>
-        SESSIONS
-      </p>
-
-      {!sits?.length && (
-        <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.2)", textAlign: "center", padding: "3rem 0" }}>
-          還沒有紀錄。
-        </p>
-      )}
-
-      <div className="pb-8" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
-      <div className="space-y-px">
-        {sits?.map((sit, i) => {
-          const d = new Date(new Date(sit.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-          const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          const prevDate = i > 0 ? (() => {
-            const pd = new Date(new Date(sits![i - 1].sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-            return `${pd.getFullYear()}-${String(pd.getMonth() + 1).padStart(2, "0")}-${String(pd.getDate()).padStart(2, "0")}`;
-          })() : null;
-          const isFirstOfDay = dateKey !== prevDate;
-          const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
-          return (
-            <div key={i} id={isFirstOfDay ? `day-${dateKey}` : undefined} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.75rem 1rem" }}>
-              <div className="flex items-center justify-between">
-                <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.75rem", color: "#BEC23F" }}>
-                  {sit.duration_min}min
-                </span>
-                <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.25)", letterSpacing: "0.08em" }}>
-                  {dateStr}
-                </span>
-              </div>
-              {sit.reflection && (
-                <p className="reflection-text mt-1" style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.6 }}>
-                  {sit.reflection}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      </div>
     </div>
   );
 }
