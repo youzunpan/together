@@ -4,47 +4,7 @@ import AvatarUpload from "./AvatarUpload";
 import Lamp from "@/components/Lamp";
 import SitMark from "@/components/SitMark";
 import TwentyOneCircle from "@/components/TwentyOneCircle";
-import { taipeiDateKey } from "@/lib/tz";
-
-// 21 天連續靜心：每連續 21 天 = +1 圓，漏一天歸零。
-// 連續判定以台北時區的「日」為單位：那一天有任何一筆 sit 即算 ✓
-function compute21Day(sits: { sat_at: string }[]): { circles: number; streak: number } {
-  if (!sits.length) return { circles: 0, streak: 0 };
-
-  // 蒐集有坐的台北日 key（去重，升冪）
-  const keys = new Set<string>();
-  for (const s of sits) keys.add(taipeiDateKey(new Date(s.sat_at)));
-  const sorted = [...keys].sort();
-
-  let circles = 0;
-  let streak = 0;
-  let prev: string | null = null;
-  for (const day of sorted) {
-    if (prev) {
-      const da = new Date(`${prev}T00:00:00+08:00`).getTime();
-      const db = new Date(`${day}T00:00:00+08:00`).getTime();
-      const diff = Math.round((db - da) / 86400000);
-      if (diff > 1) streak = 0; // 漏一天 → 歸零
-    }
-    streak += 1;
-    if (streak === 21) {
-      circles += 1;
-      streak = 0; // 完成一個圓，重新開始
-    }
-    prev = day;
-  }
-
-  // 連續是否還活著：last day 必須是今天或昨天，否則中斷
-  if (prev) {
-    const todayKey = taipeiDateKey(new Date());
-    const yest = new Date();
-    yest.setDate(yest.getDate() - 1);
-    const yestKey = taipeiDateKey(yest);
-    if (prev !== todayKey && prev !== yestKey) streak = 0;
-  }
-
-  return { circles, streak };
-}
+import { compute21Day } from "@/lib/streak";
 
 export default async function MePage() {
   const supabase = await createClient();

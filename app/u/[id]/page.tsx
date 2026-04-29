@@ -2,25 +2,8 @@ import { createClient } from "@/lib/supabase-server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
-import Heatmap from "@/app/me/Heatmap";
-
-function buildHeatmapDays(sits: { sat_at: string; duration_min: number }[]) {
-  const totals = new Map<string, number>();
-  for (const s of sits) {
-    const d = new Date(new Date(s.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    totals.set(key, (totals.get(key) ?? 0) + s.duration_min);
-  }
-  const days: { date: string; minutes: number }[] = [];
-  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    days.push({ date: key, minutes: totals.get(key) ?? 0 });
-  }
-  return days;
-}
+import TwentyOneCircle from "@/components/TwentyOneCircle";
+import { compute21Day } from "@/lib/streak";
 
 export default async function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,14 +21,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
     .eq("user_id", id).order("sat_at", { ascending: false });
 
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
-  const tpeNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-  const monthStart = new Date(`${tpeNow.getFullYear()}-${String(tpeNow.getMonth() + 1).padStart(2, "0")}-01T00:00:00+08:00`).toISOString();
-  const monthDays = new Set(
-    sits?.filter(r => r.sat_at >= monthStart).map(r => {
-      const d = new Date(new Date(r.sat_at).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    })
-  ).size;
+  const { circles, streak } = compute21Day(sits ?? []);
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -71,22 +47,16 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-px mb-8" style={{ background: "rgba(255,255,255,0.04)", borderRadius: "var(--r-cell)", overflow: "hidden" }}>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
-            {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
-          </p>
-        </div>
-        <div style={{ background: "#1a1b18", padding: "1.25rem 1rem" }}>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>THIS MONTH</p>
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
-            {monthDays}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>days</span>
-          </p>
-        </div>
-      </div>
+      {/* 21 天連續靜心圓圈 */}
+      <TwentyOneCircle circles={circles} streak={streak} />
 
-      <Heatmap days={buildHeatmapDays(sits ?? [])} />
+      {/* 總分鐘 */}
+      <div className="mb-8" style={{ background: "#1a1b18", padding: "1.25rem 1rem", borderRadius: "var(--r-cell)" }}>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
+          {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
+        </p>
+      </div>
 
       <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(237,236,234,0.2)", marginBottom: "0.75rem" }}>
         SESSIONS
