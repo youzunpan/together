@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase-server";
 import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
-import MonthlyCollage from "@/components/MonthlyCollage";
+import CommunityCircle from "@/components/CommunityCircle";
 import UpcomingCalls from "@/components/UpcomingCalls";
-import { taipeiTodayStartISO, taipeiDiffDays, taipeiMonthStartISO, taipeiMonthLabel, taipeiDateKey, APP_TZ } from "@/lib/tz";
+import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { compute21Day } from "@/lib/streak";
 
 export default async function FeedPage() {
@@ -28,60 +28,31 @@ export default async function FeedPage() {
     .order("sat_at", { ascending: false })
     .limit(30);
 
-  // 本月全社群完成的 21 天圓：撈所有成員的 sit，per user 算 streak、
-  // 統計 completion date 落在本月的圓數。
+  // 社群版 21 天圓：以「每天有 ≥ 1 位成員坐」為一日。把活躍日當成虛擬 sit 餵給
+  // compute21Day 即可重用同一套 streak 邏輯。
   const { data: allSits } = await supabase
     .from("sits")
     .select("user_id, sat_at")
     .order("sat_at", { ascending: true });
 
-  const monthStartKey = taipeiDateKey(new Date(taipeiMonthStartISO()));
-  // 下個月起點 (台北日 key)
-  const tpeNow = new Date(new Date().toLocaleString("en-US", { timeZone: APP_TZ }));
-  const nextMonth = new Date(tpeNow.getFullYear(), tpeNow.getMonth() + 1, 1);
-  const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}-01`;
-
-  const byUser = new Map<string, { sat_at: string }[]>();
-  for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
-    const arr = byUser.get(s.user_id) ?? [];
-    arr.push({ sat_at: s.sat_at });
-    byUser.set(s.user_id, arr);
-  }
-  let monthCircles = 0;
-  for (const userSits of byUser.values()) {
-    const { completions } = compute21Day(userSits);
-    for (const day of completions) {
-      if (day >= monthStartKey && day < nextMonthKey) monthCircles += 1;
-    }
-  }
-
-  // 本月每日活動：每一日有幾位不同成員坐過。
-  const todayKey = taipeiDateKey(new Date());
   const dayMembers = new Map<string, Set<string>>();
   for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
     const k = taipeiDateKey(new Date(s.sat_at));
-    if (k < monthStartKey || k >= nextMonthKey) continue;
     const set = dayMembers.get(k) ?? new Set<string>();
     set.add(s.user_id);
     dayMembers.set(k, set);
   }
-  // 從月初到今天，產出每一日的成員數（未來日子不顯示）
-  const monthDays: { day: string; members: number; isToday: boolean }[] = [];
-  {
-    const start = new Date(`${monthStartKey}T00:00:00+08:00`);
-    const today = new Date(`${todayKey}T00:00:00+08:00`);
-    for (let d = new Date(start); d.getTime() <= today.getTime(); d.setDate(d.getDate() + 1)) {
-      const k = taipeiDateKey(d);
-      monthDays.push({
-        day: k,
-        members: dayMembers.get(k)?.size ?? 0,
-        isToday: k === todayKey,
-      });
-    }
-  }
+  const activeDayKeys = [...dayMembers.keys()].sort();
+  const communityVirtualSits = activeDayKeys.map((k) => ({
+    sat_at: `${k}T00:00:00+08:00`,
+  }));
+  const { circles: communityCircles, streak: communityStreak } =
+    compute21Day(communityVirtualSits);
+
+  const todayKey = taipeiDateKey(new Date());
+  const todayMembers = dayMembers.get(todayKey)?.size ?? 0;
 
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
-  const monthLabel = taipeiMonthLabel();
 
   return (
     <div className="max-w-md mx-auto px-4">
@@ -135,7 +106,11 @@ export default async function FeedPage() {
         {/* 同心：未過期的呼喚 */}
         <UpcomingCalls />
 
-        <MonthlyCollage circles={monthCircles} monthLabel={monthLabel} days={monthDays} />
+        <CommunityCircle
+          circles={communityCircles}
+          streak={communityStreak}
+          todayMembers={todayMembers}
+        />
 
         {(!sits || sits.length === 0) && (
           <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>
