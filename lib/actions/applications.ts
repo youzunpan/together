@@ -5,6 +5,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { sendEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/web-push";
 
 function serviceClient() {
   return createServiceClient(
@@ -43,6 +44,30 @@ export async function submitApplication(formData: FormData) {
   if (error) {
     if (error.code === "23505") return { error: "這個 email 已經申請過了。" };
     return { error: error.message };
+  }
+
+  // 通知所有 admin（推播失敗不影響申請成立）
+  try {
+    const { data: admins } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin")
+      .returns<{ id: string }[]>();
+    if (admins?.length) {
+      await Promise.all(
+        admins.map((a) =>
+          sendPushToUser(a.id, {
+            title: "新成員申請",
+            body: `${display_name}（${email}）申請加入同在`,
+            url: "/admin",
+            tag: `apply-${email}`,
+            renotify: true,
+          }).catch((e) => console.error("[applications] push failed", e)),
+        ),
+      );
+    }
+  } catch (e) {
+    console.error("[applications] notify admins failed", e);
   }
 
   return { ok: true };
