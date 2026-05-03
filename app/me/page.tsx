@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import AvatarUpload from "./AvatarUpload";
 import Lamp from "@/components/Lamp";
@@ -20,12 +21,38 @@ export default async function MePage() {
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
   const { circles, streak } = compute21Day(sits ?? []);
 
+  // Admin 待審申請數（service role 繞過 RLS，只在 admin 才查）
+  let pendingCount = 0;
+  if (profile.role === "admin") {
+    const adminClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } },
+    );
+    const { count } = await adminClient
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+    pendingCount = count ?? 0;
+  }
+
   return (
     <div className="max-w-md mx-auto px-4 py-6">
       <header className="mb-8 flex items-center justify-between">
         {profile.role === "admin" ? (
-          <a href="/admin" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left" }}>
+          <a href="/admin" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
             ADMIN
+            {pendingCount > 0 && (
+              <span aria-label={`${pendingCount} 件待審`}
+                style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  minWidth: "1.1rem", height: "1.1rem", padding: "0 0.35rem",
+                  borderRadius: "999px", background: "#D65C6A", color: "#1a1b18",
+                  fontSize: "0.6rem", lineHeight: 1, fontWeight: 600,
+                }}>
+                {pendingCount}
+              </span>
+            )}
           </a>
         ) : (
           <span style={{ width: "3rem" }} />
