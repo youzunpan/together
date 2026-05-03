@@ -55,6 +55,31 @@ export default async function FeedPage() {
     }
   }
 
+  // 本月每日活動：每一日有幾位不同成員坐過。
+  const todayKey = taipeiDateKey(new Date());
+  const dayMembers = new Map<string, Set<string>>();
+  for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
+    const k = taipeiDateKey(new Date(s.sat_at));
+    if (k < monthStartKey || k >= nextMonthKey) continue;
+    const set = dayMembers.get(k) ?? new Set<string>();
+    set.add(s.user_id);
+    dayMembers.set(k, set);
+  }
+  // 從月初到今天，產出每一日的成員數（未來日子不顯示）
+  const monthDays: { day: string; members: number; isToday: boolean }[] = [];
+  {
+    const start = new Date(`${monthStartKey}T00:00:00+08:00`);
+    const today = new Date(`${todayKey}T00:00:00+08:00`);
+    for (let d = new Date(start); d.getTime() <= today.getTime(); d.setDate(d.getDate() + 1)) {
+      const k = taipeiDateKey(d);
+      monthDays.push({
+        day: k,
+        members: dayMembers.get(k)?.size ?? 0,
+        isToday: k === todayKey,
+      });
+    }
+  }
+
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
   const monthLabel = taipeiMonthLabel();
 
@@ -110,7 +135,7 @@ export default async function FeedPage() {
         {/* 同心：未過期的呼喚 */}
         <UpcomingCalls />
 
-        <MonthlyCollage circles={monthCircles} monthLabel={monthLabel} />
+        <MonthlyCollage circles={monthCircles} monthLabel={monthLabel} days={monthDays} />
 
         {(!sits || sits.length === 0) && (
           <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>
