@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ApplicationsTab from "./ApplicationsTab";
 import SitDeleteButton from "./SitDeleteButton";
+import ErrorsTab, { type ErrorRow } from "./ErrorsTab";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -28,7 +29,15 @@ export default async function AdminPage() {
     .order("sat_at", { ascending: false })
     .limit(500);
 
+  // 錯誤紀錄（最多 200 筆，依 RLS 只有 admin 撈得到）
+  const { data: errors } = await supabase
+    .from("error_logs").select("*")
+    .order("created_at", { ascending: false })
+    .limit(200)
+    .returns<ErrorRow[]>();
+
   const pendingCount = applications?.filter(a => a.status === "pending").length ?? 0;
+  const errorCount = errors?.length ?? 0;
 
   // 按日聚合（Taipei 時區）
   type DailyStat = { date: string; label: string; memberCount: number; totalMin: number; sits: typeof recentSits };
@@ -92,6 +101,9 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="sits" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
             SITS
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+            ERRORS{errorCount > 0 ? ` (${errorCount})` : ""}
           </TabsTrigger>
         </TabsList>
 
@@ -218,6 +230,10 @@ export default async function AdminPage() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="errors">
+          <ErrorsTab errors={errors ?? []} />
         </TabsContent>
       </Tabs>
     </div>

@@ -3,6 +3,7 @@ import { Noto_Sans_TC, Noto_Serif_TC, Space_Mono } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import Splash from "@/components/Splash";
+import ErrorReporter from "@/components/ErrorReporter";
 
 // 襯線：思源宋體 TW（= Google 託管的 Noto Serif TC，繁體支援完整）
 const notoSerif = Noto_Serif_TC({
@@ -63,6 +64,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
+        <ErrorReporter />
         <Splash />
         <main
           className="flex-1"
