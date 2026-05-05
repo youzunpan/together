@@ -67,6 +67,22 @@ export async function signOut() {
   redirect("/login");
 }
 
+export type ReminderTime = "off" | "morning" | "evening";
+
+export async function setReminderTime(time: ReminderTime) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  if (!["off", "morning", "evening"].includes(time)) return { error: "格式錯誤" };
+  const { error } = await supabase
+    .from("profiles")
+    .update({ reminder_time: time })
+    .eq("id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/me/settings");
+  return { ok: true };
+}
+
 // 管理員強制移除某人：清掉資料 + 刪 auth.user。對方會立即被踢出。
 // 不能移除自己（admin），也不能移除其他 admin（避免互砍）。
 export async function adminRemoveMember(targetUserId: string) {

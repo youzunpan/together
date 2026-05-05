@@ -29,6 +29,7 @@ export default async function SettingsPage() {
         display_name={profile.display_name}
         avatar_letter={profile.avatar_letter}
         avatar_color={profile.avatar_color}
+        reminder_time={(profile.reminder_time as "off" | "morning" | "evening") ?? "off"}
       />
 
       <div className="mt-6">

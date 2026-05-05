@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateProfile, signOut, setPassword, deleteAccount } from "@/lib/actions/profile";
+import { updateProfile, signOut, setPassword, deleteAccount, setReminderTime, type ReminderTime } from "@/lib/actions/profile";
 import { useRouter } from "next/navigation";
 
 const COLORS = ["purple", "teal", "coral", "blue", "amber", "pink"] as const;
@@ -13,9 +13,9 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 4,
 };
 
-type Props = { email: string; display_name: string; avatar_letter: string; avatar_color: string };
+type Props = { email: string; display_name: string; avatar_letter: string; avatar_color: string; reminder_time: ReminderTime };
 
-export default function SettingsForm({ email, display_name: initName, avatar_letter: initLetter, avatar_color: initColor }: Props) {
+export default function SettingsForm({ email, display_name: initName, avatar_letter: initLetter, avatar_color: initColor, reminder_time: initReminder }: Props) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initName);
   const [avatarLetter, setAvatarLetter] = useState(initLetter);
@@ -26,6 +26,17 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
   const [pw2, setPw2] = useState("");
   const [pwSaving, startPw] = useTransition();
   const [pwToast, setPwToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  // 提醒時段
+  const [reminder, setReminder] = useState<ReminderTime>(initReminder);
+  const [reminderSaving, startReminder] = useTransition();
+
+  function handleReminder(time: ReminderTime) {
+    setReminder(time);
+    startReminder(async () => {
+      await setReminderTime(time);
+    });
+  }
+
   // 刪除帳號狀態
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState("");
@@ -158,6 +169,47 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
         設定後即可用 email + 密碼登入。
       </p>
     </form>
+
+    {/* 每日提醒 */}
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+      <label className="seq-label block mb-1.5">每日提醒</label>
+      <p style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.55, marginBottom: "0.75rem" }}>
+        如果今天還沒坐，會在你選的時段推一次提醒。<br />
+        連續坐 ≥ 3 天的人，無論這個設定，晚上也會收到鼓勵訊息。
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {([
+          { value: "morning", label: "早晨", time: "8:00" },
+          { value: "evening", label: "傍晚", time: "21:00" },
+          { value: "off", label: "不要", time: "—" },
+        ] as const).map((opt) => {
+          const active = reminder === opt.value;
+          return (
+            <button key={opt.value} type="button"
+              onClick={() => handleReminder(opt.value)}
+              disabled={reminderSaving}
+              style={{
+                background: active ? "rgba(190,194,63,0.12)" : "#2c2c2a",
+                border: active ? "1px solid #BEC23F" : "1px solid rgba(255,255,255,0.08)",
+                color: active ? "#BEC23F" : "rgba(237,236,234,0.55)",
+                padding: "0.65rem 0.5rem", textAlign: "center",
+                cursor: reminderSaving ? "default" : "pointer",
+                borderRadius: 4, transition: "all 0.15s",
+              }}>
+              <div style={{ fontSize: "0.85rem", marginBottom: "0.15rem" }}>
+                {opt.label}
+              </div>
+              <div style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", opacity: 0.7 }}>
+                {opt.time}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p style={{ fontSize: "0.7rem", color: "rgba(237,236,234,0.3)", marginTop: "0.75rem", textAlign: "center" }}>
+        提醒只在你已開啟通知時才會送
+      </p>
+    </div>
 
     {/* 重新顯示提示卡：清掉一次性的 localStorage 旗標 */}
     <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
