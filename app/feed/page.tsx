@@ -30,9 +30,12 @@ export default async function FeedPage() {
 
   // 社群版 21 天圓：以「每天有 ≥ 1 位成員坐」為一日。把活躍日當成虛擬 sit 餵給
   // compute21Day 即可重用同一套 streak 邏輯。
+  // 為避免全表掃描，限制最近一年資料（社群連續日 / 共修圓在這個窗口內準確即可）
+  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString();
   const { data: allSits } = await supabase
     .from("sits")
     .select("user_id, sat_at")
+    .gte("sat_at", oneYearAgo)
     .order("sat_at", { ascending: true });
 
   const dayMembers = new Map<string, Set<string>>();
