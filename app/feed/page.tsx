@@ -4,6 +4,7 @@ import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import CommunityCircle from "@/components/CommunityCircle";
 import UpcomingCalls from "@/components/UpcomingCalls";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { compute21Day } from "@/lib/streak";
 
@@ -106,6 +107,9 @@ export default async function FeedPage() {
       </header>
 
       <div className="mt-4 pb-6">
+        {/* PWA 安裝指引（沒安裝才顯示，client-side 偵測） */}
+        <PWAInstallBanner />
+
         {/* 同心：未過期的呼喚 */}
         <UpcomingCalls />
 
