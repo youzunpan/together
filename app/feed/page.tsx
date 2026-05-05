@@ -6,6 +6,7 @@ import CommunityCircle from "@/components/CommunityCircle";
 import UpcomingCalls from "@/components/UpcomingCalls";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { compute21Day } from "@/lib/streak";
 
@@ -64,6 +65,15 @@ export default async function FeedPage() {
   const todayKey = taipeiDateKey(new Date());
   const todayMembers = dayMembers.get(todayKey)?.size ?? 0;
 
+  // 當前 active 公告（最多 1 則）
+  const { data: announcement } = await supabase
+    .from("announcements")
+    .select("id, body")
+    .eq("active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
 
   return (
@@ -118,6 +128,11 @@ export default async function FeedPage() {
       </header>
 
       <div className="mt-4 pb-6">
+        {/* Admin 公告（active 才有資料） */}
+        {announcement && (
+          <AnnouncementBanner id={announcement.id} body={announcement.body} />
+        )}
+
         {/* PWA 安裝指引（沒安裝才顯示，client-side 偵測） */}
         <PWAInstallBanner />
 

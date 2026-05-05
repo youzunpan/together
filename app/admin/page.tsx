@@ -4,6 +4,7 @@ import ApplicationsTab from "./ApplicationsTab";
 import SitDeleteButton from "./SitDeleteButton";
 import ErrorsTab, { type ErrorRow } from "./ErrorsTab";
 import MembersTab from "./MembersTab";
+import AnnouncementsTab from "./AnnouncementsTab";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -39,6 +40,13 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(200)
     .returns<ErrorRow[]>();
+
+  // 公告（active + 最近歷史 50 則）
+  const { data: announcements } = await supabase
+    .from("announcements")
+    .select("id, body, created_at, active")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   const pendingCount = applications?.filter(a => a.status === "pending").length ?? 0;
   const errorCount = errors?.length ?? 0;
@@ -108,6 +116,9 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="errors" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
             ERRORS{errorCount > 0 ? ` (${errorCount})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="announce" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+            ANNOUNCE
           </TabsTrigger>
         </TabsList>
 
@@ -220,6 +231,10 @@ export default async function AdminPage() {
 
         <TabsContent value="errors">
           <ErrorsTab errors={errors ?? []} />
+        </TabsContent>
+
+        <TabsContent value="announce">
+          <AnnouncementsTab items={announcements ?? []} />
         </TabsContent>
       </Tabs>
     </div>
