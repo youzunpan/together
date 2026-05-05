@@ -13,10 +13,12 @@ export default function ApplyForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    if (!agreed) { setError("請先閱讀並同意服務條款與隱私政策"); return; }
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     const res = await submitApplication(fd);
@@ -67,9 +69,39 @@ export default function ApplyForm() {
           onFocus={e => e.target.style.borderColor = "#BEC23F"}
           onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
       </div>
+      {/* 雙向同意 */}
+      <label
+        className="flex items-start gap-2 cursor-pointer select-none"
+        style={{ marginTop: "0.5rem", paddingTop: "0.5rem" }}
+      >
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          style={{
+            marginTop: "0.2rem",
+            width: 16, height: 16, accentColor: "#BEC23F",
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.55)", lineHeight: 1.6 }}>
+          我已閱讀並同意
+          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "#BEC23F", textDecoration: "underline", textUnderlineOffset: 3, marginLeft: 3, marginRight: 3 }}>
+            服務條款
+          </a>
+          與
+          <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: "#BEC23F", textDecoration: "underline", textUnderlineOffset: 3, marginLeft: 3 }}>
+            隱私政策
+          </a>
+        </span>
+      </label>
+
       {error && <p style={{ fontSize: "0.75rem", color: "#D65C6A" }}>{error}</p>}
-      <button type="submit" disabled={loading} className="btn-primary w-full"
-        style={{ width: "100%", letterSpacing: "0.12em" }}>
+      <button type="submit" disabled={loading || !agreed} className="btn-primary w-full"
+        style={{
+          width: "100%", letterSpacing: "0.12em",
+          opacity: (!agreed || loading) ? 0.5 : 1,
+        }}>
         {loading ? "SENDING..." : "送出申請"}
       </button>
     </form>
