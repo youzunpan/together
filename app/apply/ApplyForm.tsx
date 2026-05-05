@@ -30,7 +30,7 @@ export default function ApplyForm() {
       <div className="text-center space-y-2">
         <p style={{ fontSize: "1rem", color: "#edecea" }}>申請已送出。</p>
         <p style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.6 }}>
-          審核通過後，<br />就可以用你填的 email 和密碼登入。
+          通常 24 小時內審核完成，<br />通過後會寄一封登入信到你的 email。
         </p>
       </div>
     );
@@ -48,14 +48,6 @@ export default function ApplyForm() {
       <div>
         <label className="seq-label block mb-1.5">顯示名稱</label>
         <input name="display_name" type="text" required maxLength={40} placeholder="小雨"
-          style={inputStyle}
-          onFocus={e => e.target.style.borderColor = "#BEC23F"}
-          onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
-      </div>
-      <div>
-        <label className="seq-label block mb-1.5">密碼（至少 6 字）</label>
-        <input name="password" type="password" required minLength={6} placeholder="登入用的密碼"
-          autoComplete="new-password"
           style={inputStyle}
           onFocus={e => e.target.style.borderColor = "#BEC23F"}
           onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
