@@ -120,9 +120,15 @@ export default async function FeedPage() {
         />
 
         {(!sits || sits.length === 0) && (
-          <p className="text-center py-16" style={{ color: "rgba(237,236,234,0.2)", fontSize: "0.875rem" }}>
-            安靜的一天。第一個坐的人會在這裡出現。
-          </p>
+          <div className="text-center py-12" style={{ color: "rgba(237,236,234,0.35)" }}>
+            <p style={{ fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "0.5rem" }}>
+              安靜的一天。
+            </p>
+            <p style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.25)", lineHeight: 1.7 }}>
+              第一個坐的人會在這裡出現。<br />
+              要不要是你？
+            </p>
+          </div>
         )}
         {sits && sits.length > 0 && <Timeline sits={sits} currentUserId={user!.id} />}
       </div>

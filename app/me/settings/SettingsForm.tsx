@@ -159,6 +159,26 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
       </p>
     </form>
 
+    {/* 重新顯示提示卡：清掉一次性的 localStorage 旗標 */}
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+      <button type="button"
+        onClick={() => {
+          try {
+            localStorage.removeItem("push-asked");
+            localStorage.removeItem("pwa-install-dismissed-at");
+          } catch {}
+          setToast({ msg: "下次會再顯示通知與安裝指引", ok: true });
+        }}
+        style={{
+          width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(237,236,234,0.55)", padding: "0.65rem",
+          fontFamily: "var(--font-space-mono)", fontSize: "0.7rem",
+          letterSpacing: "0.12em", cursor: "pointer", borderRadius: 4,
+        }}>
+        重新顯示通知 / 安裝指引
+      </button>
+    </div>
+
     <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
       <button type="button" onClick={handleLogout}
         style={{
