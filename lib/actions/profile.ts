@@ -1,10 +1,19 @@
 "use server";
 
 import { createClient } from "@/lib/supabase-server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 const AVATAR_COLORS = ["purple", "teal", "coral", "blue", "amber", "pink"] as const;
+
+function serviceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+}
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient();
@@ -54,6 +63,47 @@ export async function setPassword(formData: FormData) {
 
 export async function signOut() {
   const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
+
+// 完全刪除自己的帳號：sits / 推播訂閱 / 同心呼喚 / reactions / profile / auth user
+// 部分表（push_subscriptions / sit_calls / sit_call_joins / reactions）是 ON DELETE CASCADE
+// 但 sits 沒有 cascade、applications.reviewed_by 也是 RESTRICT，需手動處理。
+export async function deleteAccount(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+
+  // 雙重確認：使用者必須輸入「刪除」兩個字
+  const confirmText = (formData.get("confirm") as string | null)?.trim();
+  if (confirmText !== "刪除") {
+    return { error: "請輸入「刪除」二字以確認" };
+  }
+
+  const admin = serviceClient();
+
+  // 1. 刪自己的 sits
+  const { error: sitsErr } = await admin.from("sits").delete().eq("user_id", user.id);
+  if (sitsErr) return { error: `刪除靜心紀錄失敗：${sitsErr.message}` };
+
+  // 2. 把 applications.reviewed_by 指向自己的設為 NULL
+  await admin.from("applications").update({ reviewed_by: null }).eq("reviewed_by", user.id);
+
+  // 3. 刪 profile（會 cascade 掉 push_subscriptions / sit_calls / sit_call_joins / reactions）
+  const { error: profErr } = await admin.from("profiles").delete().eq("id", user.id);
+  if (profErr) return { error: `刪除 profile 失敗：${profErr.message}` };
+
+  // 4. 把該 email 的 application 也刪掉，使用者之後想重新申請才不會被「已申請過」擋
+  if (user.email) {
+    await admin.from("applications").delete().ilike("email", user.email);
+  }
+
+  // 5. 刪 auth user
+  const { error: authErr } = await admin.auth.admin.deleteUser(user.id);
+  if (authErr) return { error: `刪除帳號失敗：${authErr.message}` };
+
+  // 6. 在當前 server-side session 也登出
   await supabase.auth.signOut();
   redirect("/login");
 }

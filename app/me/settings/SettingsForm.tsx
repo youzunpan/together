@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateProfile, signOut, setPassword } from "@/lib/actions/profile";
+import { updateProfile, signOut, setPassword, deleteAccount } from "@/lib/actions/profile";
 import { useRouter } from "next/navigation";
 
 const COLORS = ["purple", "teal", "coral", "blue", "amber", "pink"] as const;
@@ -26,6 +26,22 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
   const [pw2, setPw2] = useState("");
   const [pwSaving, startPw] = useTransition();
   const [pwToast, setPwToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  // 刪除帳號狀態
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleting, startDelete] = useTransition();
+  const [deleteError, setDeleteError] = useState("");
+
+  function handleDelete() {
+    setDeleteError("");
+    startDelete(async () => {
+      const fd = new FormData();
+      fd.set("confirm", deleteText);
+      const res = await deleteAccount(fd);
+      // 成功會 redirect，所以不會跑到這裡；只有失敗才有 res
+      if (res?.error) setDeleteError(res.error);
+    });
+  }
 
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -153,6 +169,63 @@ export default function SettingsForm({ email, display_name: initName, avatar_let
         }}>
         登出
       </button>
+    </div>
+
+    {/* 危險區：刪除帳號 */}
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+      {!deleteOpen ? (
+        <button type="button" onClick={() => setDeleteOpen(true)}
+          style={{
+            width: "100%", background: "transparent", border: "none",
+            color: "rgba(237,236,234,0.3)", padding: "0.5rem",
+            fontFamily: "var(--font-space-mono)", fontSize: "0.7rem",
+            letterSpacing: "0.12em", cursor: "pointer", textDecoration: "underline",
+            textUnderlineOffset: 3,
+          }}>
+          刪除帳號
+        </button>
+      ) : (
+        <div className="space-y-3" style={{ background: "rgba(214,92,106,0.06)", border: "1px solid rgba(214,92,106,0.2)", borderRadius: 4, padding: "1rem" }}>
+          <p style={{ fontSize: "0.85rem", color: "#edecea", lineHeight: 1.6 }}>
+            這個動作不能還原。所有靜心紀錄、頭像、推播訂閱都會永久刪除。
+          </p>
+          <p style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>
+            確認請輸入「<span style={{ color: "#D65C6A" }}>刪除</span>」二字：
+          </p>
+          <input type="text" value={deleteText} onChange={e => setDeleteText(e.target.value)}
+            placeholder="刪除"
+            style={{ ...inputStyle, borderColor: "rgba(214,92,106,0.3)" }}
+            onFocus={e => e.target.style.borderColor = "#D65C6A"}
+            onBlur={e => e.target.style.borderColor = "rgba(214,92,106,0.3)"} />
+          {deleteError && (
+            <p style={{ fontSize: "0.75rem", color: "#D65C6A" }}>{deleteError}</p>
+          )}
+          <div className="flex gap-2">
+            <button type="button" onClick={() => { setDeleteOpen(false); setDeleteText(""); setDeleteError(""); }}
+              disabled={deleting}
+              style={{
+                flex: 1, background: "transparent", border: "1px solid rgba(255,255,255,0.1)",
+                color: "rgba(237,236,234,0.5)", padding: "0.6rem",
+                fontFamily: "var(--font-space-mono)", fontSize: "0.7rem",
+                letterSpacing: "0.12em", cursor: "pointer", borderRadius: 4,
+              }}>
+              取消
+            </button>
+            <button type="button" onClick={handleDelete}
+              disabled={deleting || deleteText !== "刪除"}
+              style={{
+                flex: 1, background: deleteText === "刪除" ? "#D65C6A" : "rgba(214,92,106,0.2)",
+                border: "none", color: deleteText === "刪除" ? "#1a1b18" : "rgba(214,92,106,0.5)",
+                padding: "0.6rem", fontFamily: "var(--font-space-mono)", fontSize: "0.7rem",
+                letterSpacing: "0.12em",
+                cursor: (deleting || deleteText !== "刪除") ? "default" : "pointer",
+                borderRadius: 4,
+              }}>
+              {deleting ? "刪除中..." : "永久刪除帳號"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
