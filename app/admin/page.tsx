@@ -3,10 +3,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ApplicationsTab from "./ApplicationsTab";
 import SitDeleteButton from "./SitDeleteButton";
 import ErrorsTab, { type ErrorRow } from "./ErrorsTab";
+import MembersTab from "./MembersTab";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: applications } = await supabase
     .from("applications").select("*").order("created_at", { ascending: false });
@@ -112,25 +116,7 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="members">
-          <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
-            {members?.length === 0 && (
-              <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.2)", textAlign: "center", padding: "3rem 0" }}>還沒有成員。</p>
-            )}
-            {members?.map((m) => (
-              <Link key={m.id} href={`/u/${m.id}`} style={{ background: "#2c2c2a", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0.875rem 1rem", textDecoration: "none" }} className="flex items-center gap-3 hover:bg-[#2a2c28] transition-colors">
-                <div className={`avatar-${m.avatar_color} flex-shrink-0 flex items-center justify-center font-medium`}
-                  style={{ width: 32, height: 32, fontSize: "0.8rem" }}>
-                  {m.avatar_letter}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p style={{ fontSize: "0.875rem", color: "#edecea" }}>{m.display_name}</p>
-                  <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.25)", letterSpacing: "0.08em", marginTop: "0.2rem" }}>
-                    {m.role.toUpperCase()} · {new Date(m.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short" }).toUpperCase()}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <MembersTab members={members ?? []} currentUserId={user.id} />
         </TabsContent>
 
         <TabsContent value="sits">

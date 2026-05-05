@@ -4,7 +4,7 @@
 import { createClient } from "@/lib/supabase-server";
 import Avatar from "@/components/Avatar";
 import CreateCallForm from "@/app/feed/CreateCallForm";
-import { JoinButton, CancelButton } from "@/app/feed/CallActions";
+import { JoinButton, CancelButton, AdminCancelButton } from "@/app/feed/CallActions";
 import { APP_TZ } from "@/lib/tz";
 
 type CallRow = {
@@ -75,6 +75,11 @@ export default async function UpcomingCalls() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // 是不是 admin → admin 對「不是自己發起」的呼喚也能強制刪
+  const { data: viewerProfile } = await supabase
+    .from("profiles").select("role").eq("id", user.id).single();
+  const isAdmin = viewerProfile?.role === "admin";
 
   // 拉所有未過期的呼喚：scheduled_at > now() - 2.5h（涵蓋進行中 + 緩衝）
   const cutoff = new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString();
@@ -283,6 +288,7 @@ export default async function UpcomingCalls() {
                 </div>
                 <div className="flex items-center gap-1">
                   {isOwner && <CancelButton callId={c.id} />}
+                  {!isOwner && isAdmin && <AdminCancelButton callId={c.id} />}
                   <JoinButton
                     callId={c.id}
                     joined={Boolean(c.joined_by_me)}

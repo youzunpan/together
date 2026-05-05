@@ -190,3 +190,24 @@ export async function cancelCall(callId: string) {
   revalidatePath("/feed");
   return { ok: true };
 }
+
+// 管理員強制刪除任何呼喚（用 service role 繞過 RLS）。
+// 給 /admin 用，平常使用者會走 cancelCall。
+export async function adminCancelCall(callId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  const { data: profile } = await supabase
+    .from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || profile.role !== "admin") return { error: "無權限" };
+
+  const sb = admin();
+  const { error } = await sb.from("sit_calls").delete().eq("id", callId);
+  if (error) return { error: error.message };
+
+  await sb.from("push_jobs").delete().eq("ref_id", callId).is("sent_at", null);
+
+  revalidatePath("/feed");
+  revalidatePath("/admin");
+  return { ok: true };
+}

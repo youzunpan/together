@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { joinCall, leaveCall, cancelCall } from "@/lib/actions/calls";
+import { joinCall, leaveCall, cancelCall, adminCancelCall } from "@/lib/actions/calls";
 
 export function JoinButton({
   callId,
@@ -84,6 +84,39 @@ export function CancelButton({ callId }: { callId: string }) {
       }}
     >
       {pending ? "..." : "CANCEL"}
+    </button>
+  );
+}
+
+// 管理員強制刪除（即使不是發起人）。只在 admin 看 feed 時顯示。
+export function AdminCancelButton({ callId }: { callId: string }) {
+  const [pending, start] = useTransition();
+
+  function handleClick() {
+    if (!confirm("以管理員身份刪掉這場同心？")) return;
+    start(async () => {
+      const res = await adminCancelCall(callId);
+      if (res.error) alert(res.error);
+    });
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={pending}
+      title="管理員強制刪除"
+      style={{
+        background: "none",
+        border: "none",
+        padding: "0.25rem 0.5rem",
+        color: pending ? "rgba(214,92,106,0.3)" : "rgba(214,92,106,0.55)",
+        fontFamily: "var(--font-space-mono)",
+        fontSize: "0.6rem",
+        letterSpacing: "0.1em",
+        cursor: pending ? "default" : "pointer",
+      }}
+    >
+      {pending ? "..." : "ADMIN ✕"}
     </button>
   );
 }

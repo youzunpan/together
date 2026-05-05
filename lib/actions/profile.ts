@@ -67,6 +67,47 @@ export async function signOut() {
   redirect("/login");
 }
 
+// 管理員強制移除某人：清掉資料 + 刪 auth.user。對方會立即被踢出。
+// 不能移除自己（admin），也不能移除其他 admin（避免互砍）。
+export async function adminRemoveMember(targetUserId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  const { data: me } = await supabase
+    .from("profiles").select("role").eq("id", user.id).single();
+  if (!me || me.role !== "admin") return { error: "無權限" };
+  if (targetUserId === user.id) return { error: "不能移除自己" };
+
+  const admin = serviceClient();
+
+  // 防呆：不允許移除其他 admin
+  const { data: target } = await admin
+    .from("profiles").select("role").eq("id", targetUserId).single();
+  if (!target) return { error: "找不到該成員" };
+  if (target.role === "admin") return { error: "不能移除其他管理員" };
+
+  // 1. 刪該人 sits
+  await admin.from("sits").delete().eq("user_id", targetUserId);
+  // 2. 把 applications.reviewed_by 指向 target 的清空
+  await admin.from("applications").update({ reviewed_by: null }).eq("reviewed_by", targetUserId);
+  // 3. 刪該人尚未發出的 push_jobs
+  await admin.from("push_jobs").delete().eq("user_id", targetUserId);
+  // 4. 刪 profile（cascade push_subscriptions / sit_calls / sit_call_joins / reactions）
+  const { error: profErr } = await admin.from("profiles").delete().eq("id", targetUserId);
+  if (profErr) return { error: `刪除 profile 失敗：${profErr.message}` };
+  // 5. 刪該 email 的歷史 application（若有）
+  const { data: targetUser } = await admin.auth.admin.getUserById(targetUserId);
+  if (targetUser?.user?.email) {
+    await admin.from("applications").delete().ilike("email", targetUser.user.email);
+  }
+  // 6. 刪 auth user（會立即吊銷 session）
+  const { error: authErr } = await admin.auth.admin.deleteUser(targetUserId);
+  if (authErr) return { error: `刪除帳號失敗：${authErr.message}` };
+
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
 // 完全刪除自己的帳號：sits / 推播訂閱 / 同心呼喚 / reactions / profile / auth user
 // 部分表（push_subscriptions / sit_calls / sit_call_joins / reactions）是 ON DELETE CASCADE
 // 但 sits 沒有 cascade、applications.reviewed_by 也是 RESTRICT，需手動處理。
