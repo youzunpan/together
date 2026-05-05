@@ -100,7 +100,23 @@ export default async function AdminPage() {
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)", textAlign: "center" }}>
           ADMIN
         </p>
-        <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", fontWeight: 400, marginTop: "0.5rem" }}>管理後台</h1>
+        <div className="flex items-center justify-between mt-1">
+          <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", fontWeight: 400 }}>管理後台</h1>
+          <a
+            href="/api/admin/export"
+            download
+            title="下載一份 JSON 備份到本機"
+            style={{
+              fontFamily: "var(--font-space-mono)", fontSize: "0.6rem",
+              letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)",
+              padding: "0.35rem 0.7rem",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4,
+              textDecoration: "none",
+            }}
+          >
+            ⬇ BACKUP
+          </a>
+        </div>
       </header>
 
       <Tabs defaultValue="applications">
