@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
@@ -23,8 +24,6 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [linkLoading, setLinkLoading] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export default function LoginForm() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setError(""); setLinkSent(false); setLoading(true);
+    setError(""); setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -48,34 +47,8 @@ export default function LoginForm() {
     router.refresh();
   }
 
-  async function handleEmailLink() {
-    setError(""); setLinkSent(false);
-    if (!email) { setError("請先填 email"); return; }
-    setLinkLoading(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        // 不允許用 magic link 自助開帳號（必須先通過審核）
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/feed`,
-      },
-    });
-    setLinkLoading(false);
-    if (err) {
-      const msg = err.message.toLowerCase();
-      if (msg.includes("signup") || msg.includes("not allowed") || msg.includes("not found")) {
-        setError("這個 email 還沒通過審核，或不存在。");
-      } else {
-        setError(err.message);
-      }
-      return;
-    }
-    setLinkSent(true);
-  }
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <form onSubmit={handleLogin} className="space-y-3">
         <input type="email" value={email} onChange={e => setEmail(e.target.value)}
           placeholder="your@email.com" required autoComplete="email"
@@ -90,30 +63,22 @@ export default function LoginForm() {
           onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
 
         {error && <p style={{ fontSize: "0.75rem", color: "#D65C6A" }}>{error}</p>}
-        {linkSent && (
-          <p style={{ fontSize: "0.75rem", color: "#BEC23F" }}>
-            登入連結已寄出，請去信箱查收。
-          </p>
-        )}
 
-        <button type="submit" disabled={loading || linkLoading} className="btn-primary w-full"
+        <button type="submit" disabled={loading} className="btn-primary w-full"
           style={{ width: "100%", letterSpacing: "0.12em" }}>
           {loading ? "..." : "登入"}
         </button>
       </form>
 
-      {/* 用 email 寄登入連結（也用於忘記密碼） */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem", textAlign: "center" }}>
-        <button type="button" onClick={handleEmailLink} disabled={loading || linkLoading || linkSent}
+      <div style={{ textAlign: "center", paddingTop: "0.5rem" }}>
+        <Link href="/forgot-password"
           style={{
-            background: "transparent", border: "none", padding: 0,
             fontFamily: "var(--font-space-mono)", fontSize: "0.7rem",
-            letterSpacing: "0.1em", color: linkSent ? "rgba(190,194,63,0.6)" : "rgba(237,236,234,0.5)",
-            cursor: (loading || linkLoading || linkSent) ? "default" : "pointer",
+            letterSpacing: "0.1em", color: "rgba(237,236,234,0.4)",
             textDecoration: "underline", textUnderlineOffset: "3px",
           }}>
-          {linkLoading ? "寄送中..." : linkSent ? "已寄出" : "忘記密碼？用 email 寄登入連結"}
-        </button>
+          忘記密碼？
+        </Link>
       </div>
     </div>
   );
