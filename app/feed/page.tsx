@@ -5,6 +5,7 @@ import LiveSitters from "./LiveSitters";
 import CommunityCircle from "@/components/CommunityCircle";
 import UpcomingCalls from "@/components/UpcomingCalls";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
+import WelcomeOverlay from "@/components/WelcomeOverlay";
 import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { compute21Day } from "@/lib/streak";
 
@@ -22,6 +23,13 @@ export default async function FeedPage() {
     .order("sat_at", { ascending: false })
     .limit(1)
     .single();
+
+  // 判斷新用戶（從未坐過）→ 觸發歡迎引導
+  const { count: ownSitCount } = await supabase
+    .from("sits")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user!.id);
+  const alreadyMember = (ownSitCount ?? 0) > 0;
 
   const { data: sits } = await supabase
     .from("sits_with_stats")
@@ -60,6 +68,9 @@ export default async function FeedPage() {
 
   return (
     <div className="max-w-md mx-auto px-4">
+      {/* 首次登入引導（新用戶才顯示） */}
+      <WelcomeOverlay alreadyMember={alreadyMember} />
+
       {/* Sticky header */}
       <header className="sticky z-10 pt-4 pb-3"
         style={{
