@@ -43,6 +43,10 @@ export default function SitFlow() {
   const awaitingShownAtRef = useRef(0);
   // 這次 sit 期間是否有進過背景（螢幕鎖定 / 切 app）。有的話過了 gesture window，結束鳴鐘改走 tap。
   const wasHiddenRef = useRef(false);
+  // 計時器跨過 0 的鈴聲是否已響過（避免重複響）。每次 startTimer 重置。
+  const bellRangRef = useRef(false);
+  // 超時秒數（鈴響後使用者還沒按停止的時間）
+  const [overtime, setOvertime] = useState(0);
   // 第一次按「開始靜心」前要不要先問通知權限
   const [pushPromptOpen, setPushPromptOpen] = useState(false);
   const [pushPromptBusy, setPushPromptBusy] = useState(false);
@@ -132,7 +136,7 @@ export default function SitFlow() {
       audioCtxRef.current?.resume().catch(() => {});
       if (Date.now() >= endTimeRef.current && actualStart) {
         // 時間已到：交給 handleTimerEnd（內部會因 wasHiddenRef=true 改走輕觸鳴鐘）
-        handleTimerEnd(actualStart, selectedMin);
+        handleTimerEnd();
       } else {
         acquireWakeLock();
       }
@@ -209,33 +213,35 @@ export default function SitFlow() {
     };
   }, []);
 
-  const handleTimerEnd = useCallback((started: Date, durationMin: number) => {
-    clearTimer();
-    // 前景自然結束 → 取消推播 job，避免重複響
+  // 計時器跨 0 點：響一次鈴 + 進入「超時」模式（不自動進記錄頁）。
+  // 取消已排的「結束鈴」推播（前景已經響了，不需要 push fallback）。
+  // 不離開 liveSitters / 不釋放 wakeLock —— 學生還在坐。
+  const handleTimerEnd = useCallback(() => {
+    if (bellRangRef.current) return; // 已響過就不再響
+    bellRangRef.current = true;
+
     if (pushJobRef.current) {
       cancelPushJob(pushJobRef.current).catch(() => {});
       pushJobRef.current = null;
     }
-    setActualMin(durationMin);
+
     // 判斷是不是「從背景回來」：若 handleTimerEnd 被呼叫時，時間已超過 endTime 超過 1 秒，
     // 代表 iOS 凍結 JS 之後才解凍處理，過了 gesture window，自動 play 一定被擋。
-    // 用時間差比 wasHiddenRef 更可靠（iOS 螢幕鎖定時 visibility hidden 事件可能根本沒跑到）。
     const lateBy = Date.now() - endTimeRef.current;
     if (wasHiddenRef.current || lateBy > 1000) {
+      // 學生已回神拿起手機，不應該還繼續坐 → 走原本的 tap_to_end → 記錄頁流程
       awaitingShownAtRef.current = Date.now();
-      // 用獨立 step 而不是疊加 flag，避免任何殘留 setTimeout 干擾
       setStep("tap_to_end");
       return;
     }
-    // 全程前景：照常響鈴 + 進記錄頁
+
+    // 全程前景：響鈴一次，UI 自動切到「超時計時」（remaining → overtime）。
+    // 學生想結束時按「停止」按鈕。
     audioCtxRef.current?.resume().catch(() => {});
     ringBell();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(400);
     }
-    leaveLiveSitters();
-    releaseWakeLock();
-    setTimeout(() => setStep("record"), 4500);
   }, []);
 
   // 使用者點「輕觸鳴鐘」覆蓋層 → 這次點擊就是 user gesture，可以播音了
@@ -249,6 +255,11 @@ export default function SitFlow() {
     }
     leaveLiveSitters();
     releaseWakeLock();
+    // 記錄實際坐的時間（含超時）
+    const elapsedMin = actualStart
+      ? Math.max(selectedMin, Math.floor((Date.now() - actualStart.getTime()) / 60000))
+      : selectedMin;
+    setActualMin(elapsedMin);
     setTimeout(() => setStep("record"), 4500);
   }
 
@@ -357,6 +368,8 @@ export default function SitFlow() {
 
   function startTimer(min: number) {
     wasHiddenRef.current = false; // 新的 sit，重置背景旗標
+    bellRangRef.current = false;  // 重置鈴響旗標
+    setOvertime(0);               // 重置超時
     ringBell(); // 開始鐘（優先走 <audio>，繞過 iOS 靜音鍵）
     acquireWakeLock(); // 補保險（beginPrepare 已請求過一次，這裡確保仍生效）
     joinLiveSitters(); // 加入「正在靜坐的人」
@@ -371,9 +384,15 @@ export default function SitFlow() {
     endTimeRef.current = now + min * 60 * 1000;
     setPaused(false); setStep("timer");
     intervalRef.current = setInterval(() => {
-      const left = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
-      setRemaining(left);
-      if (left === 0) handleTimerEnd(start, min);
+      const diffSec = Math.round((endTimeRef.current - Date.now()) / 1000);
+      if (diffSec > 0) {
+        setRemaining(diffSec);
+      } else {
+        // 跨過 0 點：第一次到這裡時響鈴 + 進入超時計時
+        setRemaining(0);
+        setOvertime(-diffSec);
+        if (!bellRangRef.current) handleTimerEnd();
+      }
     }, 500);
   }
 
@@ -392,6 +411,13 @@ export default function SitFlow() {
       pushJobRef.current = null;
     }
     const elapsed = Math.floor((Date.now() - (actualStart?.getTime() ?? Date.now())) / 60000);
+    // 鈴已響過 = 已坐滿原訂時間，學生主動按停止 → 直接記錄（含超時）
+    if (bellRangRef.current) {
+      setActualMin(elapsed);
+      setStep("record");
+      return;
+    }
+    // 鈴沒響過 = 真的提前結束，少於 3 分鐘退回 pick
     if (elapsed < 3) { setEarlyEnd(true); setTimeout(() => { setEarlyEnd(false); setStep("pick"); }, 2500); }
     else { setActualMin(elapsed); setStep("record"); }
   }
@@ -400,9 +426,14 @@ export default function SitFlow() {
     if (paused) clearTimer();
     else if (step === "timer") {
       intervalRef.current = setInterval(() => {
-        const left = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
-        setRemaining(left);
-        if (left === 0 && actualStart) handleTimerEnd(actualStart, selectedMin);
+        const diffSec = Math.round((endTimeRef.current - Date.now()) / 1000);
+        if (diffSec > 0) {
+          setRemaining(diffSec);
+        } else {
+          setRemaining(0);
+          setOvertime(-diffSec);
+          if (!bellRangRef.current) handleTimerEnd();
+        }
       }, 500);
     }
     return () => clearTimer();
@@ -672,9 +703,11 @@ export default function SitFlow() {
   // ── Step 2: 計時中 ──────────────────────────────
   if (step === "timer") {
     const total = selectedMin * 60;
-    const progress = total > 0 ? (total - remaining) / total : 0;
-    const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
-    const ss = String(remaining % 60).padStart(2, "0");
+    const isOvertime = bellRangRef.current && overtime > 0;
+    const progress = isOvertime ? 1 : (total > 0 ? (total - remaining) / total : 0);
+    const displaySec = isOvertime ? overtime : remaining;
+    const mm = String(Math.floor(displaySec / 60)).padStart(2, "0");
+    const ss = String(displaySec % 60).padStart(2, "0");
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#1a1b18" }}>
@@ -689,14 +722,23 @@ export default function SitFlow() {
               className="transition-all duration-500"
             />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span style={{
               fontFamily: "var(--font-space-mono)", fontSize: "3.5rem", fontWeight: 400,
               color: "#edecea", letterSpacing: "-0.02em",
               opacity: paused ? 0.4 : 1, transition: "opacity 0.3s",
             }}>
-              {mm}:{ss}
+              {isOvertime ? "+" : ""}{mm}:{ss}
             </span>
+            {isOvertime && (
+              <span style={{
+                fontFamily: "var(--font-space-mono)", fontSize: "0.6rem",
+                letterSpacing: "0.18em", color: "rgba(190,194,63,0.7)",
+                marginTop: "0.5rem",
+              }}>
+                超時 · OVERTIME
+              </span>
+            )}
           </div>
         </div>
 
@@ -729,11 +771,13 @@ export default function SitFlow() {
         </div>
 
         <div className="flex gap-10">
-          <button onClick={handlePause} className="btn-ghost" style={{ letterSpacing: "0.12em" }}>
-            {paused ? "RESUME" : "PAUSE"}
-          </button>
+          {!isOvertime && (
+            <button onClick={handlePause} className="btn-ghost" style={{ letterSpacing: "0.12em" }}>
+              {paused ? "RESUME" : "PAUSE"}
+            </button>
+          )}
           <button onClick={handleEarlyEnd} className="btn-ghost" style={{ letterSpacing: "0.12em" }}>
-            END
+            {isOvertime ? "停止 · STOP" : "END"}
           </button>
         </div>
 
