@@ -152,7 +152,8 @@ export default function SitFlow() {
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
-  // 從 ?duration= 預填時長（給「同心」邀坐用），有值就自動進入 prepare
+  // 從 ?duration= 預填時長（給「同心」邀坐用），有值就自動進入 prepare；
+  // 沒帶就隨機選一個 preset 高亮（每次進來不同）
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -163,7 +164,10 @@ export default function SitFlow() {
       window.history.replaceState({}, "", "/sit");
       // 進入 prepare（延一個 tick 讓 audioCtx 初始化完成）
       setTimeout(() => beginPrepare(d), 0);
+      return;
     }
+    const presets = [6, 12, 18, 24, 36, 60];
+    setSelectedMin(presets[Math.floor(Math.random() * presets.length)]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
