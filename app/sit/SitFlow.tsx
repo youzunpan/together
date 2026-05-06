@@ -484,11 +484,26 @@ export default function SitFlow() {
           />
         )}
 
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 flex justify-center">
           <button onClick={() => { if (mins >= 1 && mins <= 240) tryStart(mins); }}
             disabled={mins < 1 || mins > 240}
-            className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
-            開始靜心
+            style={{
+              width: 110, height: 110, borderRadius: "50%",
+              background: (mins < 1 || mins > 240) ? "rgba(190,194,63,0.25)" : "#BEC23F",
+              color: "#1a1b18",
+              border: "none",
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "1.15rem",
+              letterSpacing: "0.08em",
+              cursor: (mins < 1 || mins > 240) ? "default" : "pointer",
+              transition: "transform 0.15s, background 0.2s",
+              boxShadow: "0 0 24px rgba(190,194,63,0.25)",
+            }}
+            onMouseDown={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.transform = "scale(0.95)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            Start
           </button>
         </div>
 
