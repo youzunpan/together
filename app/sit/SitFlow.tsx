@@ -6,9 +6,8 @@ import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { taipeiDatetimeLocal } from "@/lib/tz";
 
-type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record" | "manual";
+type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record";
 const PRESETS = [6, 12, 18, 24, 36, 60];
 
 const inputStyle = {
@@ -146,8 +145,6 @@ export default function SitFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, paused, actualStart, selectedMin]);
   const [reflection, setReflection] = useState("");
-  const [satAt, setSatAt] = useState("");
-  const [manualMin, setManualMin] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [earlyEnd, setEarlyEnd] = useState(false);
   const [prepareLeft, setPrepareLeft] = useState(5);
@@ -444,12 +441,9 @@ export default function SitFlow() {
     if (skip) { window.location.href = "/feed"; return; }
     setSubmitting(true);
     const fd = new FormData();
-    const isManual = step === "manual";
-    fd.set("duration_min", isManual ? manualMin : String(actualMin || selectedMin));
+    fd.set("duration_min", String(actualMin || selectedMin));
     fd.set("reflection", reflection);
-    // 手動輸入的 satAt 是台北牆上時間（YYYY-MM-DDTHH:mm），用 +08:00 解析後送 UTC ISO
-    const manualISO = isManual && satAt ? new Date(`${satAt}:00+08:00`).toISOString() : null;
-    fd.set("sat_at", manualISO ?? actualStart?.toISOString() ?? new Date().toISOString());
+    fd.set("sat_at", actualStart?.toISOString() ?? new Date().toISOString());
     await recordSit(fd);
   }
 
@@ -522,10 +516,6 @@ export default function SitFlow() {
             disabled={mins < 1 || mins > 240}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             開始靜心
-          </button>
-          <button onClick={() => { setStep("manual"); setSatAt(taipeiDatetimeLocal()); setManualMin(String(mins || 20)); }}
-            className="btn-ghost w-full" style={{ letterSpacing: "0.1em" }}>
-            我已經坐完了 →
           </button>
         </div>
 
@@ -823,41 +813,6 @@ export default function SitFlow() {
           <button onClick={() => handleRecord(true)} className="btn-ghost w-full" style={{ letterSpacing: "0.1em" }}>
             不記錄
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 手動補記 ──────────────────────────────
-  if (step === "manual") {
-    return (
-      <div className="max-w-md mx-auto px-4 py-10">
-        <button onClick={() => setStep("pick")} className="btn-ghost mb-6" style={{ letterSpacing: "0.1em" }}>← BACK</button>
-        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)", marginBottom: "1rem" }}>MANUAL ENTRY</p>
-        <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", marginBottom: "2rem", fontWeight: 400 }}>記錄這次靜心</h1>
-        <div className="space-y-3">
-          <div>
-            <label className="seq-label block mb-1.5">DURATION (MIN)</label>
-            <input type="number" min={1} max={240} value={manualMin} onChange={e => setManualMin(e.target.value)} style={inputStyle}
-              onFocus={e => e.target.style.borderColor = "#BEC23F"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
-          </div>
-          <div>
-            <label className="seq-label block mb-1.5">START TIME</label>
-            <input type="datetime-local" value={satAt} onChange={e => setSatAt(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }}
-              onFocus={e => e.target.style.borderColor = "#BEC23F"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
-          </div>
-          <div>
-            <label className="seq-label block mb-1.5">NOTE (OPTIONAL)</label>
-            <textarea value={reflection} onChange={e => setReflection(e.target.value.slice(0, 140))}
-              placeholder="像一句呼吸就好" rows={3} className="reflection-text"
-              style={{ ...inputStyle, resize: "none", lineHeight: 1.7 }}
-              onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.15)"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
-          </div>
-          <button onClick={() => handleRecord(false)} disabled={submitting || !manualMin}
-            className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
-            {submitting ? "SAVING..." : "記錄"}
-          </button>
-          <button onClick={() => handleRecord(true)} className="btn-ghost w-full" style={{ letterSpacing: "0.1em" }}>不記錄</button>
         </div>
       </div>
     );
