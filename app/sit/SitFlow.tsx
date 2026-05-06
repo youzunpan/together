@@ -4,12 +4,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
+import SitDurationScatter from "@/components/SitDurationScatter";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record";
-const PRESETS = [6, 12, 18, 24, 36, 60];
-
 const inputStyle = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
   // fontSize 必須 ≥ 16px，否則 iOS Safari 點進去會自動放大畫面而且不會自己縮回
@@ -468,38 +467,12 @@ export default function SitFlow() {
           今天想坐多久？
         </h1>
 
-        <div className="grid grid-cols-3 gap-1.5 mb-1.5">
-          {PRESETS.map(m => (
-            <button key={m} onClick={() => { setSelectedMin(m); setShowCustom(false); }}
-              style={{
-                padding: "0.75rem 0",
-                fontSize: "0.875rem",
-                fontFamily: "var(--font-space-mono)",
-                background: (!showCustom && selectedMin === m) ? "#BEC23F" : "#2c2c2a",
-                color: (!showCustom && selectedMin === m) ? "#1a1b18" : "rgba(237,236,234,0.5)",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                borderRadius: 4,
-              }}>
-              {m}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => setShowCustom(true)}
-          style={{
-            width: "100%",
-            padding: "0.75rem 0", fontSize: "0.75rem",
-            fontFamily: "var(--font-space-mono)",
-            background: showCustom ? "#BEC23F" : "#2c2c2a",
-            color: showCustom ? "#1a1b18" : "rgba(237,236,234,0.3)",
-            border: "none", cursor: "pointer", transition: "all 0.15s",
-            letterSpacing: "0.05em",
-            borderRadius: 4,
-            marginBottom: "0.75rem",
-          }}>
-          OTHER
-        </button>
+        <SitDurationScatter
+          selectedMin={selectedMin}
+          showCustom={showCustom}
+          onSelect={(m) => { setSelectedMin(m); setShowCustom(false); }}
+          onOther={() => setShowCustom(true)}
+        />
 
         {showCustom && (
           <input type="number" min={1} max={240} value={customMin}
