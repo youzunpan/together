@@ -7,14 +7,16 @@ import { useEffect, useRef, useState } from "react";
 
 const PRESETS: Array<{ min: number; r: number }> = [
   { min: 6, r: 26 },
-  { min: 12, r: 32 },
-  { min: 18, r: 38 },
-  { min: 24, r: 44 },
-  { min: 36, r: 54 },
+  { min: 12, r: 31 },
+  { min: 18, r: 36 },
+  { min: 24, r: 41 },
+  { min: 30, r: 46 },
+  { min: 36, r: 51 },
+  { min: 42, r: 56 },
   { min: 60, r: 66 },
 ];
 const OTHER_RADIUS = 22;
-const CONTAINER_HEIGHT = 360;
+const CONTAINER_HEIGHT = 400;
 const EDGE_PADDING = 4;
 const GAP = 4;
 

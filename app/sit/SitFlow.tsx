@@ -166,7 +166,7 @@ export default function SitFlow() {
       setTimeout(() => beginPrepare(d), 0);
       return;
     }
-    const presets = [6, 12, 18, 24, 36, 60];
+    const presets = [6, 12, 18, 24, 30, 36, 42, 60];
     setSelectedMin(presets[Math.floor(Math.random() * presets.length)]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
