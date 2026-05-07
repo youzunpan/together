@@ -65,7 +65,7 @@ function TabContent({
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const hideOn = ["/login", "/apply"];
+  const hideOn = ["/login", "/apply", "/courses"];
   if (hideOn.some((p) => pathname.startsWith(p))) return null;
 
   return (

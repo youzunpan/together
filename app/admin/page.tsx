@@ -5,6 +5,7 @@ import SitDeleteButton from "./SitDeleteButton";
 import ErrorsTab, { type ErrorRow } from "./ErrorsTab";
 import MembersTab from "./MembersTab";
 import AnnouncementsTab from "./AnnouncementsTab";
+import CoursesTab, { type CourseRow, type RegistrationRow } from "./CoursesTab";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -48,8 +49,29 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
+  // 課程（admin 讀直接 query courses 表，可以看到 draft；報名數在 JS 算）
+  const { data: rawCourses } = await supabase
+    .from("courses")
+    .select("id, slug, title, subtitle, description, format, duration_type, start_at, end_at, schedule_note, location, price_note, capacity, cover_image_url, status")
+    .order("start_at", { ascending: false });
+  const { data: rawRegistrations } = await supabase
+    .from("registrations")
+    .select("id, course_id, name, email, phone, line_id, transfer_last4, status, created_at")
+    .order("created_at", { ascending: false });
+
+  const registrationsList: RegistrationRow[] = rawRegistrations ?? [];
+  const coursesList: CourseRow[] = (rawCourses ?? []).map((c) => {
+    const active = registrationsList.filter(r => r.course_id === c.id && r.status !== "cancelled").length;
+    return {
+      ...c,
+      registered_count: active,
+      seats_left: Math.max(c.capacity - active, 0),
+    };
+  });
+
   const pendingCount = applications?.filter(a => a.status === "pending").length ?? 0;
   const errorCount = errors?.length ?? 0;
+  const totalRegistrations = registrationsList.length;
 
   // 按日聚合（Taipei 時區）
   type DailyStat = { date: string; label: string; memberCount: number; totalMin: number; sits: typeof recentSits };
@@ -120,26 +142,33 @@ export default async function AdminPage() {
       </header>
 
       <Tabs defaultValue="applications">
-        <TabsList className="w-full mb-6" style={{ background: "#2c2c2a", borderRadius: 4, padding: 0, gap: "1px", overflow: "hidden" }}>
-          <TabsTrigger value="applications" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
-            APPLICATIONS{pendingCount > 0 ? ` (${pendingCount})` : ""}
+        <TabsList className="w-full mb-6 flex-wrap" style={{ background: "#2c2c2a", borderRadius: 4, padding: 0, gap: "1px", overflow: "hidden" }}>
+          <TabsTrigger value="applications" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+            APPLY{pendingCount > 0 ? ` (${pendingCount})` : ""}
           </TabsTrigger>
-          <TabsTrigger value="members" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+          <TabsTrigger value="courses" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+            COURSES{totalRegistrations > 0 ? ` (${totalRegistrations})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="members" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
             MEMBERS
           </TabsTrigger>
-          <TabsTrigger value="sits" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+          <TabsTrigger value="sits" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
             SITS
           </TabsTrigger>
-          <TabsTrigger value="errors" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+          <TabsTrigger value="errors" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
             ERRORS{errorCount > 0 ? ` (${errorCount})` : ""}
           </TabsTrigger>
-          <TabsTrigger value="announce" className="flex-1" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em" }}>
+          <TabsTrigger value="announce" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
             ANNOUNCE
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="applications">
           <ApplicationsTab applications={applications ?? []} />
+        </TabsContent>
+
+        <TabsContent value="courses">
+          <CoursesTab courses={coursesList} registrations={registrationsList} />
         </TabsContent>
 
         <TabsContent value="members">
