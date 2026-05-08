@@ -10,6 +10,7 @@ import {
   updateRegistrationStatus,
 } from "@/lib/actions/registrations";
 import CourseFormDialog, { type CourseFormCourse } from "./CourseFormDialog";
+import CourseEmailDialog from "./CourseEmailDialog";
 
 export type CourseRow = CourseFormCourse & {
   registered_count: number;
@@ -72,6 +73,7 @@ export default function CoursesTab({
   const [editing, setEditing] = useState<CourseRow | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [emailing, setEmailing] = useState<CourseRow | null>(null);
   const [pending, start] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -173,6 +175,11 @@ export default function CoursesTab({
                   <ActionButton onClick={() => setExpandedId(expanded ? null : c.id)}>
                     {expanded ? "收起" : `報名 (${c.registered_count})`}
                   </ActionButton>
+                  {c.registered_count > 0 && (
+                    <ActionButton onClick={() => setEmailing(c)}>
+                      ✉ 寄信
+                    </ActionButton>
+                  )}
                   {c.status !== "published" && (
                     <ActionButton
                       disabled={busyId === c.id && pending}
@@ -247,6 +254,15 @@ export default function CoursesTab({
           open={!!editing}
           onOpenChange={(open) => { if (!open) setEditing(null); }}
           course={editing}
+        />
+      )}
+      {emailing && (
+        <CourseEmailDialog
+          open={!!emailing}
+          onOpenChange={(open) => { if (!open) setEmailing(null); }}
+          course={emailing}
+          pendingCount={registrations.filter(r => r.course_id === emailing.id && r.status === "pending").length}
+          confirmedCount={registrations.filter(r => r.course_id === emailing.id && r.status === "confirmed").length}
         />
       )}
     </div>

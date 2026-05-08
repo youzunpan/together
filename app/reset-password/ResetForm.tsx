@@ -19,11 +19,31 @@ export default function ResetForm() {
   const [error, setError] = useState("");
   const [authed, setAuthed] = useState<boolean | null>(null);
 
-  // 必須是「點 email 連結 + /auth/callback 換好 session」才會有有效 user
-  // 若沒有 session，就提示使用者重新發送
+  // 信件連結會直接帶 ?code=... 進來，supabase-js 在 client 初始化時會自動
+  // 把 code 交換成 session（detectSessionInUrl: true 預設值）。需要等
+  // INITIAL_SESSION 事件才知道有沒有成功交換。
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
+    let resolved = false;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // INITIAL_SESSION 一定會在 client 啟動時觸發一次（不管有沒有 session）
+      // PASSWORD_RECOVERY / SIGNED_IN 是密碼回復成功的事件
+      if (event === "INITIAL_SESSION" || event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        resolved = true;
+        setAuthed(!!session?.user);
+      }
+    });
+
+    // 保險：5 秒沒任何事件就視為失效（理論上不會走到這條）
+    const timer = setTimeout(() => {
+      if (!resolved) setAuthed(false);
+    }, 5000);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

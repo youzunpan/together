@@ -1,11 +1,20 @@
 "use client";
 
 // 新增/編輯課程的 dialog 表單。所有欄位都在同一個畫面，必要時 scroll。
+// 上課日期改為 sessions list（每堂課獨立資料）：
+// - single：1 個 datetime 輸入
+// - series：可一鍵產生「從 X 起、每 7 天一次、共 N 次」，再手動增刪
+// 表單送出時把 sessions 序列化成 hidden input `sessions_json`。
 
 import { useState, useTransition } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { createCourse, updateCourse } from "@/lib/actions/courses";
-import { taipeiDatetimeLocal } from "@/lib/tz";
+import { taipeiDatetimeLocal, APP_TZ } from "@/lib/tz";
+
+export type CourseFormSession = {
+  session_at_local: string; // "YYYY-MM-DDTHH:mm" 台北牆上時間
+  note: string | null;
+};
 
 export type CourseFormCourse = {
   id: string;
@@ -23,6 +32,7 @@ export type CourseFormCourse = {
   capacity: number;
   cover_image_url: string | null;
   status: "draft" | "published" | "closed";
+  sessions: CourseFormSession[];
 };
 
 const inputStyle: React.CSSProperties = {
@@ -52,6 +62,13 @@ const helperStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
+// 既有課程沒有 sessions 時的 fallback：用 start_at 種一筆
+function seedSessionsFromCourse(course: CourseFormCourse | null): CourseFormSession[] {
+  if (!course) return [];
+  if (course.sessions.length > 0) return course.sessions;
+  return [{ session_at_local: taipeiDatetimeLocal(new Date(course.start_at)), note: null }];
+}
+
 export default function CourseFormDialog({
   open,
   onOpenChange,
@@ -66,15 +83,25 @@ export default function CourseFormDialog({
   const [error, setError] = useState("");
   const [format, setFormat] = useState<"online" | "offline">(course?.format ?? "offline");
   const [durationType, setDurationType] = useState<"single" | "series">(course?.duration_type ?? "single");
+  const [sessions, setSessions] = useState<CourseFormSession[]>(seedSessionsFromCourse(course));
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    // 確保 single 只有 1 場、series 至少 1 場
+    let toSave = sessions.filter((s) => s.session_at_local);
+    if (durationType === "single" && toSave.length > 1) toSave = [toSave[0]];
+    if (toSave.length === 0) {
+      setError("請至少加 1 個上課日期");
+      return;
+    }
+
     const fd = new FormData(e.currentTarget);
+    fd.set("sessions_json", JSON.stringify(toSave));
+
     start(async () => {
-      const res = isEdit && course
-        ? await updateCourse(course.id, fd)
-        : await createCourse(fd);
+      const res = isEdit && course ? await updateCourse(course.id, fd) : await createCourse(fd);
       if (res.error) {
         setError(res.error);
         return;
@@ -82,8 +109,6 @@ export default function CourseFormDialog({
       onOpenChange(false);
     });
   }
-
-  // 開啟時 dialog 內容會 remount，state 預設值用 course 初始化即可
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,7 +173,14 @@ export default function CourseFormDialog({
               <SegRadio
                 name="duration_type"
                 value={durationType}
-                onChange={(v) => setDurationType(v as "single" | "series")}
+                onChange={(v) => {
+                  const next = v as "single" | "series";
+                  setDurationType(next);
+                  // single 切到 series：保留現有 1 場；series 切到 single：只留第 1 場
+                  if (next === "single" && sessions.length > 1) {
+                    setSessions([sessions[0]]);
+                  }
+                }}
                 options={[
                   { value: "single", label: "單次" },
                   { value: "series", label: "長期" },
@@ -157,38 +189,28 @@ export default function CourseFormDialog({
             </div>
           </div>
 
+          {/* 上課日期 */}
           <div>
-            <label style={labelStyle}>開課時間 *</label>
-            <input
-              name="start_at"
-              type="datetime-local"
-              required
-              defaultValue={course ? taipeiDatetimeLocal(new Date(course.start_at)) : taipeiDatetimeLocal()}
-              style={inputStyle}
-            />
+            <label style={labelStyle}>{durationType === "single" ? "上課時間 *" : "上課日期 *"}</label>
+            {durationType === "single" ? (
+              <SingleSession
+                value={sessions[0]?.session_at_local ?? taipeiDatetimeLocal()}
+                onChange={(v) => setSessions([{ session_at_local: v, note: null }])}
+              />
+            ) : (
+              <SeriesSessions sessions={sessions} onChange={setSessions} />
+            )}
             <p style={helperStyle}>台灣時間（UTC+8）</p>
           </div>
 
-          {durationType === "series" && (
-            <div>
-              <label style={labelStyle}>結束時間（長期班）</label>
-              <input
-                name="end_at"
-                type="datetime-local"
-                defaultValue={course?.end_at ? taipeiDatetimeLocal(new Date(course.end_at)) : ""}
-                style={inputStyle}
-              />
-            </div>
-          )}
-
           <div>
-            <label style={labelStyle}>上課時間備註</label>
+            <label style={labelStyle}>備註（選填）</label>
             <input
               name="schedule_note"
               type="text"
               maxLength={120}
               defaultValue={course?.schedule_note ?? ""}
-              placeholder="例：每週三 19:30–21:00，共 8 週"
+              placeholder="例：建議準時到，請帶毯子"
               style={inputStyle}
             />
           </div>
@@ -305,6 +327,237 @@ export default function CourseFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// =========================================================
+// Single class：單一 datetime 輸入
+// =========================================================
+function SingleSession({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <input
+      type="datetime-local"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={inputStyle}
+    />
+  );
+}
+
+// =========================================================
+// Series：一鍵產生 + 手動增刪
+// =========================================================
+function SeriesSessions({
+  sessions,
+  onChange,
+}: {
+  sessions: CourseFormSession[];
+  onChange: (s: CourseFormSession[]) => void;
+}) {
+  const [genStart, setGenStart] = useState<string>(taipeiDatetimeLocal());
+  const [genCount, setGenCount] = useState<number>(8);
+
+  function generate() {
+    if (!genStart || genCount < 1) return;
+    const startDate = new Date(`${genStart}:00+08:00`);
+    if (isNaN(startDate.getTime())) return;
+    const result: CourseFormSession[] = [];
+    for (let i = 0; i < genCount; i++) {
+      const d = new Date(startDate.getTime() + i * 7 * 86400000);
+      result.push({ session_at_local: taipeiDatetimeLocal(d), note: null });
+    }
+    onChange(result);
+  }
+
+  function addOne() {
+    const last = sessions[sessions.length - 1];
+    const baseTime = last
+      ? new Date(`${last.session_at_local}:00+08:00`).getTime() + 7 * 86400000
+      : Date.now();
+    onChange([
+      ...sessions,
+      { session_at_local: taipeiDatetimeLocal(new Date(baseTime)), note: null },
+    ]);
+  }
+
+  function removeAt(i: number) {
+    onChange(sessions.filter((_, idx) => idx !== i));
+  }
+
+  function updateAt(i: number, patch: Partial<CourseFormSession>) {
+    onChange(sessions.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+
+  function formatPreview(local: string): string {
+    if (!local) return "";
+    const d = new Date(`${local}:00+08:00`);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString("zh-TW", {
+      timeZone: APP_TZ,
+      month: "numeric",
+      day: "numeric",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* 一鍵產生 */}
+      <div
+        style={{
+          background: "rgba(190,194,63,0.06)",
+          border: "1px dashed rgba(190,194,63,0.25)",
+          borderRadius: 4,
+          padding: "0.65rem 0.75rem",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.6rem",
+            letterSpacing: "0.1em",
+            color: "rgba(237,236,234,0.55)",
+            marginBottom: "0.5rem",
+          }}
+        >
+          一鍵產生（從這時起、每 7 天一次、共 N 次）
+        </p>
+        <div className="flex flex-col gap-2">
+          <input
+            type="datetime-local"
+            value={genStart}
+            onChange={(e) => setGenStart(e.target.value)}
+            style={{ ...inputStyle, padding: "0.5rem 0.7rem" }}
+          />
+          <div className="flex gap-2 items-center">
+            <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>共</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={genCount}
+              onChange={(e) => setGenCount(Number(e.target.value))}
+              style={{ ...inputStyle, width: "5rem", padding: "0.5rem 0.7rem", textAlign: "center" }}
+            />
+            <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>次</span>
+            <button
+              type="button"
+              onClick={generate}
+              style={{
+                marginLeft: "auto",
+                background: "rgba(190,194,63,0.15)",
+                border: "1px solid rgba(190,194,63,0.4)",
+                color: "#BEC23F",
+                padding: "0.45rem 0.85rem",
+                fontFamily: "var(--font-space-mono)",
+                fontSize: "0.65rem",
+                letterSpacing: "0.1em",
+                cursor: "pointer",
+                borderRadius: 3,
+              }}
+            >
+              產生
+            </button>
+          </div>
+        </div>
+        <p style={{ ...helperStyle, marginTop: "0.5rem" }}>
+          按產生會覆蓋下面的清單。產生後可以個別調整，或刪掉某一場（例如那週停課）。
+        </p>
+      </div>
+
+      {/* Sessions list */}
+      {sessions.length === 0 ? (
+        <p style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.35)", textAlign: "center", padding: "1rem 0" }}>
+          還沒有上課日期，按上面「產生」或下面「+ 加一個日期」
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {sessions.map((s, i) => (
+            <div
+              key={i}
+              style={{
+                background: "#2c2c2a",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 4,
+                padding: "0.5rem 0.65rem",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  style={{
+                    fontFamily: "var(--font-space-mono)",
+                    fontSize: "0.6rem",
+                    color: "rgba(237,236,234,0.4)",
+                    letterSpacing: "0.08em",
+                    minWidth: "1.6rem",
+                    textAlign: "right",
+                  }}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <input
+                  type="datetime-local"
+                  value={s.session_at_local}
+                  onChange={(e) => updateAt(i, { session_at_local: e.target.value })}
+                  style={{ ...inputStyle, padding: "0.4rem 0.55rem", flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAt(i)}
+                  title="移除這一場"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(214,92,106,0.3)",
+                    color: "rgba(214,92,106,0.7)",
+                    padding: "0.35rem 0.55rem",
+                    cursor: "pointer",
+                    borderRadius: 3,
+                    fontSize: "0.85rem",
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <p
+                style={{
+                  fontFamily: "var(--font-space-mono)",
+                  fontSize: "0.6rem",
+                  color: "rgba(237,236,234,0.4)",
+                  letterSpacing: "0.06em",
+                  marginTop: "0.35rem",
+                  paddingLeft: "2.6rem",
+                }}
+              >
+                {formatPreview(s.session_at_local)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={addOne}
+        style={{
+          width: "100%",
+          background: "transparent",
+          border: "1px dashed rgba(255,255,255,0.15)",
+          color: "rgba(237,236,234,0.5)",
+          padding: "0.55rem",
+          fontFamily: "var(--font-space-mono)",
+          fontSize: "0.65rem",
+          letterSpacing: "0.1em",
+          cursor: "pointer",
+          borderRadius: 3,
+        }}
+      >
+        + 加一個日期
+      </button>
+    </div>
   );
 }
 

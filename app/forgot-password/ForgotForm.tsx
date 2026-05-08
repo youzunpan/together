@@ -20,8 +20,10 @@ export default function ForgotForm() {
     e.preventDefault();
     setError(""); setLoading(true);
     const supabase = createClient();
+    // 直接導到 /reset-password（純路徑，避開 Supabase 萬用字元無法 match query string 的限制）
+    // /reset-password 頁面的 supabase-js 會自動把 URL 上的 code 交換成 session（detectSessionInUrl: true）
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
     if (err) {

@@ -27,19 +27,18 @@ type CourseDetail = {
   seats_left: number;
 };
 
-function formatFullDate(iso: string): string {
+type CourseSession = {
+  id: string;
+  session_at: string;
+  note: string | null;
+};
+
+function formatFullDateTime(iso: string): string {
   return new Date(iso).toLocaleString("zh-TW", {
     timeZone: APP_TZ,
-    year: "numeric",
     month: "long",
     day: "numeric",
-    weekday: "long",
-  });
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString("zh-TW", {
-    timeZone: APP_TZ,
+    weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -80,6 +79,14 @@ export default async function CourseDetailPage({
     .single<CourseDetail>();
 
   if (!course) notFound();
+
+  const { data: sessionsData } = await supabase
+    .from("course_sessions")
+    .select("id, session_at, note")
+    .eq("course_id", course.id)
+    .order("session_at", { ascending: true })
+    .returns<CourseSession[]>();
+  const sessions = sessionsData ?? [];
 
   const isFull = course.seats_left <= 0;
   const isClosed = course.status === "closed";
@@ -140,15 +147,46 @@ export default async function CourseDetailPage({
       {/* 課程資訊 */}
       <section style={{ marginBottom: "2.5rem", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "1.5rem" }}>
         <div className="space-y-4">
-          <Field
-            label={course.duration_type === "series" ? "起訖" : "時間"}
-            value={
-              course.duration_type === "series" && course.end_at
-                ? `${formatFullDate(course.start_at)}　至　${formatFullDate(course.end_at)}`
-                : `${formatFullDate(course.start_at)}　${formatTime(course.start_at)}`
-            }
-          />
-          {course.schedule_note && <Field label="上課時間" value={course.schedule_note} />}
+          {/* 上課日期 */}
+          <div>
+            <p style={fieldLabelStyle}>
+              {course.duration_type === "series" ? `上課日期 · 共 ${sessions.length} 堂` : "上課時間"}
+            </p>
+            {sessions.length === 0 ? (
+              <p style={fieldValueStyle}>{formatFullDateTime(course.start_at)}</p>
+            ) : course.duration_type === "single" ? (
+              <p style={fieldValueStyle}>{formatFullDateTime(sessions[0].session_at)}</p>
+            ) : (
+              <ol style={{ ...fieldValueStyle, paddingLeft: 0, listStyle: "none", margin: 0 }}>
+                {sessions.map((s, i) => (
+                  <li
+                    key={s.id}
+                    style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", padding: "0.25rem 0" }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-space-mono)",
+                        fontSize: "0.65rem",
+                        color: "rgba(237,236,234,0.4)",
+                        letterSpacing: "0.08em",
+                        minWidth: "1.5rem",
+                      }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span>{formatFullDateTime(s.session_at)}</span>
+                    {s.note && (
+                      <span style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.55)" }}>
+                        · {s.note}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+
+          {course.schedule_note && <Field label="備註" value={course.schedule_note} />}
           {course.location && (
             <Field
               label={course.format === "online" ? "線上資訊" : "地點"}

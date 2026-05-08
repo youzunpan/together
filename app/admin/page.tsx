@@ -8,6 +8,7 @@ import AnnouncementsTab from "./AnnouncementsTab";
 import CoursesTab, { type CourseRow, type RegistrationRow } from "./CoursesTab";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { taipeiDatetimeLocal } from "@/lib/tz";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -58,14 +59,25 @@ export default async function AdminPage() {
     .from("registrations")
     .select("id, course_id, name, email, phone, line_id, transfer_last4, status, created_at")
     .order("created_at", { ascending: false });
+  const { data: rawSessions } = await supabase
+    .from("course_sessions")
+    .select("id, course_id, session_at, note")
+    .order("session_at", { ascending: true });
 
   const registrationsList: RegistrationRow[] = rawRegistrations ?? [];
   const coursesList: CourseRow[] = (rawCourses ?? []).map((c) => {
     const active = registrationsList.filter(r => r.course_id === c.id && r.status !== "cancelled").length;
+    const sessions = (rawSessions ?? [])
+      .filter((s) => s.course_id === c.id)
+      .map((s) => ({
+        session_at_local: taipeiDatetimeLocal(new Date(s.session_at)),
+        note: s.note,
+      }));
     return {
       ...c,
       registered_count: active,
       seats_left: Math.max(c.capacity - active, 0),
+      sessions,
     };
   });
 
