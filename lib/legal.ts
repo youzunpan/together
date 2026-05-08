@@ -10,8 +10,11 @@ export const LEGAL = {
    * 上線初期可用品牌名 +「個人營運中」；公司登記完成後改為公司全名。
    */
   controller: "同在（個人營運中）",
-  /** 給學生的聯絡 email。⚠️ 上線前換成你會收信的地址 */
-  contactEmail: "hello@example.com",
+  /**
+   * 給學生的聯絡 email。改設定時不用動 code，
+   * 在 Vercel env vars 設 NEXT_PUBLIC_CONTACT_EMAIL 即可。
+   */
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@example.com",
   /** 最後更新月份，改文案時記得更新 */
   lastUpdated: "2026 年 5 月",
 };
