@@ -154,23 +154,24 @@ export default async function AdminPage() {
       </header>
 
       <Tabs defaultValue="applications">
-        <TabsList className="w-full mb-6 flex-wrap" style={{ background: "#2c2c2a", borderRadius: 4, padding: 0, gap: "1px", overflow: "hidden" }}>
-          <TabsTrigger value="applications" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+        {/* 手機版橫向 scroll；桌機照舊全寬 */}
+        <TabsList className="w-full mb-6" style={{ background: "#2c2c2a", borderRadius: 4, padding: 0, gap: "1px", overflowX: "auto", overflowY: "hidden", flexWrap: "nowrap" }}>
+          <TabsTrigger value="applications" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             APPLY{pendingCount > 0 ? ` (${pendingCount})` : ""}
           </TabsTrigger>
-          <TabsTrigger value="courses" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+          <TabsTrigger value="courses" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             COURSES{totalRegistrations > 0 ? ` (${totalRegistrations})` : ""}
           </TabsTrigger>
-          <TabsTrigger value="members" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+          <TabsTrigger value="members" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             MEMBERS
           </TabsTrigger>
-          <TabsTrigger value="sits" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+          <TabsTrigger value="sits" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             SITS
           </TabsTrigger>
-          <TabsTrigger value="errors" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+          <TabsTrigger value="errors" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             ERRORS{errorCount > 0 ? ` (${errorCount})` : ""}
           </TabsTrigger>
-          <TabsTrigger value="announce" className="flex-1 min-w-[5rem]" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+          <TabsTrigger value="announce" className="flex-1 shrink-0" style={{ borderRadius: 0, fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", minWidth: "5.5rem", whiteSpace: "nowrap" }}>
             ANNOUNCE
           </TabsTrigger>
         </TabsList>

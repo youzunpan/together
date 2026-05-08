@@ -24,8 +24,16 @@ const sourceLabel: Record<string, string> = {
 };
 
 function formatTime(iso: string): string {
+  // 短格式：MM/DD HH:mm（窄手機放得下）
   const d = new Date(iso);
-  return d.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false });
+  return d.toLocaleString("zh-TW", {
+    timeZone: "Asia/Taipei",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 export default function ErrorsTab({ errors }: { errors: ErrorRow[] }) {
@@ -122,7 +130,7 @@ export default function ErrorsTab({ errors }: { errors: ErrorRow[] }) {
                     padding: "0.75rem 1rem", cursor: "pointer", color: "inherit",
                   }}
                 >
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline flex-wrap" style={{ gap: "0.4rem 0.5rem" }}>
                     <span style={{
                       fontFamily: "var(--font-space-mono)", fontSize: "0.55rem",
                       letterSpacing: "0.08em",
@@ -132,7 +140,7 @@ export default function ErrorsTab({ errors }: { errors: ErrorRow[] }) {
                       {sourceLabel[e.source] ?? e.source.toUpperCase()}
                     </span>
                     {e.route && (
-                      <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.35)", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.35)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {e.route}
                       </span>
                     )}
