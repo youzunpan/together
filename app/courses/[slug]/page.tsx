@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase-server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { APP_TZ } from "@/lib/tz";
 import RegisterForm from "./RegisterForm";
+import BackButton from "./BackButton";
 
 type CourseDetail = {
   id: string;
@@ -129,20 +130,9 @@ export default async function CourseDetailPage({
 
   return (
     <article>
-      {/* 麵包屑 */}
+      {/* 返回上一頁 */}
       <p style={{ marginBottom: "1.5rem" }}>
-        <Link
-          href="/courses"
-          style={{
-            fontFamily: "var(--font-space-mono)",
-            fontSize: "0.6rem",
-            letterSpacing: "0.15em",
-            color: "rgba(237,236,234,0.4)",
-            textDecoration: "none",
-          }}
-        >
-          ← 所有課程
-        </Link>
+        <BackButton />
       </p>
 
       {/* 標題 */}
