@@ -76,14 +76,15 @@ export default async function MyCoursesPage() {
   const myRegs = (myRegsRaw ?? []).filter((r) => r.course);
   const myCourseIds = new Set(myRegs.map((r) => r.course!.id));
 
-  // 開放中、你還沒報名的課程
+  // 所有開放報名中的課程（不過濾，已報名的會在「你的課程」也出現一次，
+  // 這裡保留資訊性，但會用 ✓ 標記已報名）
   const { data: openRaw } = await sb
     .from("courses")
     .select("id, slug, title, subtitle, format, duration_type, start_at, end_at, schedule_note, capacity, status")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .returns<CourseRow[]>();
-  const openCourses = (openRaw ?? []).filter((c) => !myCourseIds.has(c.id));
+  const openCourses = openRaw ?? [];
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -153,25 +154,35 @@ export default async function MyCoursesPage() {
           <p style={emptyStyle}>目前沒有開放中的課程。</p>
         ) : (
           <div className="space-y-2">
-            {openCourses.map((c) => (
-              <Link
-                key={c.id}
-                href={`/courses/${c.slug}`}
-                style={cardStyle}
-                className="block hover:opacity-90 transition-opacity"
-              >
-                <p style={{ fontSize: "1rem", color: "#edecea", lineHeight: 1.4, marginBottom: c.subtitle ? "0.4rem" : "0.3rem" }}>
-                  {c.title}
-                </p>
-                {c.subtitle && (
-                  <p style={subtitleStyle}>{c.subtitle}</p>
-                )}
-                <p style={metaStyle}>
-                  {formatStart(c.start_at)}
-                  {c.schedule_note && c.duration_type === "series" ? ` · ${c.schedule_note}` : ""}
-                </p>
-              </Link>
-            ))}
+            {openCourses.map((c) => {
+              const isMine = myCourseIds.has(c.id);
+              return (
+                <Link
+                  key={c.id}
+                  href={`/courses/${c.slug}`}
+                  style={cardStyle}
+                  className="block hover:opacity-90 transition-opacity"
+                >
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <p style={{ fontSize: "1rem", color: "#edecea", lineHeight: 1.4, flex: 1, marginRight: "0.5rem" }}>
+                      {c.title}
+                    </p>
+                    {isMine && (
+                      <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "#BEC23F", flexShrink: 0 }}>
+                        ✓ 已報名
+                      </span>
+                    )}
+                  </div>
+                  {c.subtitle && (
+                    <p style={subtitleStyle}>{c.subtitle}</p>
+                  )}
+                  <p style={metaStyle}>
+                    {formatStart(c.start_at)}
+                    {c.schedule_note && c.duration_type === "series" ? ` · ${c.schedule_note}` : ""}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

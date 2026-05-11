@@ -4,6 +4,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { APP_TZ } from "@/lib/tz";
 import RegisterForm from "./RegisterForm";
 
@@ -93,17 +94,30 @@ export default async function CourseDetailPage({
   const canRegister = !isClosed && !isFull;
 
   // 已登入學生：撈他的 profile 跟對這個 course 的報名紀錄
+  // （用 service role 撈報名紀錄，避開 RLS 對學生讀自己資料的限制）
   const { data: { user } } = await supabase.auth.getUser();
   let viewer: { display_name: string; email: string } | null = null;
-  let myRegistration: { status: string } | null = null;
+  let myRegistration: {
+    status: string;
+    name: string;
+    email: string;
+    line_id: string | null;
+    transfer_last4: string | null;
+    created_at: string;
+  } | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles").select("display_name").eq("id", user.id).single();
     if (profile) {
       viewer = { display_name: profile.display_name, email: user.email ?? "" };
-      const { data: reg } = await supabase
+      const sb = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } },
+      );
+      const { data: reg } = await sb
         .from("registrations")
-        .select("status")
+        .select("status, name, email, line_id, transfer_last4, created_at")
         .eq("course_id", course.id)
         .or(`user_id.eq.${user.id},email.eq.${user.email?.toLowerCase() ?? ""}`)
         .neq("status", "cancelled")
@@ -234,16 +248,39 @@ export default async function CourseDetailPage({
         </p>
 
         {myRegistration ? (
-          /* 已登入學生且已報名：顯示狀態，不再給表單 */
-          <div style={{ textAlign: "center", padding: "2rem 1rem", background: "rgba(190,194,63,0.08)", border: "1px solid rgba(190,194,63,0.3)", borderRadius: 6 }}>
-            <p style={{ fontSize: "1.05rem", color: "#BEC23F", marginBottom: "0.5rem" }}>
-              ✓ 你已報名
-            </p>
-            <p style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.6)", lineHeight: 1.7 }}>
-              狀態：{myRegistration.status === "pending" ? "待處理" : myRegistration.status === "confirmed" ? "已確認" : myRegistration.status}
-            </p>
-            <p style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.6, marginTop: "0.75rem" }}>
-              開課前會收到確認信。若需取消請直接 email 我。
+          /* 已報名：唯讀摘要 */
+          <div style={{ padding: "1.5rem 1.25rem", background: "rgba(190,194,63,0.06)", border: "1px solid rgba(190,194,63,0.3)", borderRadius: 6 }}>
+            <div className="text-center mb-4">
+              <p style={{ fontSize: "1.05rem", color: "#BEC23F", marginBottom: "0.35rem" }}>
+                ✓ 你已報名
+              </p>
+              <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)" }}>
+                {myRegistration.status === "pending"
+                  ? "STATUS · 待處理"
+                  : myRegistration.status === "confirmed"
+                  ? "STATUS · 已確認"
+                  : `STATUS · ${myRegistration.status}`}
+              </p>
+            </div>
+
+            <div className="space-y-2.5" style={{ borderTop: "1px solid rgba(190,194,63,0.15)", paddingTop: "1rem" }}>
+              <ReadOnlyRow label="報名姓名" value={myRegistration.name} />
+              <ReadOnlyRow label="EMAIL" value={myRegistration.email} mono />
+              {myRegistration.line_id && <ReadOnlyRow label="LINE ID" value={myRegistration.line_id} />}
+              {myRegistration.transfer_last4 && (
+                <ReadOnlyRow label="匯款末四碼" value={myRegistration.transfer_last4} mono />
+              )}
+              <ReadOnlyRow
+                label="報名時間"
+                value={new Date(myRegistration.created_at).toLocaleString("zh-TW", {
+                  timeZone: APP_TZ, month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false,
+                })}
+              />
+            </div>
+
+            <p style={{ fontSize: "0.72rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.7, marginTop: "1.25rem", textAlign: "center" }}>
+              開課前會收到確認信。<br />
+              如果資料需要更動或取消，請直接 email 老師。
             </p>
           </div>
         ) : !canRegister ? (
@@ -280,6 +317,44 @@ function Field({
     <div>
       <p style={fieldLabelStyle}>{label}</p>
       <p style={{ ...fieldValueStyle, color: valueColor ?? "#edecea" }}>{value}</p>
+    </div>
+  );
+}
+
+function ReadOnlyRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span
+        style={{
+          fontFamily: "var(--font-space-mono)",
+          fontSize: "0.6rem",
+          letterSpacing: "0.12em",
+          color: "rgba(237,236,234,0.4)",
+          minWidth: "5rem",
+          flexShrink: 0,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: "0.85rem",
+          color: "#edecea",
+          lineHeight: 1.5,
+          fontFamily: mono ? "var(--font-space-mono)" : "inherit",
+          wordBreak: "break-word",
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
