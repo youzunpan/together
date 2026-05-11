@@ -74,6 +74,14 @@ export async function submitRegistration(slug: string, formData: FormData) {
   if (line_id && line_id.length > 60) return { error: "Line ID 過長" };
   if (transfer_last4 && !/^[0-9]{4}$/.test(transfer_last4)) return { error: "匯款末四碼需為 4 位數字" };
 
+  // 已登入則帶 user_id（綁定到 feed 帳號）；匿名照舊
+  let userId: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    userId = data.user?.id ?? null;
+  } catch {}
+
   const sb = serviceClient();
 
   // 透過 RPC 原子化檢查名額並寫入
@@ -83,6 +91,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
     p_email: email,
     p_line_id: line_id,
     p_transfer_last4: transfer_last4,
+    p_user_id: userId,
   });
 
   if (rpcErr) {

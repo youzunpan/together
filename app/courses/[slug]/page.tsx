@@ -92,6 +92,27 @@ export default async function CourseDetailPage({
   const isClosed = course.status === "closed";
   const canRegister = !isClosed && !isFull;
 
+  // 已登入學生：撈他的 profile 跟對這個 course 的報名紀錄
+  const { data: { user } } = await supabase.auth.getUser();
+  let viewer: { display_name: string; email: string } | null = null;
+  let myRegistration: { status: string } | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles").select("display_name").eq("id", user.id).single();
+    if (profile) {
+      viewer = { display_name: profile.display_name, email: user.email ?? "" };
+      const { data: reg } = await supabase
+        .from("registrations")
+        .select("status")
+        .eq("course_id", course.id)
+        .or(`user_id.eq.${user.id},email.eq.${user.email?.toLowerCase() ?? ""}`)
+        .neq("status", "cancelled")
+        .limit(1)
+        .maybeSingle();
+      myRegistration = reg;
+    }
+  }
+
   return (
     <article>
       {/* 麵包屑 */}
@@ -212,7 +233,20 @@ export default async function CourseDetailPage({
           ── 報名 ──
         </p>
 
-        {!canRegister ? (
+        {myRegistration ? (
+          /* 已登入學生且已報名：顯示狀態，不再給表單 */
+          <div style={{ textAlign: "center", padding: "2rem 1rem", background: "rgba(190,194,63,0.08)", border: "1px solid rgba(190,194,63,0.3)", borderRadius: 6 }}>
+            <p style={{ fontSize: "1.05rem", color: "#BEC23F", marginBottom: "0.5rem" }}>
+              ✓ 你已報名
+            </p>
+            <p style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.6)", lineHeight: 1.7 }}>
+              狀態：{myRegistration.status === "pending" ? "待處理" : myRegistration.status === "confirmed" ? "已確認" : myRegistration.status}
+            </p>
+            <p style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.6, marginTop: "0.75rem" }}>
+              開課前會收到確認信。若需取消請直接 email 我。
+            </p>
+          </div>
+        ) : !canRegister ? (
           <div style={{ textAlign: "center", padding: "2rem 1rem", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6 }}>
             <p style={{ fontSize: "1rem", color: "#D65C6A", marginBottom: "0.5rem" }}>
               {isClosed ? "此課程已截止報名" : "此課程已額滿"}
@@ -226,7 +260,7 @@ export default async function CourseDetailPage({
             </p>
           </div>
         ) : (
-          <RegisterForm slug={course.slug} title={course.title} />
+          <RegisterForm slug={course.slug} title={course.title} initialName={viewer?.display_name} initialEmail={viewer?.email} />
         )}
       </section>
     </article>

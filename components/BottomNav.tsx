@@ -25,6 +25,16 @@ const navItems = [
     ),
   },
   {
+    href: "/me/courses",
+    label: "課程",
+    icon: (active: boolean) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 1.5 : 1} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z" />
+        <path d="M4 16a4 4 0 0 1 4-4h12" />
+      </svg>
+    ),
+  },
+  {
     href: "/me",
     label: "我",
     icon: (active: boolean) => (
@@ -63,6 +73,18 @@ function TabContent({
   );
 }
 
+// /me 與 /me/courses 是兩個 tab；不能簡單 startsWith("/me")（會兩個都亮）。
+// /me/settings 屬於 /me tab；/me/courses/* 屬於 /me/courses tab。
+function isActive(href: string, pathname: string): boolean {
+  if (href === "/me") {
+    return pathname === "/me" || pathname.startsWith("/me/settings");
+  }
+  if (href === "/me/courses") {
+    return pathname === "/me/courses" || pathname.startsWith("/me/courses/");
+  }
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export default function BottomNav() {
   const pathname = usePathname();
   const hideOn = ["/login", "/apply", "/courses"];
@@ -80,7 +102,7 @@ export default function BottomNav() {
     >
       <div className="flex items-center justify-around max-w-md mx-auto h-14 px-4">
         {navItems.map(({ href, label, icon }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+          const active = isActive(href, pathname);
           return (
             <Link key={href} href={href} prefetch>
               <TabContent label={label} icon={icon} active={active} />

@@ -17,7 +17,12 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 4,
 };
 
-export default function RegisterForm({ slug, title }: { slug: string; title: string }) {
+export default function RegisterForm({ slug, title, initialName, initialEmail }: {
+  slug: string;
+  title: string;
+  initialName?: string;
+  initialEmail?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -73,6 +78,7 @@ export default function RegisterForm({ slug, title }: { slug: string; title: str
           required
           maxLength={60}
           autoComplete="name"
+          defaultValue={initialName ?? ""}
           placeholder="本名 / 筆名 / 暱稱皆可"
           style={inputStyle}
           onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
@@ -86,6 +92,7 @@ export default function RegisterForm({ slug, title }: { slug: string; title: str
           type="email"
           required
           autoComplete="email"
+          defaultValue={initialEmail ?? ""}
           placeholder="your@email.com"
           style={{ ...inputStyle, fontFamily: "var(--font-space-mono)" }}
           onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
