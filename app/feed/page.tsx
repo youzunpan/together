@@ -76,6 +76,14 @@ export default async function FeedPage() {
 
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
 
+  // 開放報名中的課程（給「新課程 →」連結用）
+  const { data: openCourses } = await supabase
+    .from("courses")
+    .select("slug, title")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(3);
+
   return (
     <div className="max-w-md mx-auto px-4">
       {/* 首次登入引導（新用戶才顯示） */}
@@ -115,6 +123,20 @@ export default async function FeedPage() {
             </div>
           )}
         </div>
+
+        {/* 開放報名中的課程連結（淡淡一行） */}
+        {openCourses && openCourses.length > 0 && (
+          <p className="text-center mt-2.5" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.62rem", letterSpacing: "0.12em" }}>
+            <a
+              href={openCourses.length === 1 ? `/courses/${openCourses[0].slug}` : "/courses"}
+              style={{ color: "rgba(190,194,63,0.65)", textDecoration: "none" }}
+            >
+              {openCourses.length === 1
+                ? <>新課程 · <span style={{ color: "#BEC23F" }}>{openCourses[0].title}</span> →</>
+                : <>新課程 · <span style={{ color: "#BEC23F" }}>{openCourses.length} 個開放中</span> →</>}
+            </a>
+          </p>
+        )}
 
         {/* 正在靜坐的人 */}
         <LiveSitters currentUserId={user!.id} />
