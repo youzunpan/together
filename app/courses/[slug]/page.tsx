@@ -280,7 +280,7 @@ export default async function CourseDetailPage({
 
             <p style={{ fontSize: "0.72rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.7, marginTop: "1.25rem", textAlign: "center" }}>
               開課前會收到確認信。<br />
-              如果資料需要更動或取消，請直接 email 老師。
+              如果資料需要更動或取消，請直接 email 樽。
             </p>
           </div>
         ) : !canRegister ? (

@@ -105,7 +105,7 @@ export default async function MyCoursesPage() {
         課程
       </h1>
       <p style={{ fontSize: "0.78rem", color: "rgba(237,236,234,0.4)", lineHeight: 1.7, marginBottom: "2rem" }}>
-        老師近期開課動態，跟你自己報名過的紀錄都在這裡。
+        樽近期的開課動態，跟你自己報名過的紀錄都在這裡。
       </p>
 
       {/* 你的課程 */}
