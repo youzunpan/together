@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase-browser";
 
 const navItems = [
   {
@@ -74,21 +76,42 @@ function TabContent({
 }
 
 // /me 與 /me/courses 是兩個 tab；不能簡單 startsWith("/me")（會兩個都亮）。
-// /me/settings 屬於 /me tab；/me/courses/* 屬於 /me/courses tab。
+// /me/settings 屬於 /me tab；/me/courses/* 跟 /courses/* 屬於 /me/courses tab。
 function isActive(href: string, pathname: string): boolean {
   if (href === "/me") {
     return pathname === "/me" || pathname.startsWith("/me/settings");
   }
   if (href === "/me/courses") {
-    return pathname === "/me/courses" || pathname.startsWith("/me/courses/");
+    return (
+      pathname === "/me/courses" ||
+      pathname.startsWith("/me/courses/") ||
+      pathname === "/courses" ||
+      pathname.startsWith("/courses/")
+    );
   }
   return pathname === href || pathname.startsWith(href + "/");
 }
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const hideOn = ["/login", "/apply", "/courses"];
-  if (hideOn.some((p) => pathname.startsWith(p))) return null;
+  // 登入狀態：null = 還沒確定；true/false = 確定後
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_, session) => {
+      setAuthed(!!session);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // /login /apply 永遠隱藏
+  if (pathname.startsWith("/login") || pathname.startsWith("/apply")) return null;
+
+  // /courses 路徑：只在「確認登入」時才顯示，匿名或還在判斷時都先隱藏
+  // 避免公開訪客先看到 nav 再閃掉
+  if (pathname.startsWith("/courses") && authed !== true) return null;
 
   return (
     <nav
