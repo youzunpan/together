@@ -40,10 +40,24 @@ export default function ErrorReporter() {
       reportClientError({ ...args, route, userAgent }).catch(() => {});
     }
 
+    // 已知無害的訊息：不送 server log。
+    // - NEXT_REDIRECT：Next.js 用 throw 實作 server-side redirect，redirect 實際成功
+    // - Script error.：跨來源腳本被瀏覽器隱藏細節，無法診斷
+    function isNoise(msg: string): boolean {
+      return (
+        msg.includes("NEXT_REDIRECT") ||
+        msg.includes("NEXT_NOT_FOUND") ||
+        msg === "Script error." ||
+        msg === "unhandledrejection: Script error."
+      );
+    }
+
     function onError(e: ErrorEvent) {
+      const msg = e.message || "(no message)";
+      if (isNoise(msg)) return;
       send({
         source: "client",
-        message: e.message || "(no message)",
+        message: msg,
         stack: e.error?.stack,
         meta: { filename: e.filename, lineno: e.lineno, colno: e.colno },
       });
@@ -57,6 +71,7 @@ export default function ErrorReporter() {
           : typeof reason === "string"
             ? reason
             : JSON.stringify(reason);
+      if (isNoise(message) || isNoise(`unhandledrejection: ${message}`)) return;
       const stack = reason instanceof Error ? reason.stack : undefined;
       send({
         source: "client",
