@@ -3,6 +3,7 @@
 // 下半：「開放報名中」— 學生還沒報名的、status='published' 的課程
 
 import { createClient } from "@/lib/supabase-server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { APP_TZ } from "@/lib/tz";
@@ -54,8 +55,15 @@ export default async function MyCoursesPage() {
 
   const emailLower = user.email?.toLowerCase() ?? "";
 
-  // 你的課程：透過 user_id 或 email 對應（兩者擇一）
-  const { data: myRegsRaw } = await supabase
+  // 用 service role 撈（已經 auth check 過了，撈自己的資料沒 RLS 問題比較穩）
+  const sb = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  // 你的課程：user_id 或 email match
+  const { data: myRegsRaw } = await sb
     .from("registrations")
     .select(`
       status, created_at,
@@ -69,7 +77,7 @@ export default async function MyCoursesPage() {
   const myCourseIds = new Set(myRegs.map((r) => r.course!.id));
 
   // 開放中、你還沒報名的課程
-  const { data: openRaw } = await supabase
+  const { data: openRaw } = await sb
     .from("courses")
     .select("id, slug, title, subtitle, format, duration_type, start_at, end_at, schedule_note, capacity, status")
     .eq("status", "published")
