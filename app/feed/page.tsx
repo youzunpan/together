@@ -8,6 +8,7 @@ import UpcomingCalls from "@/components/UpcomingCalls";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import RefreshOnVisible from "@/components/RefreshOnVisible";
 import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { compute21Day } from "@/lib/streak";
 
@@ -95,6 +96,7 @@ export default async function FeedPage() {
 
   return (
     <div className="max-w-md mx-auto px-4">
+      <RefreshOnVisible />
       {/* 首次登入引導（新用戶才顯示） */}
       <WelcomeOverlay alreadyMember={alreadyMember} />
 

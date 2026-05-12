@@ -7,6 +7,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { APP_TZ } from "@/lib/tz";
+import RefreshOnVisible from "@/components/RefreshOnVisible";
 
 type CourseRow = {
   id: string;
@@ -88,6 +89,7 @@ export default async function MyCoursesPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+      <RefreshOnVisible />
       <header className="mb-8 flex items-center justify-between">
         <Link
           href="/me"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import AvatarUpload from "./AvatarUpload";
 import Lamp from "@/components/Lamp";
 import TwentyOneCircle from "@/components/TwentyOneCircle";
+import RefreshOnVisible from "@/components/RefreshOnVisible";
 import { compute21Day } from "@/lib/streak";
 
 export default async function MePage() {
@@ -39,6 +40,7 @@ export default async function MePage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+      <RefreshOnVisible />
       <header className="mb-8 flex items-center justify-between">
         {profile.role === "admin" ? (
           <Link href="/admin" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
