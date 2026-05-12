@@ -38,15 +38,30 @@ export default function LoginForm() {
     e.preventDefault();
     setError(""); setLoading(true);
     const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+
+    // 15 秒 timeout：若 Supabase auth 卡住（網路抖動 / 服務短暫不通），
+    // 不要讓使用者永久停在「登入中...」
+    const authPromise = supabase.auth.signInWithPassword({ email, password });
+    const timeoutPromise = new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: "timeout" } }), 15000),
+    );
+
+    const result = await Promise.race([authPromise, timeoutPromise]);
+    const err = "error" in result ? result.error : null;
+
     if (err) {
-      // 失敗才解除 loading；成功時保持 loading 狀態到 /feed 真的載完，
-      // 避免按鈕「先變回登入再消失」造成「卡住」的錯覺
       setLoading(false);
-      if (err.message.toLowerCase().includes("invalid")) setError("email 或密碼不正確。");
-      else setError(err.message);
+      const msg = err.message.toLowerCase();
+      if (msg === "timeout") {
+        setError("連線太慢，請檢查網路後再試一次。");
+      } else if (msg.includes("invalid")) {
+        setError("email 或密碼不正確。");
+      } else {
+        setError(err.message);
+      }
       return;
     }
+    // 成功：保持 loading 狀態到 /feed 載完，避免按鈕先變回「登入」造成卡住的錯覺
     router.push("/feed");
     router.refresh();
   }
