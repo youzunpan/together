@@ -14,39 +14,64 @@ export default async function FeedPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: summary } = await supabase.rpc("today_summary");
-
-  const { data: todaySit } = await supabase
-    .from("sits")
-    .select("duration_min")
-    .eq("user_id", user!.id)
-    .gte("sat_at", taipeiTodayStartISO())
-    .order("sat_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  // 判斷新用戶（從未坐過）→ 觸發歡迎引導
-  const { count: ownSitCount } = await supabase
-    .from("sits")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user!.id);
-  const alreadyMember = (ownSitCount ?? 0) > 0;
-
-  const { data: sits } = await supabase
-    .from("sits_with_stats")
-    .select("*")
-    .order("sat_at", { ascending: false })
-    .limit(30);
-
-  // 社群版 21 天圓：以「每天有 ≥ 1 位成員坐」為一日。把活躍日當成虛擬 sit 餵給
-  // compute21Day 即可重用同一套 streak 邏輯。
   // 為避免全表掃描，限制最近一年資料（社群連續日 / 共修圓在這個窗口內準確即可）
   const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString();
-  const { data: allSits } = await supabase
-    .from("sits")
-    .select("user_id, sat_at")
-    .gte("sat_at", oneYearAgo)
-    .order("sat_at", { ascending: true });
+
+  // 8 個 query 全部並行（之前是循序累加，慢的時候會超過 1 秒）
+  const [
+    summaryRes,
+    todaySitRes,
+    ownSitCountRes,
+    sitsRes,
+    allSitsRes,
+    announcementRes,
+    openCoursesRes,
+  ] = await Promise.all([
+    supabase.rpc("today_summary"),
+    supabase
+      .from("sits")
+      .select("duration_min")
+      .eq("user_id", user!.id)
+      .gte("sat_at", taipeiTodayStartISO())
+      .order("sat_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("sits")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user!.id),
+    supabase
+      .from("sits_with_stats")
+      .select("*")
+      .order("sat_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("sits")
+      .select("user_id, sat_at")
+      .gte("sat_at", oneYearAgo)
+      .order("sat_at", { ascending: true }),
+    supabase
+      .from("announcements")
+      .select("id, body")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("courses")
+      .select("slug, title")
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(3),
+  ]);
+  const summary = summaryRes.data;
+  const todaySit = todaySitRes.data;
+  const ownSitCount = ownSitCountRes.count;
+  const sits = sitsRes.data;
+  const allSits = allSitsRes.data;
+  const announcement = announcementRes.data;
+  const openCourses = openCoursesRes.data;
+  const alreadyMember = (ownSitCount ?? 0) > 0;
 
   const dayMembers = new Map<string, Set<string>>();
   for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
@@ -65,24 +90,7 @@ export default async function FeedPage() {
   const todayKey = taipeiDateKey(new Date());
   const todayMembers = dayMembers.get(todayKey)?.size ?? 0;
 
-  // 當前 active 公告（最多 1 則）
-  const { data: announcement } = await supabase
-    .from("announcements")
-    .select("id, body")
-    .eq("active", true)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
-
-  // 開放報名中的課程（給「新課程 →」連結用）
-  const { data: openCourses } = await supabase
-    .from("courses")
-    .select("slug, title")
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(3);
 
   return (
     <div className="max-w-md mx-auto px-4">

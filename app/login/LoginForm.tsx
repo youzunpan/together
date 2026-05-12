@@ -30,7 +30,9 @@ export default function LoginForm() {
     const params = new URLSearchParams(window.location.search);
     const urlError = params.get("error");
     if (urlError && URL_ERROR_MESSAGES[urlError]) setError(URL_ERROR_MESSAGES[urlError]);
-  }, []);
+    // 預先快取 /feed：登入成功後跳過去會比較順
+    router.prefetch("/feed");
+  }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -66,15 +68,22 @@ export default function LoginForm() {
 
         {error && <p style={{ fontSize: "0.75rem", color: "#D65C6A" }}>{error}</p>}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full"
+        <button type="submit" disabled={loading} className="btn-primary w-full login-btn"
           style={{
             width: "100%",
             letterSpacing: "0.12em",
             opacity: loading ? 0.7 : 1,
             cursor: loading ? "wait" : "pointer",
+            touchAction: "manipulation", // 避開 iOS 雙擊縮放 300ms 延遲
           }}>
           {loading ? "登入中..." : "登入"}
         </button>
+        <style>{`
+          .login-btn:active:not(:disabled) {
+            transform: scale(0.97);
+            transition: transform 0.05s ease-out;
+          }
+        `}</style>
       </form>
 
       <div style={{ textAlign: "center", paddingTop: "0.5rem" }}>
