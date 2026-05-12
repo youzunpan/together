@@ -104,11 +104,18 @@ export async function adminRemoveMember(targetUserId: string) {
 
   // 1. 刪該人 sits
   await admin.from("sits").delete().eq("user_id", targetUserId);
-  // 2. 把 applications.reviewed_by 指向 target 的清空
+  // 2. 刪該人的 hearts（hearts.user_id 沒 cascade，會擋 profile 刪除）
+  await admin.from("hearts").delete().eq("user_id", targetUserId);
+  // 3. 把 applications.reviewed_by 指向 target 的清空
   await admin.from("applications").update({ reviewed_by: null }).eq("reviewed_by", targetUserId);
-  // 3. 刪該人尚未發出的 push_jobs
+  // 4. invites 沒 cascade — 沒人在用但保險起見處理
+  await admin.from("invites").update({ used_by: null }).eq("used_by", targetUserId);
+  await admin.from("invites").delete().eq("created_by", targetUserId);
+  // 5. 把 registrations.user_id 設 NULL（FK 已是 SET NULL，但保險）
+  await admin.from("registrations").update({ user_id: null }).eq("user_id", targetUserId);
+  // 6. 刪該人尚未發出的 push_jobs
   await admin.from("push_jobs").delete().eq("user_id", targetUserId);
-  // 4. 刪 profile（cascade push_subscriptions / sit_calls / sit_call_joins / reactions）
+  // 7. 刪 profile（其他 cascade 表會自動清：push_subscriptions / sit_calls / sit_call_joins / reactions / reminder_log）
   const { error: profErr } = await admin.from("profiles").delete().eq("id", targetUserId);
   if (profErr) return { error: `刪除 profile 失敗：${profErr.message}` };
   // 5. 刪該 email 的歷史 application（若有）
@@ -144,10 +151,18 @@ export async function deleteAccount(formData: FormData) {
   const { error: sitsErr } = await admin.from("sits").delete().eq("user_id", user.id);
   if (sitsErr) return { error: `刪除靜心紀錄失敗：${sitsErr.message}` };
 
-  // 2. 把 applications.reviewed_by 指向自己的設為 NULL
-  await admin.from("applications").update({ reviewed_by: null }).eq("reviewed_by", user.id);
+  // 2. 刪 hearts（沒 cascade，會擋 profile 刪除）
+  await admin.from("hearts").delete().eq("user_id", user.id);
 
-  // 3. 刪 profile（會 cascade 掉 push_subscriptions / sit_calls / sit_call_joins / reactions）
+  // 3. 把 applications.reviewed_by / invites 處理（沒 cascade）
+  await admin.from("applications").update({ reviewed_by: null }).eq("reviewed_by", user.id);
+  await admin.from("invites").update({ used_by: null }).eq("used_by", user.id);
+  await admin.from("invites").delete().eq("created_by", user.id);
+
+  // 4. 把 registrations.user_id 設 NULL（保留報名歷史，純粹解綁）
+  await admin.from("registrations").update({ user_id: null }).eq("user_id", user.id);
+
+  // 5. 刪 profile（會 cascade 其他 push_subscriptions / sit_calls / sit_call_joins / reactions / reminder_log）
   const { error: profErr } = await admin.from("profiles").delete().eq("id", user.id);
   if (profErr) return { error: `刪除 profile 失敗：${profErr.message}` };
 
