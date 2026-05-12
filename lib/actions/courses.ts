@@ -198,6 +198,8 @@ export async function createCourse(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/courses");
+  revalidatePath("/feed");
+  revalidatePath("/me/courses");
   revalidatePath(`/courses/${finalSlug}`);
   return { ok: true };
 }
@@ -229,6 +231,8 @@ export async function updateCourse(id: string, formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/courses");
+  revalidatePath("/feed");
+  revalidatePath("/me/courses");
   if (prev?.slug) revalidatePath(`/courses/${prev.slug}`);
   if (data.slug && data.slug !== prev?.slug) {
     revalidatePath(`/courses/${data.slug}`);
@@ -248,6 +252,8 @@ export async function deleteCourse(id: string) {
 
   revalidatePath("/admin");
   revalidatePath("/courses");
+  revalidatePath("/feed");
+  revalidatePath("/me/courses");
   if (prev?.slug) revalidatePath(`/courses/${prev.slug}`);
   return { ok: true };
 }
@@ -267,6 +273,8 @@ export async function setCourseStatus(
 
   revalidatePath("/admin");
   revalidatePath("/courses");
+  revalidatePath("/feed");
+  revalidatePath("/me/courses");
   if (prev?.slug) revalidatePath(`/courses/${prev.slug}`);
   return { ok: true };
 }
