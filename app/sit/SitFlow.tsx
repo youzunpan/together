@@ -280,7 +280,10 @@ export default function SitFlow() {
       return;
     }
     const supported = "serviceWorker" in navigator && "PushManager" in window;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // iPadOS 13+ 報 Macintosh UA，要看 maxTouchPoints 才認得出 iPad
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     const isStandalone =
       // @ts-expect-error iOS 自家屬性
       window.navigator.standalone === true ||

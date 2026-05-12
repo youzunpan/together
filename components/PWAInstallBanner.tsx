@@ -23,7 +23,11 @@ export default function PWAInstallBanner() {
     if (isStandalone) return;
 
     const ua = navigator.userAgent;
-    const isIOS = /iPhone|iPad|iPod/.test(ua) && !/Macintosh/.test(ua);
+    // iPadOS 13+ Safari 預設 UA 報 "Macintosh"，要靠 maxTouchPoints 才認得出 iPad
+    const isIPad =
+      /iPad/.test(ua) ||
+      (/Macintosh/.test(ua) && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
+    const isIOS = /iPhone|iPod/.test(ua) || isIPad;
     const isAndroid = /Android/.test(ua);
     const p: Platform = isIOS ? "ios" : isAndroid ? "android" : "other";
     setPlatform(p);
