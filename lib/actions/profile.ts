@@ -67,6 +67,38 @@ export async function signOut() {
   redirect("/login");
 }
 
+// 管理員幫學生重設臨時密碼。產 12 字易讀密碼（避開易混淆字元）；
+// 設定到 auth.user → 學生用此密碼登入後可去 settings 自行改。
+export async function adminResetPassword(targetUserId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+  const { data: me } = await supabase
+    .from("profiles").select("role").eq("id", user.id).single();
+  if (!me || me.role !== "admin") return { error: "無權限" };
+  if (targetUserId === user.id) return { error: "不能重設自己（請用設定頁改）" };
+
+  const admin = serviceClient();
+  const { data: target } = await admin
+    .from("profiles").select("role,display_name").eq("id", targetUserId).single();
+  if (!target) return { error: "找不到該成員" };
+  if (target.role === "admin") return { error: "不能重設其他管理員的密碼" };
+
+  // 12 字易讀密碼：避開 0/O/1/l/I 等易混淆
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  let pw = "";
+  for (let i = 0; i < 12; i++) {
+    pw += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  const { error: updateErr } = await admin.auth.admin.updateUserById(targetUserId, {
+    password: pw,
+  });
+  if (updateErr) return { error: `重設失敗：${updateErr.message}` };
+
+  return { ok: true, password: pw, displayName: target.display_name };
+}
+
 export type ReminderTime = "off" | "morning" | "evening";
 
 export async function setReminderTime(time: ReminderTime) {
