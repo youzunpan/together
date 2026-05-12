@@ -273,6 +273,9 @@ export default function SitFlow() {
 
   // 點「開始靜心」進來這裡：判斷要不要先跳通知權限卡
   function tryStart(min: number) {
+    // 把 selectedMin 同步成真實要計時的 min（OTHER 模式時 selectedMin 還停在隨機 preset，
+    // 不同步的話結束記錄會抓錯時間）
+    setSelectedMin(min);
     if (typeof window === "undefined") {
       beginPrepare(min);
       return;
