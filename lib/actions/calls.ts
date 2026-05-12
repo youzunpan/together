@@ -19,6 +19,7 @@ async function schedulePushForCallStart(params: {
   userId: string;
   callId: string;
   scheduledAt: string;
+  durationMin: number;
   message: string | null;
 }) {
   const sb = admin();
@@ -31,7 +32,8 @@ async function schedulePushForCallStart(params: {
     payload: {
       title: "同心開始了",
       body: params.message || "輕輕坐下，呼吸幾次。",
-      url: "/sit",
+      // 帶 ?duration=N 讓 /sit 自動進入倒數，學生不用再選一次時長
+      url: `/sit?duration=${params.durationMin}`,
       tag: `call_${params.callId}`,
       renotify: true,
     },
@@ -99,6 +101,7 @@ export async function createCall(formData: FormData) {
     userId: user.id,
     callId: call.id,
     scheduledAt: scheduledAt.toISOString(),
+    durationMin,
     message,
   });
 
@@ -122,7 +125,7 @@ export async function joinCall(callId: string) {
   if (!error) {
     const { data: call } = await supabase
       .from("sit_calls")
-      .select("scheduled_at, message")
+      .select("scheduled_at, duration_min, message")
       .eq("id", callId)
       .single();
     if (call) {
@@ -132,6 +135,7 @@ export async function joinCall(callId: string) {
           userId: user.id,
           callId,
           scheduledAt: call.scheduled_at,
+          durationMin: call.duration_min,
           message: call.message,
         });
       }
