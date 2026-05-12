@@ -116,14 +116,17 @@ export default function SitFlow() {
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState === "hidden") {
-        // 螢幕鎖定 / 切到背景：主動把進行中的鈴聲暫停 + AudioContext suspend，
-        // 避免 iOS 直接中斷音訊 session 而發出系統「逼」聲。
+        // 螢幕鎖定 / 切到背景：主動把進行中的鈴聲完全銷毀 + AudioContext suspend
+        // （只 pause 不夠：iOS Safari 在 resume / 下一個 user gesture 時會把 paused
+        // audio 再播一次）
         if (step === "timer") wasHiddenRef.current = true;
         const a = activeBellAudioRef.current;
         if (a) {
-          // 先把 volume 拉到 0 再 pause：避免直接 pause 在某些情境下出現 click
           try { a.volume = 0; } catch {}
           try { a.pause(); } catch {}
+          try { a.currentTime = 999; } catch {} // 跳到結尾，萬一還是被 resume 也沒聲音
+          try { a.src = ""; } catch {}          // 卸掉音訊來源
+          try { a.load(); } catch {}            // 強制重設、釋放
           activeBellAudioRef.current = null;
         }
         audioCtxRef.current?.suspend().catch(() => {});
