@@ -50,8 +50,10 @@ self.addEventListener("notificationclick", (event) => {
           const u = new URL(client.url);
           const target = new URL(url, self.location.origin);
           if (u.origin === target.origin) {
+            // iOS PWA client.navigate() 不穩，改用 focus + postMessage 讓
+            // client 自己 window.location.assign 過去（最可靠的跨平台做法）
             client.focus();
-            client.navigate(target.href).catch(() => {});
+            client.postMessage({ type: "sw-navigate", url: target.pathname + target.search });
             return;
           }
         } catch {}

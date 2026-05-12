@@ -4,6 +4,7 @@ import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import Splash from "@/components/Splash";
 import ErrorReporter from "@/components/ErrorReporter";
+import SWNavigationListener from "@/components/SWNavigationListener";
 
 // 襯線：思源宋體 TW（= Google 託管的 Noto Serif TC，繁體支援完整）
 const notoSerif = Noto_Serif_TC({
@@ -65,6 +66,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
         <ErrorReporter />
+        <SWNavigationListener />
         <Splash />
         <main
           className="flex-1"
