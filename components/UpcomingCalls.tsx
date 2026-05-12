@@ -81,8 +81,8 @@ export default async function UpcomingCalls() {
     .from("profiles").select("role").eq("id", user.id).single();
   const isAdmin = viewerProfile?.role === "admin";
 
-  // 拉所有未過期的呼喚：scheduled_at > now() - 2.5h（涵蓋進行中 + 緩衝）
-  const cutoff = new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString();
+  // 拉所有未過期的呼喚：scheduled_at > now() - 4h（涵蓋進行中、留點 DB 查詢餘地）
+  const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
   const { data: calls } = await supabase
     .from("sit_calls_with_stats")
     .select("*")
@@ -90,10 +90,10 @@ export default async function UpcomingCalls() {
     .order("scheduled_at", { ascending: true })
     .returns<CallRow[]>();
 
-  // 進一步過濾：scheduled_at + duration + 30min 緩衝 < now → 過期，丟掉
+  // 過濾：scheduled_at + duration < now → 結束就立刻消失（不留緩衝）
   const now = Date.now();
   const live = (calls ?? []).filter((c) => {
-    const endMs = new Date(c.scheduled_at).getTime() + (c.duration_min + 30) * 60 * 1000;
+    const endMs = new Date(c.scheduled_at).getTime() + c.duration_min * 60 * 1000;
     return endMs > now;
   });
 
