@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AvatarUpload from "./AvatarUpload";
 import Lamp from "@/components/Lamp";
 import TwentyOneCircle from "@/components/TwentyOneCircle";
@@ -40,7 +41,7 @@ export default async function MePage() {
     <div className="max-w-md mx-auto px-4 py-6">
       <header className="mb-8 flex items-center justify-between">
         {profile.role === "admin" ? (
-          <a href="/admin" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+          <Link href="/admin" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
             ADMIN
             {pendingCount > 0 && (
               <span aria-label={`${pendingCount} 件待審`}
@@ -53,16 +54,16 @@ export default async function MePage() {
                 {pendingCount}
               </span>
             )}
-          </a>
+          </Link>
         ) : (
           <span style={{ width: "3rem" }} />
         )}
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)" }}>
           PROFILE
         </p>
-        <a href="/me/settings" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", width: "3rem", textAlign: "right" }}>
+        <Link href="/me/settings" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", width: "3rem", textAlign: "right" }}>
           EDIT
-        </a>
+        </Link>
       </header>
 
       {/* 頭像 + 名字 */}

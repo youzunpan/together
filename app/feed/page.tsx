@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
@@ -118,16 +119,16 @@ export default async function FeedPage() {
           {todaySit ? (
             <div className="flex items-center justify-between">
               <p style={{ fontSize: "0.9rem", color: "#edecea" }}>今天你坐了 <span style={{ fontFamily: "var(--font-space-mono)", color: "#BEC23F" }}>{todaySit.duration_min}</span> 分鐘。</p>
-              <a href="/sit" style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)" }} className="hover:text-[#BEC23F] transition-colors">
+              <Link href="/sit" prefetch style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)" }} className="hover:text-[#BEC23F] transition-colors">
                 再坐一次 →
-              </a>
+              </Link>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
               <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜心</p>
-              <a href="/sit" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
+              <Link href="/sit" prefetch className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
                 記錄今天
-              </a>
+              </Link>
             </div>
           )}
         </div>
@@ -135,14 +136,15 @@ export default async function FeedPage() {
         {/* 開放報名中的課程連結（淡淡一行） */}
         {openCourses && openCourses.length > 0 && (
           <p className="text-center mt-2.5" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.62rem", letterSpacing: "0.12em" }}>
-            <a
+            <Link
               href={openCourses.length === 1 ? `/courses/${openCourses[0].slug}` : "/courses"}
+              prefetch
               style={{ color: "rgba(190,194,63,0.65)", textDecoration: "none" }}
             >
               {openCourses.length === 1
                 ? <>新課程 · <span style={{ color: "#BEC23F" }}>{openCourses[0].title}</span> →</>
                 : <>新課程 · <span style={{ color: "#BEC23F" }}>{openCourses.length} 個開放中</span> →</>}
-            </a>
+            </Link>
           </p>
         )}
 
