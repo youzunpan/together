@@ -145,6 +145,21 @@
   font-family: var(--font-space-mono), monospace;
 }
 
+/* 全域：所有可點擊元素拿掉 iOS 300ms 雙擊延遲，並給 active 觸覺回饋 */
+button, a, [role="button"], label[for], input[type="submit"], input[type="button"] {
+  touch-action: manipulation;
+}
+/* 手機 / 觸控裝置才上 :active 視覺反應（電腦保留 :hover） */
+@media (hover: none) {
+  button:active:not(:disabled),
+  a:active,
+  [role="button"]:active,
+  label[for]:active {
+    opacity: 0.6;
+    transition: opacity 0.05s ease-out;
+  }
+}
+
 /* 主按鈕：金色，微圓角 */
 .btn-primary {
   background: var(--seq-gold);
@@ -158,6 +173,10 @@
   transition: background 0.2s, transform 0.15s;
 }
 .btn-primary:hover { background: var(--seq-gold-hover); transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.05s ease-out;
+}
 .btn-primary:disabled { opacity: 0.4; transform: none; cursor: default; }
 
 /* 次要按鈕：透明 + 邊框 */
@@ -172,6 +191,7 @@
   transition: color 0.2s;
 }
 .btn-ghost:hover { color: var(--seq-white); }
+.btn-ghost:active { color: var(--seq-white); opacity: 0.7; }
 
 /* 隱藏 scroll bar 但保留滾動 */
 .hide-scrollbar {
