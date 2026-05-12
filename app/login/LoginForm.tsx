@@ -64,6 +64,13 @@ export default function LoginForm() {
     // 成功：保持 loading 狀態到 /feed 載完，避免按鈕先變回「登入」造成卡住的錯覺
     router.push("/feed");
     router.refresh();
+    // 保險：5 秒後還沒切過去，強制 hard reload。RSC 導航偶爾會卡住但
+    // cookie 已經設好了，full reload 一定會成功
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.location.pathname !== "/feed") {
+        window.location.assign("/feed");
+      }
+    }, 5000);
   }
 
   return (
