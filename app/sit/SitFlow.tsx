@@ -255,11 +255,9 @@ export default function SitFlow() {
     }
     leaveLiveSitters();
     releaseWakeLock();
-    // 記錄實際坐的時間（含超時）
-    const elapsedMin = actualStart
-      ? Math.max(selectedMin, Math.floor((Date.now() - actualStart.getTime()) / 60000))
-      : selectedMin;
-    setActualMin(elapsedMin);
+    // 這條路 = 學生鎖屏中時間到了，回來才點輕觸；我們不知道他實際坐了多久，
+    // 紀錄就用原訂時間，不要把「離開 app 的時間」算進去
+    setActualMin(selectedMin);
     setTimeout(() => setStep("record"), 4500);
   }
 
