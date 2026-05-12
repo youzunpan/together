@@ -37,8 +37,10 @@ export default function LoginForm() {
     setError(""); setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
     if (err) {
+      // 失敗才解除 loading；成功時保持 loading 狀態到 /feed 真的載完，
+      // 避免按鈕「先變回登入再消失」造成「卡住」的錯覺
+      setLoading(false);
       if (err.message.toLowerCase().includes("invalid")) setError("email 或密碼不正確。");
       else setError(err.message);
       return;
@@ -65,8 +67,13 @@ export default function LoginForm() {
         {error && <p style={{ fontSize: "0.75rem", color: "#D65C6A" }}>{error}</p>}
 
         <button type="submit" disabled={loading} className="btn-primary w-full"
-          style={{ width: "100%", letterSpacing: "0.12em" }}>
-          {loading ? "..." : "登入"}
+          style={{
+            width: "100%",
+            letterSpacing: "0.12em",
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "wait" : "pointer",
+          }}>
+          {loading ? "登入中..." : "登入"}
         </button>
       </form>
 
