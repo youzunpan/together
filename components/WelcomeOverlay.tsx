@@ -11,7 +11,7 @@ const CARDS = [
   {
     title: "同在",
     subtitle: "TOGETHER",
-    body: "一起靜心的地方，\n每天只要幾分鐘，\n就可以整理你的\n身 心 靈",
+    body: "一起靜心的地方，\n每天只要幾分鐘，\n好好整理你的身心靈。",
   },
   {
     title: "21 天圓",

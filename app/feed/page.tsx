@@ -186,7 +186,7 @@ export default async function FeedPage() {
             </p>
             <p style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.25)", lineHeight: 1.7 }}>
               第一個坐的人會在這裡出現。<br />
-              要不要是你？
+              是你？
             </p>
           </div>
         )}

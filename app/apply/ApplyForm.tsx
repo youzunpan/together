@@ -49,7 +49,7 @@ export default function ApplyForm() {
       </div>
       <div>
         <label className="seq-label block mb-1.5">顯示名稱</label>
-        <input name="display_name" type="text" required maxLength={40} placeholder="小雨"
+        <input name="display_name" type="text" required maxLength={40} placeholder="大拙"
           style={inputStyle}
           onFocus={e => e.target.style.borderColor = "#BEC23F"}
           onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"} />
