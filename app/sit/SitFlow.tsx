@@ -719,15 +719,6 @@ export default function SitFlow() {
             }}>
               {isOvertime ? "+" : ""}{mm}:{ss}
             </span>
-            {isOvertime && (
-              <span style={{
-                fontFamily: "var(--font-space-mono)", fontSize: "0.6rem",
-                letterSpacing: "0.18em", color: "rgba(190,194,63,0.7)",
-                marginTop: "0.5rem",
-              }}>
-                超時 · OVERTIME
-              </span>
-            )}
           </div>
         </div>
 
@@ -794,7 +785,7 @@ export default function SitFlow() {
         <div className="space-y-3">
           <textarea value={reflection}
             onChange={e => setReflection(e.target.value.slice(0, 140))}
-            placeholder="像一句呼吸就好" rows={3}
+            placeholder="想說點什麼？" rows={3}
             className="reflection-text"
             style={{ ...inputStyle, resize: "none", lineHeight: 1.7 }}
             onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.15)"}
@@ -802,7 +793,7 @@ export default function SitFlow() {
           />
           {reflection.length > 120 && (
             <p className="text-right" style={{ fontSize: "0.7rem", fontFamily: "var(--font-space-mono)", color: reflection.length >= 140 ? "#D65C6A" : "rgba(237,236,234,0.2)" }}>
-              {reflection.length >= 140 ? "短一點，像一句呼吸就好。" : `${140 - reflection.length}`}
+              {reflection.length >= 140 ? "再短一點。" : `${140 - reflection.length}`}
             </p>
           )}
           <button onClick={() => handleRecord(false)} disabled={submitting}
