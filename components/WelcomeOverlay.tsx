@@ -11,17 +11,17 @@ const CARDS = [
   {
     title: "同在",
     subtitle: "TOGETHER",
-    body: "一起靜坐的地方。\n沒有教練，沒有目標。\n只是坐。",
+    body: "一起靜心的地方，\n每天只要幾分鐘，\n就可以整理你的\n身 心 靈",
   },
   {
     title: "21 天圓",
     subtitle: "CIRCLE",
-    body: "連續坐 21 天，畫完一個圓。\n漏一天，重新開始。\n每天 5 分鐘也很好。",
+    body: "邀請你連續靜心二十一天，\n我們一起完成一個圓。",
   },
   {
     title: "同心",
     subtitle: "TOGETHER CALL",
-    body: "可以呼喚別人在同一個時間一起坐。\n看不到彼此，但你不是一個人。",
+    body: "呼喚你的靜心夥伴，\n同個時間一起坐。",
   },
 ];
 
