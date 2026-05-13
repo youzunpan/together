@@ -29,6 +29,7 @@ export type CourseFormCourse = {
   schedule_note: string | null;
   location: string | null;
   price_note: string | null;
+  single_session_price: string | null;
   capacity: number;
   cover_image_url: string | null;
   status: "draft" | "published" | "closed";
@@ -228,7 +229,7 @@ export default function CourseFormDialog({
           </div>
 
           <div>
-            <label style={labelStyle}>費用 + 轉帳資訊</label>
+            <label style={labelStyle}>整期費用 + 轉帳資訊</label>
             <textarea
               name="price_note"
               rows={3}
@@ -236,6 +237,18 @@ export default function CourseFormDialog({
               defaultValue={course?.price_note ?? ""}
               placeholder={"例：3000 元 / 8 堂\n台新銀行 (812) 帳號 1234-5678-9000，戶名 樽"}
               style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>單堂費用（選填，留空不開放單堂報名）</label>
+            <input
+              name="single_session_price"
+              type="text"
+              maxLength={120}
+              defaultValue={course?.single_session_price ?? ""}
+              placeholder="例：500 元 / 堂"
+              style={inputStyle}
             />
           </div>
 

@@ -50,6 +50,7 @@ type CourseInput = {
   schedule_note?: string | null;
   location?: string | null;
   price_note?: string | null;
+  single_session_price?: string | null;
   capacity: number;
   cover_image_url?: string | null;
   status: "draft" | "published" | "closed";
@@ -134,6 +135,7 @@ function parseInput(formData: FormData): { error?: string; parsed?: ParsedInput 
         schedule_note: get("schedule_note"),
         location: get("location"),
         price_note: get("price_note"),
+        single_session_price: get("single_session_price"),
         capacity,
         cover_image_url: get("cover_image_url"),
         status,

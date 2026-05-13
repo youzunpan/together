@@ -27,6 +27,7 @@ export type RegistrationRow = {
   transfer_last4: string | null;
   status: "pending" | "confirmed" | "cancelled";
   created_at: string;
+  session_ids: string[] | null;
 };
 
 const STATUS_STYLE: Record<CourseRow["status"], { label: string; color: string }> = {
@@ -320,7 +321,19 @@ function RegistrationItem({
     <div style={{ background: "rgba(0,0,0,0.2)", padding: "0.65rem 0.75rem", borderRadius: 4 }}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex-1 min-w-0">
-          <p style={{ fontSize: "0.85rem", color: "#edecea" }}>{reg.name}</p>
+          <div className="flex items-center gap-2" style={{ marginBottom: "0.1rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "#edecea" }}>{reg.name}</p>
+            <span style={{
+              fontFamily: "var(--font-space-mono)", fontSize: "0.55rem",
+              letterSpacing: "0.08em", color: "rgba(190,194,63,0.7)",
+              border: "1px solid rgba(190,194,63,0.3)", borderRadius: 2,
+              padding: "0.05rem 0.35rem",
+            }}>
+              {reg.session_ids && reg.session_ids.length > 0
+                ? `單堂 × ${reg.session_ids.length}`
+                : "整期"}
+            </span>
+          </div>
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", color: "rgba(237,236,234,0.4)", marginTop: "0.15rem", wordBreak: "break-all" }}>
             {reg.email}
           </p>

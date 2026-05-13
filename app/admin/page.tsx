@@ -53,11 +53,11 @@ export default async function AdminPage() {
   // 課程（admin 讀直接 query courses 表，可以看到 draft；報名數在 JS 算）
   const { data: rawCourses } = await supabase
     .from("courses")
-    .select("id, slug, title, subtitle, description, format, duration_type, start_at, end_at, schedule_note, location, price_note, capacity, cover_image_url, status")
+    .select("id, slug, title, subtitle, description, format, duration_type, start_at, end_at, schedule_note, location, price_note, single_session_price, capacity, cover_image_url, status")
     .order("start_at", { ascending: false });
   const { data: rawRegistrations } = await supabase
     .from("registrations")
-    .select("id, course_id, name, email, phone, line_id, transfer_last4, status, created_at")
+    .select("id, course_id, name, email, phone, line_id, transfer_last4, status, created_at, session_ids")
     .order("created_at", { ascending: false });
   const { data: rawSessions } = await supabase
     .from("course_sessions")

@@ -22,6 +22,7 @@ type CourseDetail = {
   schedule_note: string | null;
   location: string | null;
   price_note: string | null;
+  single_session_price: string | null;
   capacity: number;
   cover_image_url: string | null;
   status: "draft" | "published" | "closed";
@@ -287,7 +288,18 @@ export default async function CourseDetailPage({
             </p>
           </div>
         ) : (
-          <RegisterForm slug={course.slug} title={course.title} initialName={viewer?.display_name} initialEmail={viewer?.email} />
+          <RegisterForm
+            slug={course.slug}
+            title={course.title}
+            initialName={viewer?.display_name}
+            initialEmail={viewer?.email}
+            seriesPrice={course.price_note}
+            singleSessionPrice={course.single_session_price}
+            sessions={sessions.map((s) => ({
+              id: s.id,
+              label: formatFullDateTime(s.session_at) + (s.note ? ` · ${s.note}` : ""),
+            }))}
+          />
         )}
       </section>
     </article>

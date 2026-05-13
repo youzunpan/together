@@ -17,16 +17,35 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 4,
 };
 
-export default function RegisterForm({ slug, title, initialName, initialEmail }: {
+type Session = { id: string; label: string };
+
+export default function RegisterForm({
+  slug, title, initialName, initialEmail,
+  seriesPrice, singleSessionPrice, sessions,
+}: {
   slug: string;
   title: string;
   initialName?: string;
   initialEmail?: string;
+  seriesPrice?: string | null;
+  singleSessionPrice?: string | null;
+  sessions?: Session[];
 }) {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const allowSingle = !!singleSessionPrice && (sessions?.length ?? 0) > 0;
+  const [regType, setRegType] = useState<"series" | "single">("series");
+  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
+
+  function toggleSession(id: string) {
+    setSelectedSessions((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,8 +54,14 @@ export default function RegisterForm({ slug, title, initialName, initialEmail }:
       setError("請先閱讀並同意服務條款與隱私政策");
       return;
     }
+    if (regType === "single" && selectedSessions.size === 0) {
+      setError("請至少選一堂");
+      return;
+    }
     setLoading(true);
     const fd = new FormData(e.currentTarget);
+    fd.set("reg_type", regType);
+    fd.set("sessions_csv", regType === "single" ? Array.from(selectedSessions).join(",") : "");
     const res = await submitRegistration(slug, fd);
     setLoading(false);
     if ("error" in res && res.error) {
@@ -71,6 +96,76 @@ export default function RegisterForm({ slug, title, initialName, initialEmail }:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {/* 報名類型：整期 vs 單堂（只有 admin 設了單堂價、又有 sessions 才出現） */}
+      {allowSingle && (
+        <Field label="報名方式">
+          <div className="grid grid-cols-2 gap-2">
+            <RegTypeOption
+              active={regType === "series"}
+              title="整期"
+              hint={seriesPrice ?? "全期完整參加"}
+              onClick={() => setRegType("series")}
+            />
+            <RegTypeOption
+              active={regType === "single"}
+              title="單堂"
+              hint={singleSessionPrice ?? ""}
+              onClick={() => setRegType("single")}
+            />
+          </div>
+        </Field>
+      )}
+
+      {/* 單堂模式：顯示課表複選 */}
+      {regType === "single" && sessions && sessions.length > 0 && (
+        <Field label={`選擇要報的堂次（共 ${selectedSessions.size} 堂）`}>
+          <div
+            className="space-y-1.5"
+            style={{
+              background: "#1a1b18",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 4,
+              padding: "0.6rem 0.85rem",
+              maxHeight: "260px",
+              overflowY: "auto",
+            }}
+          >
+            {sessions.map((s, i) => {
+              const checked = selectedSessions.has(s.id);
+              return (
+                <label
+                  key={s.id}
+                  className="flex items-center gap-2.5 cursor-pointer select-none"
+                  style={{ padding: "0.35rem 0" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleSession(s.id)}
+                    style={{ width: 16, height: 16, accentColor: "#BEC23F", flexShrink: 0 }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-space-mono)",
+                      fontSize: "0.65rem",
+                      color: "rgba(237,236,234,0.35)",
+                      letterSpacing: "0.08em",
+                      width: "1.5rem",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span style={{ fontSize: "0.82rem", color: checked ? "#edecea" : "rgba(237,236,234,0.65)", flex: 1 }}>
+                    {s.label}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </Field>
+      )}
+
       <Field label="名字">
         <input
           name="name"
@@ -166,6 +261,42 @@ export default function RegisterForm({ slug, title, initialName, initialEmail }:
         {loading ? "SENDING..." : "送出報名"}
       </button>
     </form>
+  );
+}
+
+function RegTypeOption({
+  active,
+  title,
+  hint,
+  onClick,
+}: {
+  active: boolean;
+  title: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        background: active ? "rgba(190,194,63,0.12)" : "#2c2c2a",
+        border: active ? "1px solid #BEC23F" : "1px solid rgba(255,255,255,0.08)",
+        color: active ? "#BEC23F" : "rgba(237,236,234,0.55)",
+        padding: "0.7rem 0.85rem",
+        textAlign: "left",
+        cursor: "pointer",
+        borderRadius: 4,
+        transition: "all 0.15s",
+      }}
+    >
+      <div style={{ fontSize: "0.95rem", marginBottom: hint ? "0.2rem" : 0 }}>{title}</div>
+      {hint && (
+        <div style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.05em", opacity: 0.75 }}>
+          {hint}
+        </div>
+      )}
+    </button>
   );
 }
 

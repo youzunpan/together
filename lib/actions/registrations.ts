@@ -67,12 +67,25 @@ export async function submitRegistration(slug: string, formData: FormData) {
   const email = (formData.get("email") as string | null)?.trim().toLowerCase();
   const line_id = (formData.get("line_id") as string | null)?.trim() || null;
   const transfer_last4 = (formData.get("transfer_last4") as string | null)?.trim() || null;
+  const reg_type = (formData.get("reg_type") as string | null) ?? "series";
+  // sessions_csv：單堂時帶 "uuid,uuid,uuid"；整期時空字串
+  const sessionsCsv = (formData.get("sessions_csv") as string | null)?.trim() ?? "";
 
   if (!name || !email) return { error: "請填寫名字與 email" };
   if (name.length > 60) return { error: "名字過長" };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "email 格式不正確" };
   if (line_id && line_id.length > 60) return { error: "Line ID 過長" };
   if (transfer_last4 && !/^[0-9]{4}$/.test(transfer_last4)) return { error: "匯款末四碼需為 4 位數字" };
+
+  // 解析 session_ids
+  let sessionIds: string[] | null = null;
+  if (reg_type === "single") {
+    sessionIds = sessionsCsv.split(",").map(s => s.trim()).filter(Boolean);
+    if (sessionIds.length === 0) return { error: "請至少選一堂" };
+    // uuid 格式檢查
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!sessionIds.every(s => uuidRe.test(s))) return { error: "課堂資料異常" };
+  }
 
   // 已登入則帶 user_id（綁定到 feed 帳號）；匿名照舊
   let userId: string | null = null;
@@ -92,6 +105,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
     p_line_id: line_id,
     p_transfer_last4: transfer_last4,
     p_user_id: userId,
+    p_session_ids: sessionIds,
   });
 
   if (rpcErr) {
