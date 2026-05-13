@@ -25,6 +25,7 @@ export type RegistrationRow = {
   phone: string | null;
   line_id: string | null;
   transfer_last4: string | null;
+  transfer_amount: number | null;
   status: "pending" | "confirmed" | "cancelled";
   created_at: string;
   session_ids: string[] | null;
@@ -337,10 +338,15 @@ function RegistrationItem({
           <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", color: "rgba(237,236,234,0.4)", marginTop: "0.15rem", wordBreak: "break-all" }}>
             {reg.email}
           </p>
-          {(reg.line_id || reg.transfer_last4 || reg.phone) && (
+          {(reg.line_id || reg.transfer_last4 || reg.transfer_amount || reg.phone) && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.25rem", fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.4)" }}>
               {reg.line_id && <span>LINE · {reg.line_id}</span>}
-              {reg.transfer_last4 && <span style={{ color: "#BEC23F" }}>匯款 · {reg.transfer_last4}</span>}
+              {(reg.transfer_amount || reg.transfer_last4) && (
+                <span style={{ color: "#BEC23F" }}>
+                  匯款 ·{reg.transfer_amount ? ` $${reg.transfer_amount}` : ""}
+                  {reg.transfer_last4 ? ` · ${reg.transfer_last4}` : ""}
+                </span>
+              )}
               {reg.phone && <span>TEL · {reg.phone}</span>}
             </div>
           )}

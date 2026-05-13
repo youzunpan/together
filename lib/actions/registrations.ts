@@ -67,6 +67,8 @@ export async function submitRegistration(slug: string, formData: FormData) {
   const email = (formData.get("email") as string | null)?.trim().toLowerCase();
   const line_id = (formData.get("line_id") as string | null)?.trim() || null;
   const transfer_last4 = (formData.get("transfer_last4") as string | null)?.trim() || null;
+  const transfer_amount_raw = (formData.get("transfer_amount") as string | null)?.trim();
+  const transfer_amount = transfer_amount_raw ? Number(transfer_amount_raw) : null;
   const reg_type = (formData.get("reg_type") as string | null) ?? "series";
   // sessions_csv：單堂時帶 "uuid,uuid,uuid"；整期時空字串
   const sessionsCsv = (formData.get("sessions_csv") as string | null)?.trim() ?? "";
@@ -76,6 +78,9 @@ export async function submitRegistration(slug: string, formData: FormData) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "email 格式不正確" };
   if (line_id && line_id.length > 60) return { error: "Line ID 過長" };
   if (transfer_last4 && !/^[0-9]{4}$/.test(transfer_last4)) return { error: "匯款末四碼需為 4 位數字" };
+  if (transfer_amount !== null && (!Number.isInteger(transfer_amount) || transfer_amount <= 0 || transfer_amount > 1_000_000)) {
+    return { error: "匯款金額需為正整數" };
+  }
 
   // 解析 session_ids
   let sessionIds: string[] | null = null;
@@ -106,6 +111,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
     p_transfer_last4: transfer_last4,
     p_user_id: userId,
     p_session_ids: sessionIds,
+    p_transfer_amount: transfer_amount,
   });
 
   if (rpcErr) {

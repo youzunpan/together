@@ -57,7 +57,7 @@ export default async function AdminPage() {
     .order("start_at", { ascending: false });
   const { data: rawRegistrations } = await supabase
     .from("registrations")
-    .select("id, course_id, name, email, phone, line_id, transfer_last4, status, created_at, session_ids")
+    .select("id, course_id, name, email, phone, line_id, transfer_last4, transfer_amount, status, created_at, session_ids")
     .order("created_at", { ascending: false });
   const { data: rawSessions } = await supabase
     .from("course_sessions")

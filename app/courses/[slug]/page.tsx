@@ -105,6 +105,7 @@ export default async function CourseDetailPage({
     email: string;
     line_id: string | null;
     transfer_last4: string | null;
+    transfer_amount: number | null;
     created_at: string;
   } | null = null;
   if (user) {
@@ -119,7 +120,7 @@ export default async function CourseDetailPage({
       );
       const { data: reg } = await sb
         .from("registrations")
-        .select("status, name, email, line_id, transfer_last4, created_at")
+        .select("status, name, email, line_id, transfer_last4, transfer_amount, created_at")
         .eq("course_id", course.id)
         .or(`user_id.eq.${user.id},email.eq.${user.email?.toLowerCase() ?? ""}`)
         .neq("status", "cancelled")
@@ -258,6 +259,9 @@ export default async function CourseDetailPage({
               <ReadOnlyRow label="報名姓名" value={myRegistration.name} />
               <ReadOnlyRow label="EMAIL" value={myRegistration.email} mono />
               {myRegistration.line_id && <ReadOnlyRow label="LINE ID" value={myRegistration.line_id} />}
+              {myRegistration.transfer_amount && (
+                <ReadOnlyRow label="匯款金額" value={`${myRegistration.transfer_amount} 元`} mono />
+              )}
               {myRegistration.transfer_last4 && (
                 <ReadOnlyRow label="匯款末四碼" value={myRegistration.transfer_last4} mono />
               )}

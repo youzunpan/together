@@ -207,19 +207,37 @@ export default function RegisterForm({
         />
       </Field>
 
-      <Field label="匯款末四碼（選填）" hint="已匯款請填，協助對帳；尚未匯款可留空">
-        <input
-          name="transfer_last4"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]{4}"
-          maxLength={4}
-          placeholder="0000"
-          style={{ ...inputStyle, fontFamily: "var(--font-space-mono)", letterSpacing: "0.3em" }}
-          onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
-          onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="匯款金額（選填）">
+          <input
+            name="transfer_amount"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={1000000}
+            placeholder="3000"
+            style={{ ...inputStyle, fontFamily: "var(--font-space-mono)" }}
+            onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
+            onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
+          />
+        </Field>
+        <Field label="末四碼（選填）">
+          <input
+            name="transfer_last4"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]{4}"
+            maxLength={4}
+            placeholder="0000"
+            style={{ ...inputStyle, fontFamily: "var(--font-space-mono)", letterSpacing: "0.3em" }}
+            onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
+            onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
+          />
+        </Field>
+      </div>
+      <p style={{ fontSize: "0.7rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.5, marginTop: "-0.5rem" }}>
+        已匯款請填，協助對帳；尚未匯款可留空
+      </p>
 
       <label
         className="flex items-start gap-2 cursor-pointer select-none"
