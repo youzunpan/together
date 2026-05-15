@@ -74,7 +74,7 @@ function TabContent({
     >
       <div style={{ position: "relative" }}>
         {icon(lit)}
-        {badge && badge > 0 && (
+        {badge !== undefined && badge > 0 && (
           <span
             aria-label={`${badge} 則未讀回應`}
             style={{
