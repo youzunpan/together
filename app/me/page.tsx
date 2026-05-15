@@ -23,6 +23,50 @@ export default async function MePage() {
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
   const { circles, streak } = compute21Day(sits ?? []);
 
+  // 收到的回應（其他人對「我發的 sit」的回應）—— 取最近 20 則
+  // 用 last_replies_viewed_at 跟 created_at 比對，前 N 則標未讀
+  type RawRecvReply = {
+    id: string;
+    body: string;
+    created_at: string;
+    sit: { duration_min: number; sat_at: string } | null;
+    author: { display_name: string; avatar_letter: string; avatar_color: string } | null;
+  };
+  // 先撈自己所有 sit id
+  const { data: mySitIds } = await supabase
+    .from("sits").select("id").eq("user_id", user.id);
+  const sitIdList = (mySitIds ?? []).map((s) => s.id);
+  let receivedReplies: Array<{
+    id: string; body: string; created_at: string;
+    sitDurationMin: number; sitSatAt: string;
+    authorName: string; authorLetter: string; authorColor: string;
+    unread: boolean;
+  }> = [];
+  if (sitIdList.length > 0) {
+    const { data: replies } = await supabase
+      .from("sit_replies")
+      .select("id, body, created_at, sit:sits(duration_min, sat_at), author:profiles(display_name, avatar_letter, avatar_color)")
+      .in("sit_id", sitIdList)
+      .neq("user_id", user.id) // 排除自己留給自己的（理論上不會發生）
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .returns<RawRecvReply[]>();
+    const lastViewed = new Date(profile.last_replies_viewed_at ?? 0).getTime();
+    receivedReplies = (replies ?? [])
+      .filter((r) => r.sit && r.author)
+      .map((r) => ({
+        id: r.id,
+        body: r.body,
+        created_at: r.created_at,
+        sitDurationMin: r.sit!.duration_min,
+        sitSatAt: r.sit!.sat_at,
+        authorName: r.author!.display_name,
+        authorLetter: r.author!.avatar_letter,
+        authorColor: r.author!.avatar_color,
+        unread: new Date(r.created_at).getTime() > lastViewed,
+      }));
+  }
+
   // Admin 待審申請數（service role 繞過 RLS，只在 admin 才查）
   let pendingCount = 0;
   if (profile.role === "admin") {
@@ -94,6 +138,73 @@ export default async function MePage() {
           {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>
         </p>
       </div>
+
+      {/* 收到的回應 */}
+      {receivedReplies.length > 0 && (
+        <section className="mb-8">
+          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.18em", color: "rgba(237,236,234,0.3)", marginBottom: "0.75rem" }}>
+            回應 · REPLIES
+          </p>
+          <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
+            {receivedReplies.map((r) => {
+              const sitDate = new Date(new Date(r.sitSatAt).toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+              const sitLabel = `${sitDate.getMonth() + 1}/${sitDate.getDate()} · ${r.sitDurationMin}min`;
+              const replyDate = new Date(r.created_at);
+              const diffSec = (Date.now() - replyDate.getTime()) / 1000;
+              const ago =
+                diffSec < 60 ? "剛剛"
+                : diffSec < 3600 ? `${Math.floor(diffSec / 60)} 分鐘前`
+                : diffSec < 86400 ? `${Math.floor(diffSec / 3600)} 小時前`
+                : diffSec < 86400 * 7 ? `${Math.floor(diffSec / 86400)} 天前`
+                : replyDate.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" });
+              return (
+                <div
+                  key={r.id}
+                  style={{
+                    background: r.unread ? "rgba(190,194,63,0.06)" : "#2c2c2a",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    padding: "0.75rem 1rem",
+                    position: "relative",
+                  }}
+                >
+                  {r.unread && (
+                    <span
+                      aria-label="未讀"
+                      style={{
+                        position: "absolute", top: 12, right: 12,
+                        width: 6, height: 6, borderRadius: "50%", background: "#BEC23F",
+                      }}
+                    />
+                  )}
+                  <div className="flex items-start gap-2.5">
+                    <div
+                      className={`avatar-${r.authorColor} flex-shrink-0 flex items-center justify-center font-medium`}
+                      style={{ width: 26, height: 26, fontSize: "0.7rem" }}
+                      aria-hidden
+                    >
+                      {r.authorLetter}
+                    </div>
+                    <div className="flex-1 min-w-0" style={{ paddingRight: r.unread ? "1rem" : 0 }}>
+                      <div className="flex items-baseline gap-2" style={{ marginBottom: "0.2rem" }}>
+                        <span style={{ fontSize: "0.82rem", color: "#edecea" }}>{r.authorName}</span>
+                        <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.3)" }}>
+                          {ago}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: "0.88rem", color: "rgba(237,236,234,0.85)", lineHeight: 1.55, wordBreak: "break-word", marginBottom: "0.3rem" }}>
+                        {r.body}
+                      </p>
+                      <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.3)" }}>
+                        在你 {sitLabel} 的紀錄
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
