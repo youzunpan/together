@@ -58,6 +58,24 @@ export default function SitReplies({
     }
   }, [sitId]);
 
+  // 只允許同時開一張卡的回應 — 自己一開就廣播；別人廣播就把自己關掉
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (open) {
+      window.dispatchEvent(new CustomEvent("sit-reply-opened", { detail: { sitId } }));
+    }
+  }, [open, sitId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function onOther(e: Event) {
+      const detail = (e as CustomEvent<{ sitId: string }>).detail;
+      if (detail && detail.sitId !== sitId) setOpen(false);
+    }
+    window.addEventListener("sit-reply-opened", onOther);
+    return () => window.removeEventListener("sit-reply-opened", onOther);
+  }, [sitId]);
+
   const myReply = list.find((r) => r.user_id === currentUserId);
   const count = list.length;
 
@@ -188,29 +206,32 @@ export default function SitReplies({
             );
           })}
 
-          {/* 還沒回應 → 顯示輸入框 */}
+          {/* 還沒回應 → 顯示輸入框（上下兩列，配合窄畫面） */}
           {!myReply && (
-            <div style={{ marginTop: "0.5rem" }}>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  value={text}
-                  onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
-                  placeholder="留一句話（最多 40 字）"
-                  maxLength={MAX_LEN}
-                  disabled={pending}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePost(); } }}
-                  style={{
-                    flex: 1,
-                    background: lightBg ? "rgba(0,0,0,0.04)" : "#1a1b18",
-                    border: `1px solid ${lightBg ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
-                    padding: "0.4rem 0.7rem",
-                    fontSize: "16px",
-                    color: lightBg ? "#1a1b18" : "#edecea",
-                    outline: "none",
-                    borderRadius: 4,
-                  }}
-                />
+            <div style={{ marginTop: "0.5rem" }} className="space-y-1.5">
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
+                placeholder="留一句話（最多 40 字）"
+                maxLength={MAX_LEN}
+                disabled={pending}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePost(); } }}
+                style={{
+                  width: "100%",
+                  background: lightBg ? "rgba(0,0,0,0.04)" : "#1a1b18",
+                  border: `1px solid ${lightBg ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
+                  padding: "0.45rem 0.7rem",
+                  fontSize: "16px",
+                  color: lightBg ? "#1a1b18" : "#edecea",
+                  outline: "none",
+                  borderRadius: 4,
+                }}
+              />
+              <div className="flex items-center justify-between">
+                <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: dimColor }}>
+                  {text.length > 0 ? `${MAX_LEN - text.length}` : ""}
+                </span>
                 <button
                   type="button"
                   onClick={handlePost}
@@ -219,7 +240,7 @@ export default function SitReplies({
                     background: text.trim() ? "#BEC23F" : "transparent",
                     border: text.trim() ? "none" : `1px solid ${lightBg ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.08)"}`,
                     color: text.trim() ? "#1a1b18" : dimColor,
-                    padding: "0.4rem 0.85rem",
+                    padding: "0.4rem 1.25rem",
                     fontFamily: "var(--font-space-mono)",
                     fontSize: "0.65rem",
                     letterSpacing: "0.1em",
@@ -231,12 +252,7 @@ export default function SitReplies({
                 </button>
               </div>
               {error && (
-                <p style={{ fontSize: "0.65rem", color: "#D65C6A", marginTop: "0.25rem" }}>{error}</p>
-              )}
-              {text.length > 30 && (
-                <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: dimColor, marginTop: "0.2rem", textAlign: "right" }}>
-                  {MAX_LEN - text.length}
-                </p>
+                <p style={{ fontSize: "0.65rem", color: "#D65C6A" }}>{error}</p>
               )}
             </div>
           )}
