@@ -1,0 +1,227 @@
+"use client";
+
+// sit 卡下方的回應區塊。
+// - 預設摺疊，顯示「回應 N 則 ▼」
+// - 展開後列出所有回應 + 輸入框（如果使用者還沒回應過）
+// - 自己的回應有刪除按鈕
+
+import { useState, useTransition } from "react";
+import { postReply, deleteReply } from "@/lib/actions/replies";
+
+export type ReplyRow = {
+  id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  // 顯示用：作者頭像 + 名字（從 join 撈進來，丟給這個 component）
+  display_name: string;
+  avatar_letter: string;
+  avatar_color: string;
+};
+
+const MAX_LEN = 40;
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const now = Date.now();
+  const diff = (now - d.getTime()) / 1000;
+  if (diff < 60) return "剛剛";
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前`;
+  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`;
+  return d.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" });
+}
+
+export default function SitReplies({
+  sitId,
+  replies,
+  currentUserId,
+  lightBg = false,
+}: {
+  sitId: string;
+  replies: ReplyRow[];
+  currentUserId: string;
+  lightBg?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [pending, start] = useTransition();
+  const [delPending, startDel] = useTransition();
+  const [list, setList] = useState(replies);
+
+  const myReply = list.find((r) => r.user_id === currentUserId);
+  const count = list.length;
+
+  function handlePost() {
+    setError("");
+    if (!text.trim()) return;
+    start(async () => {
+      const res = await postReply(sitId, text);
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      // optimistic：暫時用 placeholder，等 server 重 fetch 會覆蓋
+      setList((prev) => [
+        ...prev,
+        {
+          id: `temp-${Date.now()}`,
+          user_id: currentUserId,
+          body: text.trim(),
+          created_at: new Date().toISOString(),
+          display_name: "你",
+          avatar_letter: "我",
+          avatar_color: "purple",
+        },
+      ]);
+      setText("");
+    });
+  }
+
+  function handleDelete(replyId: string) {
+    startDel(async () => {
+      const res = await deleteReply(replyId);
+      if (res.error) return;
+      setList((prev) => prev.filter((r) => r.id !== replyId));
+    });
+  }
+
+  const textColor = lightBg ? "rgba(26,27,24,0.55)" : "rgba(237,236,234,0.55)";
+  const dimColor = lightBg ? "rgba(26,27,24,0.4)" : "rgba(237,236,234,0.4)";
+
+  return (
+    <div style={{ marginTop: "0.5rem" }}>
+      {/* 摺疊 toggle */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          background: "transparent",
+          border: "none",
+          padding: "0.25rem 0",
+          fontFamily: "var(--font-space-mono)",
+          fontSize: "0.7rem",
+          letterSpacing: "0.1em",
+          color: textColor,
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.35rem",
+        }}
+      >
+        <span aria-hidden style={{ fontSize: "0.85rem" }}>💬</span>
+        <span>
+          {count === 0 ? "回應" : `${count} 則`}
+          <span aria-hidden style={{ marginLeft: "0.3rem", opacity: 0.5 }}>
+            {open ? "▲" : "▼"}
+          </span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="space-y-2" style={{ marginTop: "0.5rem", paddingLeft: "0.25rem" }}>
+          {/* 既有回應 */}
+          {list.map((r) => {
+            const isMine = r.user_id === currentUserId;
+            return (
+              <div key={r.id} className="flex items-start gap-2">
+                <div
+                  className={`avatar-${r.avatar_color} flex-shrink-0 flex items-center justify-center font-medium`}
+                  style={{ width: 22, height: 22, fontSize: "0.6rem" }}
+                  aria-hidden
+                >
+                  {r.avatar_letter}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2" style={{ marginBottom: "0.1rem" }}>
+                    <span style={{ fontSize: "0.72rem", color: textColor }}>{r.display_name}</span>
+                    <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", letterSpacing: "0.06em", color: dimColor }}>
+                      {formatTime(r.created_at)}
+                    </span>
+                    {isMine && !r.id.startsWith("temp-") && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(r.id)}
+                        disabled={delPending}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          fontFamily: "var(--font-space-mono)",
+                          fontSize: "0.55rem",
+                          letterSpacing: "0.06em",
+                          color: "rgba(214,92,106,0.45)",
+                          cursor: "pointer",
+                          marginLeft: "auto",
+                        }}
+                      >
+                        刪
+                      </button>
+                    )}
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: lightBg ? "#1a1b18" : "#edecea", lineHeight: 1.5, wordBreak: "break-word" }}>
+                    {r.body}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* 還沒回應 → 顯示輸入框 */}
+          {!myReply && (
+            <div style={{ marginTop: "0.5rem" }}>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
+                  placeholder="留一句話（最多 40 字）"
+                  maxLength={MAX_LEN}
+                  disabled={pending}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePost(); } }}
+                  style={{
+                    flex: 1,
+                    background: lightBg ? "rgba(0,0,0,0.04)" : "#1a1b18",
+                    border: `1px solid ${lightBg ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
+                    padding: "0.4rem 0.7rem",
+                    fontSize: "16px",
+                    color: lightBg ? "#1a1b18" : "#edecea",
+                    outline: "none",
+                    borderRadius: 4,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handlePost}
+                  disabled={pending || !text.trim()}
+                  style={{
+                    background: text.trim() ? "#BEC23F" : "transparent",
+                    border: text.trim() ? "none" : `1px solid ${lightBg ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.08)"}`,
+                    color: text.trim() ? "#1a1b18" : dimColor,
+                    padding: "0.4rem 0.85rem",
+                    fontFamily: "var(--font-space-mono)",
+                    fontSize: "0.65rem",
+                    letterSpacing: "0.1em",
+                    cursor: text.trim() && !pending ? "pointer" : "default",
+                    borderRadius: 4,
+                  }}
+                >
+                  {pending ? "..." : "送出"}
+                </button>
+              </div>
+              {error && (
+                <p style={{ fontSize: "0.65rem", color: "#D65C6A", marginTop: "0.25rem" }}>{error}</p>
+              )}
+              {text.length > 30 && (
+                <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: dimColor, marginTop: "0.2rem", textAlign: "right" }}>
+                  {MAX_LEN - text.length}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

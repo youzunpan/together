@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+import { markRepliesViewed } from "@/lib/actions/replies";
 
 const navItems = [
   {
@@ -53,23 +54,52 @@ function TabContent({
   label,
   icon,
   active,
+  badge,
 }: {
   label: string;
   icon: (active: boolean) => React.ReactNode;
   active: boolean;
+  badge?: number;
 }) {
   const { pending } = useLinkStatus();
   // 點下去的瞬間就視覺上變成 active，等伺服器渲染時不顯得遲鈍
   const lit = active || pending;
   return (
     <div
-      className="flex flex-col items-center gap-0.5 min-w-[56px]"
+      className="flex flex-col items-center gap-0.5 min-w-[56px] relative"
       style={{
         color: lit ? "#BEC23F" : "rgba(237,236,234,0.3)",
         transition: "color 0.1s",
       }}
     >
-      {icon(lit)}
+      <div style={{ position: "relative" }}>
+        {icon(lit)}
+        {badge && badge > 0 && (
+          <span
+            aria-label={`${badge} 則未讀回應`}
+            style={{
+              position: "absolute",
+              top: -2,
+              right: -6,
+              minWidth: "1rem",
+              height: "1rem",
+              padding: "0 0.25rem",
+              borderRadius: 999,
+              background: "#D65C6A",
+              color: "#1a1b18",
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.55rem",
+              fontWeight: 600,
+              lineHeight: 1,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
+      </div>
       <span style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>{label}</span>
     </div>
   );
@@ -96,6 +126,8 @@ export default function BottomNav() {
   const pathname = usePathname();
   // 登入狀態：null = 還沒確定；true/false = 確定後
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [unreadReplies, setUnreadReplies] = useState(0);
+  const lastViewRef = useRef<string>("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -105,6 +137,38 @@ export default function BottomNav() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // 查未讀回應（only when logged in），每分鐘 + visibility 變化時更新
+  useEffect(() => {
+    if (authed !== true) return;
+    let cancelled = false;
+    const supabase = createClient();
+    async function fetchUnread() {
+      const { data } = await supabase
+        .from("my_unread_replies")
+        .select("unread_count")
+        .maybeSingle();
+      if (!cancelled) setUnreadReplies(data?.unread_count ?? 0);
+    }
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60_000);
+    document.addEventListener("visibilitychange", fetchUnread);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", fetchUnread);
+    };
+  }, [authed, pathname]);
+
+  // 進 /me 自動標記為已讀
+  useEffect(() => {
+    if (authed !== true) return;
+    if (pathname !== "/me") return;
+    if (lastViewRef.current === pathname) return;
+    lastViewRef.current = pathname;
+    setUnreadReplies(0); // 樂觀清零
+    markRepliesViewed().catch(() => {});
+  }, [pathname, authed]);
 
   // /login /apply 永遠隱藏
   if (pathname.startsWith("/login") || pathname.startsWith("/apply")) return null;
@@ -128,7 +192,12 @@ export default function BottomNav() {
           const active = isActive(href, pathname);
           return (
             <Link key={href} href={href} prefetch>
-              <TabContent label={label} icon={icon} active={active} />
+              <TabContent
+                label={label}
+                icon={icon}
+                active={active}
+                badge={href === "/me" ? unreadReplies : 0}
+              />
             </Link>
           );
         })}

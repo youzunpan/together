@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import Link from "next/link";
 import ReactionBar from "./ReactionBar";
+import SitReplies from "./SitReplies";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import CommunityCircle from "@/components/CommunityCircle";
@@ -74,6 +75,43 @@ export default async function FeedPage() {
   const announcement = announcementRes.data;
   const openCourses = openCoursesRes.data;
   const alreadyMember = (ownSitCount ?? 0) > 0;
+
+  // 撈這 30 筆 sit 的回應（含作者頭像／名字）
+  type RawReply = {
+    id: string;
+    sit_id: string;
+    user_id: string;
+    body: string;
+    created_at: string;
+    profiles: { display_name: string; avatar_letter: string; avatar_color: string } | null;
+  };
+  const sitIds = (sits ?? []).map((s) => s.id);
+  const repliesBySit = new Map<string, Array<{
+    id: string; user_id: string; body: string; created_at: string;
+    display_name: string; avatar_letter: string; avatar_color: string;
+  }>>();
+  if (sitIds.length > 0) {
+    const { data: rawReplies } = await supabase
+      .from("sit_replies")
+      .select("id, sit_id, user_id, body, created_at, profiles(display_name, avatar_letter, avatar_color)")
+      .in("sit_id", sitIds)
+      .order("created_at", { ascending: true })
+      .returns<RawReply[]>();
+    for (const r of rawReplies ?? []) {
+      if (!r.profiles) continue;
+      const arr = repliesBySit.get(r.sit_id) ?? [];
+      arr.push({
+        id: r.id,
+        user_id: r.user_id,
+        body: r.body,
+        created_at: r.created_at,
+        display_name: r.profiles.display_name,
+        avatar_letter: r.profiles.avatar_letter,
+        avatar_color: r.profiles.avatar_color,
+      });
+      repliesBySit.set(r.sit_id, arr);
+    }
+  }
 
   const dayMembers = new Map<string, Set<string>>();
   for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
@@ -190,7 +228,13 @@ export default async function FeedPage() {
             </p>
           </div>
         )}
-        {sits && sits.length > 0 && <Timeline sits={sits} currentUserId={user!.id} />}
+        {sits && sits.length > 0 && (
+          <Timeline
+            sits={sits}
+            currentUserId={user!.id}
+            repliesBySit={Object.fromEntries(repliesBySit)}
+          />
+        )}
       </div>
     </div>
   );
@@ -210,7 +254,18 @@ function groupByDate(sits: any[]) {
   return groups;
 }
 
-function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string }) {
+type ReplyForCard = {
+  id: string; user_id: string; body: string; created_at: string;
+  display_name: string; avatar_letter: string; avatar_color: string;
+};
+
+function Timeline({
+  sits, currentUserId, repliesBySit,
+}: {
+  sits: any[];
+  currentUserId: string;
+  repliesBySit: Record<string, ReplyForCard[]>;
+}) {
   const groups = groupByDate(sits);
   // 跨組交替 side，保持流動感
   let idx = 0;
@@ -250,7 +305,15 @@ function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string 
           {items.map((sit) => {
             const side: "left" | "right" = idx % 2 === 0 ? "right" : "left";
             idx++;
-            return <TimelineCard key={sit.id} sit={sit} side={side} currentUserId={currentUserId} />;
+            return (
+              <TimelineCard
+                key={sit.id}
+                sit={sit}
+                side={side}
+                currentUserId={currentUserId}
+                replies={repliesBySit[sit.id] ?? []}
+              />
+            );
           })}
         </div>
       ))}
@@ -269,7 +332,14 @@ function Timeline({ sits, currentUserId }: { sits: any[]; currentUserId: string 
   );
 }
 
-function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "right"; currentUserId: string }) {
+function TimelineCard({
+  sit, side, currentUserId, replies,
+}: {
+  sit: any;
+  side: "left" | "right";
+  currentUserId: string;
+  replies: ReplyForCard[];
+}) {
   const isSelf = sit.user_id === currentUserId;
   const href = isSelf ? "/me" : `/u/${sit.user_id}`;
   const ago = (() => {
@@ -366,6 +436,14 @@ function TimelineCard({ sit, side, currentUserId }: { sit: any; side: "left" | "
               {ago}
             </span>
           </div>
+
+          {/* 回應區 */}
+          <SitReplies
+            sitId={sit.id}
+            replies={replies}
+            currentUserId={currentUserId}
+            lightBg={isLight}
+          />
         </div>
       </div>
     </div>
