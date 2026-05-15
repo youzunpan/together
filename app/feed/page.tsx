@@ -361,7 +361,7 @@ function TimelineCard({
   const durationColor = isLight ? "#6d7220" : "#BEC23F";
 
   return (
-    <div className="relative my-3">
+    <div id={`sit-${sit.id}`} className="relative my-3" style={{ scrollMarginTop: "5rem" }}>
       {/* 軸上的點：垂直置中對齊卡片 */}
       <div
         aria-hidden

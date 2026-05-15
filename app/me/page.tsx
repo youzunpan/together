@@ -27,6 +27,7 @@ export default async function MePage() {
   // 用 last_replies_viewed_at 跟 created_at 比對，前 N 則標未讀
   type RawRecvReply = {
     id: string;
+    sit_id: string;
     body: string;
     created_at: string;
     sit: { duration_min: number; sat_at: string } | null;
@@ -37,7 +38,7 @@ export default async function MePage() {
     .from("sits").select("id").eq("user_id", user.id);
   const sitIdList = (mySitIds ?? []).map((s) => s.id);
   let receivedReplies: Array<{
-    id: string; body: string; created_at: string;
+    id: string; sit_id: string; body: string; created_at: string;
     sitDurationMin: number; sitSatAt: string;
     authorName: string; authorLetter: string; authorColor: string;
     unread: boolean;
@@ -45,7 +46,7 @@ export default async function MePage() {
   if (sitIdList.length > 0) {
     const { data: replies } = await supabase
       .from("sit_replies")
-      .select("id, body, created_at, sit:sits(duration_min, sat_at), author:profiles(display_name, avatar_letter, avatar_color)")
+      .select("id, sit_id, body, created_at, sit:sits(duration_min, sat_at), author:profiles(display_name, avatar_letter, avatar_color)")
       .in("sit_id", sitIdList)
       .neq("user_id", user.id) // 排除自己留給自己的（理論上不會發生）
       .order("created_at", { ascending: false })
@@ -56,6 +57,7 @@ export default async function MePage() {
       .filter((r) => r.sit && r.author)
       .map((r) => ({
         id: r.id,
+        sit_id: r.sit_id,
         body: r.body,
         created_at: r.created_at,
         sitDurationMin: r.sit!.duration_min,
@@ -64,7 +66,9 @@ export default async function MePage() {
         authorLetter: r.author!.avatar_letter,
         authorColor: r.author!.avatar_color,
         unread: new Date(r.created_at).getTime() > lastViewed,
-      }));
+      }))
+      // 只顯示未讀，已讀不再列出（讀過就是讀過）
+      .filter((r) => r.unread);
   }
 
   // Admin 待審申請數（service role 繞過 RLS，只在 admin 才查）
@@ -139,11 +143,11 @@ export default async function MePage() {
         </p>
       </div>
 
-      {/* 收到的回應 */}
+      {/* 新回應（只列未讀，點下去跳到該則 sit） */}
       {receivedReplies.length > 0 && (
         <section className="mb-8">
-          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.18em", color: "rgba(237,236,234,0.3)", marginBottom: "0.75rem" }}>
-            回應 · REPLIES
+          <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.18em", color: "#BEC23F", marginBottom: "0.75rem" }}>
+            新回應 · NEW
           </p>
           <div className="space-y-px" style={{ borderRadius: "var(--r-card)", overflow: "hidden" }}>
             {receivedReplies.map((r) => {
@@ -158,24 +162,17 @@ export default async function MePage() {
                 : diffSec < 86400 * 7 ? `${Math.floor(diffSec / 86400)} 天前`
                 : replyDate.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" });
               return (
-                <div
+                <Link
                   key={r.id}
+                  href={`/feed#sit-${r.sit_id}`}
                   style={{
-                    background: r.unread ? "rgba(190,194,63,0.06)" : "#2c2c2a",
+                    display: "block",
+                    background: "rgba(190,194,63,0.06)",
                     borderBottom: "1px solid rgba(255,255,255,0.04)",
                     padding: "0.75rem 1rem",
-                    position: "relative",
+                    textDecoration: "none",
                   }}
                 >
-                  {r.unread && (
-                    <span
-                      aria-label="未讀"
-                      style={{
-                        position: "absolute", top: 12, right: 12,
-                        width: 6, height: 6, borderRadius: "50%", background: "#BEC23F",
-                      }}
-                    />
-                  )}
                   <div className="flex items-start gap-2.5">
                     <div
                       className={`avatar-${r.authorColor} flex-shrink-0 flex items-center justify-center font-medium`}
@@ -184,7 +181,7 @@ export default async function MePage() {
                     >
                       {r.authorLetter}
                     </div>
-                    <div className="flex-1 min-w-0" style={{ paddingRight: r.unread ? "1rem" : 0 }}>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2" style={{ marginBottom: "0.2rem" }}>
                         <span style={{ fontSize: "0.82rem", color: "#edecea" }}>{r.authorName}</span>
                         <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: "rgba(237,236,234,0.3)" }}>
@@ -195,11 +192,11 @@ export default async function MePage() {
                         {r.body}
                       </p>
                       <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.3)" }}>
-                        在你 {sitLabel} 的紀錄
+                        在你 {sitLabel} 的紀錄 ·  跳去看 →
                       </p>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

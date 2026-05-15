@@ -5,7 +5,7 @@
 // - 展開後列出所有回應 + 輸入框（如果使用者還沒回應過）
 // - 自己的回應有刪除按鈕
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { postReply, deleteReply } from "@/lib/actions/replies";
 
 export type ReplyRow = {
@@ -49,6 +49,14 @@ export default function SitReplies({
   const [pending, start] = useTransition();
   const [delPending, startDel] = useTransition();
   const [list, setList] = useState(replies);
+
+  // 從 /me 的「新回應」section 點過來時 URL 是 /feed#sit-<id>，自動展開
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === `#sit-${sitId}`) {
+      setOpen(true);
+    }
+  }, [sitId]);
 
   const myReply = list.find((r) => r.user_id === currentUserId);
   const count = list.length;
