@@ -93,14 +93,14 @@ export default async function MyCoursesPage() {
       <header className="mb-8 flex items-center justify-between">
         <Link
           href="/me"
-          style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", width: "3rem" }}
+          style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", whiteSpace: "nowrap" }}
         >
           ← BACK
         </Link>
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)" }}>
           COURSES
         </p>
-        <span style={{ width: "3rem" }} />
+        <span style={{ width: "3rem" }} aria-hidden />
       </header>
 
       <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", fontWeight: 400, marginBottom: "0.25rem" }}>

@@ -91,7 +91,7 @@ export default async function MePage() {
       <RefreshOnVisible />
       <header className="mb-8 flex items-center justify-between">
         {profile.role === "admin" ? (
-          <Link href="/admin" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", width: "3rem", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+          <Link href="/admin" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#BEC23F", textAlign: "left", display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap" }}>
             ADMIN
             {pendingCount > 0 && (
               <span aria-label={`${pendingCount} 件待審`}
@@ -111,7 +111,7 @@ export default async function MePage() {
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)" }}>
           PROFILE
         </p>
-        <Link href="/me/settings" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", width: "3rem", textAlign: "right" }}>
+        <Link href="/me/settings" prefetch style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", textAlign: "right", whiteSpace: "nowrap" }}>
           EDIT
         </Link>
       </header>
