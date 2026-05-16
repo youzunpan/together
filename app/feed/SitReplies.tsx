@@ -213,7 +213,7 @@ export default function SitReplies({
                 type="text"
                 value={text}
                 onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
-                placeholder="留一句話（最多 40 字）"
+                placeholder="留言"
                 maxLength={MAX_LEN}
                 disabled={pending}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePost(); } }}
