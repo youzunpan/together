@@ -66,13 +66,16 @@ function TabContent({
   const lit = active || pending;
   return (
     <div
-      className="flex flex-col items-center gap-0.5 min-w-[56px] relative"
+      className="flex flex-col items-center gap-0.5 min-w-[56px]"
       style={{
         color: lit ? "#BEC23F" : "rgba(237,236,234,0.3)",
         transition: "color 0.1s",
       }}
     >
-      <div style={{ position: "relative" }}>
+      {/* icon 包一層 inline-flex + lineHeight:0：消除 SVG 的 inline baseline
+          描述符空間（不然 wrapper 會比 SVG 多 ~4px，讓 icon 在 56px 容器裡
+          的垂直中心下沉，每個頁面看起來高度不一致） */}
+      <span style={{ position: "relative", display: "inline-flex", lineHeight: 0 }}>
         {icon(lit)}
         {badge !== undefined && badge > 0 && (
           <span
@@ -99,7 +102,7 @@ function TabContent({
             {badge > 9 ? "9+" : badge}
           </span>
         )}
-      </div>
+      </span>
       <span style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>{label}</span>
     </div>
   );
