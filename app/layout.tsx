@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-TW"
-      className={`${notoSans.variable} ${notoSerif.variable} ${spaceMono.variable} h-full`}
+      className={`${notoSans.variable} ${notoSerif.variable} ${spaceMono.variable} min-h-dvh`}
     >
       <head>
         {/* 日本黑體（Zen Kaku Gothic New）— 給一般 UI 文字增加日式留白感
@@ -64,7 +64,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap"
         />
       </head>
-      <body className="min-h-full flex flex-col" style={{ background: "#1a1b18" }}>
+      <body className="min-h-dvh flex flex-col" style={{ background: "#1a1b18" }}>
         <ErrorReporter />
         <SWNavigationListener />
         <Splash />
