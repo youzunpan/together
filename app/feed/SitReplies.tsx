@@ -6,7 +6,7 @@
 // - 自己的回應有刪除按鈕
 
 import { useEffect, useState, useTransition } from "react";
-import { postReply, deleteReply } from "@/lib/actions/replies";
+import { postReply, deleteReply, updateReply } from "@/lib/actions/replies";
 
 export type ReplyRow = {
   id: string;
@@ -49,6 +49,11 @@ export default function SitReplies({
   const [pending, start] = useTransition();
   const [delPending, startDel] = useTransition();
   const [list, setList] = useState(replies);
+  // 編輯中的 reply id；同時只能編輯一則
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editError, setEditError] = useState("");
+  const [editPending, startEdit] = useTransition();
 
   // 從 /me 的「新回應」section 點過來時 URL 是 /feed#sit-<id>，自動展開
   useEffect(() => {
@@ -110,6 +115,37 @@ export default function SitReplies({
       const res = await deleteReply(replyId);
       if (res.error) return;
       setList((prev) => prev.filter((r) => r.id !== replyId));
+    });
+  }
+
+  function startEditReply(reply: ReplyRow) {
+    setEditingId(reply.id);
+    setEditDraft(reply.body);
+    setEditError("");
+  }
+
+  function cancelEditReply() {
+    setEditingId(null);
+    setEditDraft("");
+    setEditError("");
+  }
+
+  function saveEditReply(replyId: string) {
+    setEditError("");
+    if (!editDraft.trim()) {
+      setEditError("請寫點什麼");
+      return;
+    }
+    startEdit(async () => {
+      const res = await updateReply(replyId, editDraft);
+      if (res.error) {
+        setEditError(res.error);
+        return;
+      }
+      const newBody = editDraft.trim();
+      setList((prev) => prev.map((r) => (r.id === replyId ? { ...r, body: newBody } : r)));
+      setEditingId(null);
+      setEditDraft("");
     });
   }
 
@@ -177,30 +213,121 @@ export default function SitReplies({
                     <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", letterSpacing: "0.06em", color: dimColor }}>
                       {formatTime(r.created_at)}
                     </span>
-                    {isMine && !r.id.startsWith("temp-") && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(r.id)}
-                        disabled={delPending}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          padding: 0,
-                          fontFamily: "var(--font-space-mono)",
-                          fontSize: "0.55rem",
-                          letterSpacing: "0.06em",
-                          color: "rgba(214,92,106,0.45)",
-                          cursor: "pointer",
-                          marginLeft: "auto",
-                        }}
-                      >
-                        刪
-                      </button>
+                    {isMine && !r.id.startsWith("temp-") && editingId !== r.id && (
+                      <div className="flex items-center gap-2" style={{ marginLeft: "auto" }}>
+                        <button
+                          type="button"
+                          onClick={() => startEditReply(r)}
+                          disabled={delPending || editPending}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            fontFamily: "var(--font-space-mono)",
+                            fontSize: "0.55rem",
+                            letterSpacing: "0.06em",
+                            color: dimColor,
+                            cursor: "pointer",
+                          }}
+                        >
+                          編
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(r.id)}
+                          disabled={delPending || editPending}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            fontFamily: "var(--font-space-mono)",
+                            fontSize: "0.55rem",
+                            letterSpacing: "0.06em",
+                            color: "rgba(214,92,106,0.45)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          刪
+                        </button>
+                      </div>
                     )}
                   </div>
-                  <p style={{ fontSize: "0.82rem", color: lightBg ? "#1a1b18" : "#edecea", lineHeight: 1.5, wordBreak: "break-word" }}>
-                    {r.body}
-                  </p>
+                  {editingId === r.id ? (
+                    <div className="space-y-1.5" style={{ marginTop: "0.2rem" }}>
+                      <input
+                        type="text"
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value.slice(0, MAX_LEN))}
+                        maxLength={MAX_LEN}
+                        disabled={editPending}
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); saveEditReply(r.id); }
+                          if (e.key === "Escape") { e.preventDefault(); cancelEditReply(); }
+                        }}
+                        style={{
+                          width: "100%",
+                          background: lightBg ? "rgba(0,0,0,0.04)" : "#1a1b18",
+                          border: `1px solid ${lightBg ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
+                          padding: "0.4rem 0.6rem",
+                          fontSize: "16px",
+                          color: lightBg ? "#1a1b18" : "#edecea",
+                          outline: "none",
+                          borderRadius: 4,
+                        }}
+                      />
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.55rem", color: dimColor }}>
+                          {editDraft.length > 0 ? `${MAX_LEN - editDraft.length}` : ""}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={cancelEditReply}
+                            disabled={editPending}
+                            style={{
+                              background: "transparent",
+                              border: `1px solid ${lightBg ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.08)"}`,
+                              color: dimColor,
+                              padding: "0.25rem 0.7rem",
+                              fontFamily: "var(--font-space-mono)",
+                              fontSize: "0.55rem",
+                              letterSpacing: "0.08em",
+                              cursor: editPending ? "default" : "pointer",
+                              borderRadius: 4,
+                            }}
+                          >
+                            取消
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => saveEditReply(r.id)}
+                            disabled={editPending || !editDraft.trim()}
+                            style={{
+                              background: editDraft.trim() ? "#BEC23F" : "transparent",
+                              border: editDraft.trim() ? "none" : `1px solid ${lightBg ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.08)"}`,
+                              color: editDraft.trim() ? "#1a1b18" : dimColor,
+                              padding: "0.25rem 0.9rem",
+                              fontFamily: "var(--font-space-mono)",
+                              fontSize: "0.55rem",
+                              letterSpacing: "0.08em",
+                              cursor: editDraft.trim() && !editPending ? "pointer" : "default",
+                              borderRadius: 4,
+                            }}
+                          >
+                            {editPending ? "..." : "儲存"}
+                          </button>
+                        </div>
+                      </div>
+                      {editError && (
+                        <p style={{ fontSize: "0.6rem", color: "#D65C6A" }}>{editError}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "0.82rem", color: lightBg ? "#1a1b18" : "#edecea", lineHeight: 1.5, wordBreak: "break-word" }}>
+                      {r.body}
+                    </p>
+                  )}
                 </div>
               </div>
             );

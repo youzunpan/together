@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import SitReplies from "./SitReplies";
+import OwnReflection from "./OwnReflection";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import CommunityCircle from "@/components/CommunityCircle";
@@ -408,18 +409,29 @@ function TimelineCard({
             </div>
           </div>
 
-          {sit.reflection && (
-            <p
-              className="reflection-text mt-2"
-              style={{
-                fontSize: "0.82rem",
-                color: reflectionColor,
-                lineHeight: 1.55,
-                textAlign: isLeft ? "right" : "left",
-              }}
-            >
-              {sit.reflection}
-            </p>
+          {isSelf ? (
+            <OwnReflection
+              sitId={sit.id}
+              initialReflection={sit.reflection ?? null}
+              isLeft={isLeft}
+              reflectionColor={reflectionColor}
+              dimColor={agoColor}
+              lightBg={isLight}
+            />
+          ) : (
+            sit.reflection && (
+              <p
+                className="reflection-text mt-2"
+                style={{
+                  fontSize: "0.82rem",
+                  color: reflectionColor,
+                  lineHeight: 1.55,
+                  textAlign: isLeft ? "right" : "left",
+                }}
+              >
+                {sit.reflection}
+              </p>
+            )
           )}
 
           <div

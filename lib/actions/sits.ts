@@ -30,6 +30,27 @@ export async function deleteSit(id: string) {
   return { ok: true };
 }
 
+// 編輯／清空自己 sit 的心得。傳 null 或空字串 = 刪掉心得（保留時長紀錄）。
+export async function updateReflection(sitId: string, reflection: string | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+
+  const trimmed = reflection?.trim() || null;
+  if (trimmed && trimmed.length > 140) return { error: "再短一點。" };
+
+  const { error } = await supabase
+    .from("sits")
+    .update({ reflection: trimmed })
+    .eq("id", sitId)
+    .eq("user_id", user.id); // 只能改自己的；RLS 也擋一次
+  if (error) return { error: error.message };
+
+  revalidatePath("/feed");
+  revalidatePath("/me");
+  return { ok: true };
+}
+
 export async function recordSit(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

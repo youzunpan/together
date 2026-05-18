@@ -26,6 +26,26 @@ export async function postReply(sitId: string, body: string) {
   return { ok: true };
 }
 
+export async function updateReply(replyId: string, body: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "未登入" };
+
+  const trimmed = body.trim();
+  if (!trimmed) return { error: "請寫點什麼" };
+  if (trimmed.length > MAX_LEN) return { error: `最多 ${MAX_LEN} 字` };
+
+  const { error } = await supabase
+    .from("sit_replies")
+    .update({ body: trimmed })
+    .eq("id", replyId)
+    .eq("user_id", user.id); // 只能改自己的
+  if (error) return { error: error.message };
+
+  revalidatePath("/feed");
+  return { ok: true };
+}
+
 export async function deleteReply(replyId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
