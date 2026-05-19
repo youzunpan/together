@@ -63,9 +63,9 @@ export default function Splash() {
         pointerEvents: fade ? "none" : "auto",
       }}
     >
-      {/* 圓點 — 絕對定位 + marginTop 負值定位（不用 transform 避免被
-          splashPulse 動畫的 transform: scale 覆蓋）。
-          top: 50% + marginTop: -44px → 圓點 top 邊在「螢幕中央上方 44px」 */}
+      {/* 圓點包一層 wrapper：opacity 跟 fontsReady 綁，跟文字同時淡入。
+          動畫只在內層運作，wrapper 的 opacity 不會跟動畫的 opacity 衝突。
+          ─ 設計目的：永遠沒有「只圓點、無文字」的中間狀態 ─ */}
       <div
         style={{
           position: "absolute",
@@ -75,11 +75,20 @@ export default function Splash() {
           marginLeft: -5,
           width: 10,
           height: 10,
-          borderRadius: "50%",
-          background: "#BEC23F",
-          animation: "splashPulse 6s ease-in-out infinite",
+          opacity: fontsReady ? 1 : 0,
+          transition: "opacity 0.55s ease-out",
         }}
-      />
+      >
+        <div
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#BEC23F",
+            animation: "splashPulse 6s ease-in-out infinite",
+          }}
+        />
+      </div>
 
       {/* 文字塊：top: 50% + marginTop: -14px → 在圓點下方（圓點高 10 + gap 20 = 30，
           所以從圓點 top 往下 30，相對中央就是 -44 + 30 = -14）
