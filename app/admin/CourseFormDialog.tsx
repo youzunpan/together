@@ -369,15 +369,42 @@ function SeriesSessions({
 }) {
   const [genStart, setGenStart] = useState<string>(taipeiDatetimeLocal());
   const [genCount, setGenCount] = useState<number>(8);
+  // 多選星期幾。0=日、1=一、…、6=六。初始預設為 genStart 那天的星期幾，
+  // 之後使用者可以自由 toggle 加減其他天。
+  const [genDays, setGenDays] = useState<number[]>(() => {
+    const d = new Date(`${taipeiDatetimeLocal()}:00+08:00`);
+    return isNaN(d.getTime()) ? [1] : [d.getDay()];
+  });
+
+  function toggleDay(day: number) {
+    setGenDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort(),
+    );
+  }
 
   function generate() {
     if (!genStart || genCount < 1) return;
     const startDate = new Date(`${genStart}:00+08:00`);
     if (isNaN(startDate.getTime())) return;
+
+    // 沒勾任何天 → 退化成「每週一次」（用 start 那天的星期幾）
+    const days = genDays.length > 0 ? genDays : [startDate.getDay()];
+
+    // 抓 start 那一週的「週日 00:00」(在台北時區) 當基準點，再從這裡推算每場
+    const startWeekSunday = new Date(startDate);
+    startWeekSunday.setDate(startDate.getDate() - startDate.getDay());
+    startWeekSunday.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
+
     const result: CourseFormSession[] = [];
-    for (let i = 0; i < genCount; i++) {
-      const d = new Date(startDate.getTime() + i * 7 * 86400000);
-      result.push({ session_at_local: taipeiDatetimeLocal(d), note: null });
+    for (let w = 0; w < genCount; w++) {
+      for (const day of days) {
+        const session = new Date(startWeekSunday);
+        session.setDate(startWeekSunday.getDate() + w * 7 + day);
+        // 跳過 start 之前的場次（如果 start=週三、選了週一+三，第一週的週一會被跳掉）
+        if (session.getTime() >= startDate.getTime()) {
+          result.push({ session_at_local: taipeiDatetimeLocal(session), note: null });
+        }
+      }
     }
     onChange(result);
   }
@@ -436,7 +463,7 @@ function SeriesSessions({
             marginBottom: "0.5rem",
           }}
         >
-          一鍵產生（從這時起、每 7 天一次、共 N 次）
+          一鍵產生（從這時起、每週指定天、共 N 週）
         </p>
         <div className="flex flex-col gap-2">
           <input
@@ -445,17 +472,51 @@ function SeriesSessions({
             onChange={(e) => setGenStart(e.target.value)}
             style={{ ...inputStyle, padding: "0.5rem 0.7rem" }}
           />
+          {/* 每週幾（多選） */}
+          <div className="flex gap-1.5">
+            {[
+              { day: 1, label: "一" },
+              { day: 2, label: "二" },
+              { day: 3, label: "三" },
+              { day: 4, label: "四" },
+              { day: 5, label: "五" },
+              { day: 6, label: "六" },
+              { day: 0, label: "日" },
+            ].map(({ day, label }) => {
+              const active = genDays.includes(day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleDay(day)}
+                  style={{
+                    flex: 1,
+                    padding: "0.4rem 0",
+                    background: active ? "rgba(190,194,63,0.2)" : "transparent",
+                    border: `1px solid ${active ? "rgba(190,194,63,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: active ? "#BEC23F" : "rgba(237,236,234,0.45)",
+                    fontFamily: "var(--font-noto-serif)",
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
+                    borderRadius: 3,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="flex gap-2 items-center">
             <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>共</span>
             <input
               type="number"
               min={1}
-              max={20}
+              max={52}
               value={genCount}
               onChange={(e) => setGenCount(Number(e.target.value))}
               style={{ ...inputStyle, width: "5rem", padding: "0.5rem 0.7rem", textAlign: "center" }}
             />
-            <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>次</span>
+            <span style={{ fontSize: "0.75rem", color: "rgba(237,236,234,0.5)" }}>週</span>
             <button
               type="button"
               onClick={generate}
