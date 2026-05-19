@@ -55,18 +55,21 @@ export default function Splash() {
         inset: 0,
         zIndex: 9999,
         background: "#1a1b18",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1.25rem",
         opacity: fade ? 0 : 1,
         transition: "opacity 0.55s ease-out",
         pointerEvents: fade ? "none" : "auto",
       }}
     >
+      {/* 圓點 — 絕對定位 pin 在固定 y。完全不靠 flex 居中，因此跟文字的
+          opacity / 是否撐高度毫無關聯。
+          計算：總群組 = 圓點 10px + gap 20px + 文字塊 (1.8rem+1.25rem+0.6rem)
+          ≈ 88px；半高 ≈ 44px。圓點 top 邊放在「螢幕中央上方 44px」處。 */}
       <div
         style={{
+          position: "absolute",
+          top: "calc(50% - 44px)",
+          left: "50%",
+          transform: "translateX(-50%)",
           width: 10,
           height: 10,
           borderRadius: "50%",
@@ -75,12 +78,13 @@ export default function Splash() {
         }}
       />
 
-      {/* 文字區塊外包一層固定大小的 wrapper：opacity 切換時 wrapper 仍占空間，
-          確保圓點在「字還沒出來 / 字已出來」兩個狀態的垂直位置完全一致。
-          總高 = 同在 (1.8rem) + gap (1.25rem) + TOGETHER (0.6rem) = 3.65rem */}
+      {/* 文字塊也絕對定位：top = 圓點 top + 圓點高 + gap = 50% - 44 + 10 + 20 = 50% - 14px */}
       <div
         style={{
-          height: "3.65rem",
+          position: "absolute",
+          top: "calc(50% - 14px)",
+          left: "50%",
+          transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
