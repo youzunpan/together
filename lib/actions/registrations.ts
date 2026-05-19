@@ -151,19 +151,19 @@ export async function submitRegistration(slug: string, formData: FormData) {
       } else if (course.duration_type === "single" || sessions.length === 1) {
         dateBlock = `<li><b>時間：</b>${escapeHtml(formatDateTime(sessions[0].session_at))}</li>`;
       } else {
+        // 用 div 而不是 ol/li，避免 <ol> 自動編號跟「01 · 」前綴重複出現
         const sessionItems = sessions
           .map((s, i) => {
             const dt = formatDateTime(s.session_at);
             const note = s.note ? `（${s.note}）` : "";
-            return `<li style="margin-bottom:2px;">${String(i + 1).padStart(2, "0")} · ${escapeHtml(dt)}${escapeHtml(note)}</li>`;
+            return `<div style="margin-bottom:2px;">${String(i + 1).padStart(2, "0")} · ${escapeHtml(dt)}${escapeHtml(note)}</div>`;
           })
           .join("\n              ");
         dateBlock = `
-          <li><b>共 ${sessions.length} 堂</b></li>
-          <li>
-            <ol style="padding-left:18px;margin:6px 0 0;color:#444;">
+          <li><b>共 ${sessions.length} 堂</b>
+            <div style="margin:6px 0 0;color:#444;">
               ${sessionItems}
-            </ol>
+            </div>
           </li>`;
       }
 
