@@ -52,7 +52,10 @@ export default function Splash() {
       aria-hidden
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100dvh",
         zIndex: 9999,
         background: "#1a1b18",
         opacity: fade ? 0 : 1,
@@ -60,16 +63,16 @@ export default function Splash() {
         pointerEvents: fade ? "none" : "auto",
       }}
     >
-      {/* 圓點 — 絕對定位 pin 在固定 y。完全不靠 flex 居中，因此跟文字的
-          opacity / 是否撐高度毫無關聯。
-          計算：總群組 = 圓點 10px + gap 20px + 文字塊 (1.8rem+1.25rem+0.6rem)
-          ≈ 88px；半高 ≈ 44px。圓點 top 邊放在「螢幕中央上方 44px」處。 */}
+      {/* 圓點 — 絕對定位 + marginTop 負值定位（不用 transform 避免被
+          splashPulse 動畫的 transform: scale 覆蓋）。
+          top: 50% + marginTop: -44px → 圓點 top 邊在「螢幕中央上方 44px」 */}
       <div
         style={{
           position: "absolute",
-          top: "calc(50% - 44px)",
+          top: "50%",
           left: "50%",
-          transform: "translateX(-50%)",
+          marginTop: -44,
+          marginLeft: -5,
           width: 10,
           height: 10,
           borderRadius: "50%",
@@ -78,12 +81,15 @@ export default function Splash() {
         }}
       />
 
-      {/* 文字塊也絕對定位：top = 圓點 top + 圓點高 + gap = 50% - 44 + 10 + 20 = 50% - 14px */}
+      {/* 文字塊：top: 50% + marginTop: -14px → 在圓點下方（圓點高 10 + gap 20 = 30，
+          所以從圓點 top 往下 30，相對中央就是 -44 + 30 = -14）
+          橫向用 transform 沒問題（沒有跟動畫衝突） */}
       <div
         style={{
           position: "absolute",
-          top: "calc(50% - 14px)",
+          top: "50%",
           left: "50%",
+          marginTop: -14,
           transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
