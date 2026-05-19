@@ -75,38 +75,49 @@ export default function Splash() {
         }}
       />
 
+      {/* 文字區塊外包一層固定大小的 wrapper：opacity 切換時 wrapper 仍占空間，
+          確保圓點在「字還沒出來 / 字已出來」兩個狀態的垂直位置完全一致。
+          總高 = 同在 (1.8rem) + gap (1.25rem) + TOGETHER (0.6rem) = 3.65rem */}
       <div
         style={{
-          fontFamily: "var(--font-noto-serif)",
-          fontSize: "1.8rem",
-          color: "#edecea",
-          letterSpacing: "0.4em",
-          paddingLeft: "0.4em",
-          lineHeight: 1,
-          height: "1.8rem",
+          height: "3.65rem",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
+          gap: "1.25rem",
           opacity: fontsReady ? 1 : 0,
           transition: "opacity 0.55s ease-out",
         }}
       >
-        同在
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-space-mono)",
-          fontSize: "0.6rem",
-          letterSpacing: "0.35em",
-          color: "rgba(237,236,234,0.3)",
-          lineHeight: 1,
-          height: "0.6rem",
-          display: "flex",
-          alignItems: "center",
-          opacity: fontsReady ? 1 : 0,
-          transition: "opacity 0.85s ease-out",
-        }}
-      >
-        TOGETHER
+        <div
+          style={{
+            fontFamily: "var(--font-noto-serif)",
+            fontSize: "1.8rem",
+            color: "#edecea",
+            letterSpacing: "0.4em",
+            paddingLeft: "0.4em",
+            lineHeight: 1,
+            height: "1.8rem",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          同在
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.6rem",
+            letterSpacing: "0.35em",
+            color: "rgba(237,236,234,0.3)",
+            lineHeight: 1,
+            height: "0.6rem",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          TOGETHER
+        </div>
       </div>
 
       <style>{`
