@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import Avatar from "@/components/Avatar";
 import CreateCallForm from "@/app/feed/CreateCallForm";
 import { JoinButton, CancelButton, AdminCancelButton } from "@/app/feed/CallActions";
+import InviteMoreButton from "@/app/feed/InviteMoreButton";
 import { APP_TZ } from "@/lib/tz";
 
 type CallRow = {
@@ -99,12 +100,21 @@ export default async function UpcomingCalls() {
 
   // 拉每筆 call 前 5 位加入者頭像
   let joinersByCall = new Map<string, Joiner[]>();
+  // 拉「我被邀請的 call」集合，顯示 badge
+  const invitedCallIds = new Set<string>();
   if (live.length > 0) {
     const ids = live.map((c) => c.id);
-    const { data: joins } = await supabase
-      .from("sit_call_joins")
-      .select("call_id, user_id, profiles(display_name, avatar_letter, avatar_color, avatar_url)")
-      .in("call_id", ids);
+    const [{ data: joins }, { data: myInvites }] = await Promise.all([
+      supabase
+        .from("sit_call_joins")
+        .select("call_id, user_id, profiles(display_name, avatar_letter, avatar_color, avatar_url)")
+        .in("call_id", ids),
+      supabase
+        .from("sit_call_invites")
+        .select("call_id")
+        .eq("user_id", user.id)
+        .in("call_id", ids),
+    ]);
     if (joins) {
       for (const j of joins as unknown as Array<{
         call_id: string;
@@ -122,6 +132,9 @@ export default async function UpcomingCalls() {
         });
         joinersByCall.set(j.call_id, arr);
       }
+    }
+    for (const i of myInvites ?? []) {
+      invitedCallIds.add(i.call_id);
     }
   }
 
@@ -175,18 +188,45 @@ export default async function UpcomingCalls() {
           const whenLabel = formatWhen(c.scheduled_at);
           const joiners = (joinersByCall.get(c.id) ?? []).slice(0, 5);
 
+          const wasInvited = invitedCallIds.has(c.id);
+
           return (
             <div
               key={c.id}
+              id={`call-${c.id}`}
               style={{
                 background: "#2c2c2a",
-                border: isLive ? "1px solid rgba(190,194,63,0.5)" : "1px solid rgba(255,255,255,0.06)",
+                border: isLive
+                  ? "1px solid rgba(190,194,63,0.5)"
+                  : wasInvited
+                  ? "1px solid rgba(190,194,63,0.3)"
+                  : "1px solid rgba(255,255,255,0.06)",
                 borderRadius: "var(--r-card)",
                 padding: "0.875rem 1rem",
                 position: "relative",
                 overflow: "hidden",
+                scrollMarginTop: "5rem",
               }}
             >
+              {/* 被邀請者：卡片頂部小 chip */}
+              {wasInvited && !isOwner && (
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-space-mono)",
+                      fontSize: "0.5rem",
+                      letterSpacing: "0.12em",
+                      color: "#BEC23F",
+                      background: "rgba(190,194,63,0.12)",
+                      border: "1px solid rgba(190,194,63,0.3)",
+                      padding: "0.18rem 0.45rem",
+                      borderRadius: 3,
+                    }}
+                  >
+                    你被邀請
+                  </span>
+                </div>
+              )}
               {/* 進行中：左上小金點 */}
               {isLive && (
                 <span
@@ -287,6 +327,7 @@ export default async function UpcomingCalls() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {isOwner && !isLive && <InviteMoreButton callId={c.id} />}
                   {isOwner && <CancelButton callId={c.id} />}
                   {!isOwner && isAdmin && <AdminCancelButton callId={c.id} />}
                   <JoinButton

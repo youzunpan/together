@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createCall } from "@/lib/actions/calls";
 import { taipeiDateKey } from "@/lib/tz";
+import MemberPicker from "./MemberPicker";
 
 export default function CreateCallForm() {
   const [open, setOpen] = useState(false);
@@ -10,6 +11,8 @@ export default function CreateCallForm() {
   const [time, setTime] = useState(""); // 時間留空，使用者自填
   const [duration, setDuration] = useState(""); // 時長自填
   const [message, setMessage] = useState("");
+  const [showInvitePicker, setShowInvitePicker] = useState(false);
+  const [inviteeIds, setInviteeIds] = useState<string[]>([]);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +34,7 @@ export default function CreateCallForm() {
     fd.set("scheduled_at", `${date}T${time}`); // server action 會用 +08:00 解析
     fd.set("duration_min", String(durNum));
     fd.set("message", message);
+    fd.set("invitee_ids", JSON.stringify(inviteeIds));
     start(async () => {
       const res = await createCall(fd);
       if (res.error) {
@@ -41,6 +45,8 @@ export default function CreateCallForm() {
         setDate(taipeiDateKey());
         setTime("");
         setDuration("");
+        setInviteeIds([]);
+        setShowInvitePicker(false);
       }
     });
   }
@@ -163,6 +169,42 @@ export default function CreateCallForm() {
         maxLength={80}
         style={{ ...inputStyle, fontFamily: "inherit", marginBottom: "0.875rem" }}
       />
+
+      {/* 邀請對象（選填）：toggle 展開 picker。沒勾的話這場 call 一樣會在
+          /feed 顯示，只是沒有特別通知任何人，大家自己 opt-in */}
+      <div style={{ marginBottom: "0.875rem" }}>
+        <button
+          type="button"
+          onClick={() => setShowInvitePicker((v) => !v)}
+          style={{
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.6rem",
+            letterSpacing: "0.12em",
+            color: inviteeIds.length > 0 ? "#BEC23F" : "rgba(237,236,234,0.5)",
+            cursor: "pointer",
+          }}
+        >
+          {showInvitePicker ? "▾" : "▸"} 邀請特定人{inviteeIds.length > 0 ? `（${inviteeIds.length}）` : "（選填）"}
+        </button>
+        {showInvitePicker && (
+          <div style={{ marginTop: "0.5rem" }}>
+            <MemberPicker selected={inviteeIds} onChange={setInviteeIds} />
+            <p style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.55rem",
+              letterSpacing: "0.08em",
+              color: "rgba(237,236,234,0.3)",
+              marginTop: "0.4rem",
+              lineHeight: 1.5,
+            }}>
+              被邀請的人會收到通知。沒勾的人在 /feed 一樣看得到、可以自己加入。
+            </p>
+          </div>
+        )}
+      </div>
 
       {error && (
         <p style={{ fontSize: "0.75rem", color: "#D65C6A", marginBottom: "0.75rem" }}>{error}</p>
