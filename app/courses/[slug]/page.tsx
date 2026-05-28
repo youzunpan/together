@@ -23,6 +23,7 @@ type CourseDetail = {
   location: string | null;
   price_note: string | null;
   single_session_price: string | null;
+  payment_info: string | null;
   capacity: number;
   cover_image_url: string | null;
   status: "draft" | "published" | "closed";
@@ -299,6 +300,7 @@ export default async function CourseDetailPage({
             initialEmail={viewer?.email}
             seriesPrice={course.price_note}
             singleSessionPrice={course.single_session_price}
+            paymentInfo={course.payment_info}
             sessions={sessions.map((s) => ({
               id: s.id,
               label: formatFullDateTime(s.session_at) + (s.note ? ` · ${s.note}` : ""),

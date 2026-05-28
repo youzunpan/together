@@ -30,6 +30,7 @@ export type CourseFormCourse = {
   location: string | null;
   price_note: string | null;
   single_session_price: string | null;
+  payment_info: string | null;
   capacity: number;
   cover_image_url: string | null;
   status: "draft" | "published" | "closed";
@@ -229,14 +230,14 @@ export default function CourseFormDialog({
           </div>
 
           <div>
-            <label style={labelStyle}>整期費用 + 轉帳資訊</label>
-            <textarea
+            <label style={labelStyle}>整期費用</label>
+            <input
               name="price_note"
-              rows={3}
-              maxLength={500}
+              type="text"
+              maxLength={120}
               defaultValue={course?.price_note ?? ""}
-              placeholder={"例：3000 元 / 8 堂\n台新銀行 (812) 帳號 1234-5678-9000，戶名 樽"}
-              style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }}
+              placeholder="例：3000 元 / 8 堂"
+              style={inputStyle}
             />
           </div>
 
@@ -250,6 +251,19 @@ export default function CourseFormDialog({
               placeholder="例：500 元 / 堂"
               style={inputStyle}
             />
+          </div>
+
+          <div>
+            <label style={labelStyle}>匯款資訊（共用）</label>
+            <textarea
+              name="payment_info"
+              rows={3}
+              maxLength={500}
+              defaultValue={course?.payment_info ?? ""}
+              placeholder={"例：\n台新銀行 (812) 帳號 1234-5678-9000，戶名 樽\n也可以 LinePay：Line ID youzunpan"}
+              style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }}
+            />
+            <p style={helperStyle}>學生報名時整期 / 單堂都會看到這段</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

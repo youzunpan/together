@@ -21,7 +21,7 @@ type Session = { id: string; label: string };
 
 export default function RegisterForm({
   slug, title, initialName, initialEmail,
-  seriesPrice, singleSessionPrice, sessions,
+  seriesPrice, singleSessionPrice, paymentInfo, sessions,
 }: {
   slug: string;
   title: string;
@@ -29,6 +29,7 @@ export default function RegisterForm({
   initialEmail?: string;
   seriesPrice?: string | null;
   singleSessionPrice?: string | null;
+  paymentInfo?: string | null;
   sessions?: Session[];
 }) {
   const [loading, setLoading] = useState(false);
@@ -114,6 +115,41 @@ export default function RegisterForm({
             />
           </div>
         </Field>
+      )}
+
+      {/* 匯款資訊（整期 / 單堂共用，獨立區塊） */}
+      {paymentInfo && (
+        <div
+          style={{
+            background: "rgba(190,194,63,0.05)",
+            border: "1px solid rgba(190,194,63,0.2)",
+            borderRadius: 4,
+            padding: "0.75rem 0.9rem",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.55rem",
+              letterSpacing: "0.15em",
+              color: "rgba(190,194,63,0.7)",
+              marginBottom: "0.45rem",
+            }}
+          >
+            匯款資訊
+          </p>
+          <p
+            style={{
+              fontSize: "0.82rem",
+              color: "rgba(237,236,234,0.75)",
+              lineHeight: 1.65,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {paymentInfo}
+          </p>
+        </div>
       )}
 
       {/* 單堂模式：顯示課表複選 */}

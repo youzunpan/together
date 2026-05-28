@@ -129,7 +129,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
   try {
     const { data: course } = await sb
       .from("courses")
-      .select("id,title,format,start_at,end_at,schedule_note,location,price_note,duration_type")
+      .select("id,title,format,start_at,end_at,schedule_note,location,price_note,payment_info,duration_type")
       .eq("slug", slug)
       .single();
 
@@ -174,6 +174,9 @@ export async function submitRegistration(slug: string, formData: FormData) {
       if (course.schedule_note) lines.push(`<li><b>備註：</b>${escapeHtml(course.schedule_note)}</li>`);
       if (course.location) lines.push(`<li><b>${isOnline ? "線上資訊" : "地點"}：</b>${escapeHtml(course.location)}</li>`);
       if (course.price_note) lines.push(`<li><b>費用：</b>${escapeHtml(course.price_note)}</li>`);
+      if (course.payment_info) {
+        lines.push(`<li><b>匯款資訊：</b><br><span style="white-space:pre-wrap;">${escapeHtml(course.payment_info)}</span></li>`);
+      }
 
       // 還沒填末四碼 → 提醒；已填 → 確認
       const paymentBlock = transfer_last4
