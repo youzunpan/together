@@ -107,6 +107,7 @@ export default async function CourseDetailPage({
     line_id: string | null;
     transfer_last4: string | null;
     transfer_amount: number | null;
+    notes: string | null;
     created_at: string;
   } | null = null;
   if (user) {
@@ -121,7 +122,7 @@ export default async function CourseDetailPage({
       );
       const { data: reg } = await sb
         .from("registrations")
-        .select("status, name, email, line_id, transfer_last4, transfer_amount, created_at")
+        .select("status, name, email, line_id, transfer_last4, transfer_amount, notes, created_at")
         .eq("course_id", course.id)
         .or(`user_id.eq.${user.id},email.eq.${user.email?.toLowerCase() ?? ""}`)
         .neq("status", "cancelled")
@@ -272,6 +273,9 @@ export default async function CourseDetailPage({
                   timeZone: APP_TZ, month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false,
                 })}
               />
+              {myRegistration.notes && (
+                <ReadOnlyRow label="備註" value={myRegistration.notes} />
+              )}
             </div>
 
             <p style={{ fontSize: "0.72rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.7, marginTop: "1.25rem", textAlign: "center" }}>

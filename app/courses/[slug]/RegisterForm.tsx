@@ -275,6 +275,18 @@ export default function RegisterForm({
         已匯款請填，協助對帳；尚未匯款可留空
       </p>
 
+      <Field label="備註（選填）">
+        <textarea
+          name="notes"
+          rows={3}
+          maxLength={1000}
+          placeholder="任何想說的話或是想讓我知道的事情？"
+          style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }}
+          onFocus={(e) => (e.target.style.borderColor = "#BEC23F")}
+          onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
+        />
+      </Field>
+
       <label
         className="flex items-start gap-2 cursor-pointer select-none"
         style={{ marginTop: "0.75rem", paddingTop: "0.5rem" }}

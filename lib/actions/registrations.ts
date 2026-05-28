@@ -69,6 +69,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
   const transfer_last4 = (formData.get("transfer_last4") as string | null)?.trim() || null;
   const transfer_amount_raw = (formData.get("transfer_amount") as string | null)?.trim();
   const transfer_amount = transfer_amount_raw ? Number(transfer_amount_raw) : null;
+  const notes = (formData.get("notes") as string | null)?.trim() || null;
   const reg_type = (formData.get("reg_type") as string | null) ?? "series";
   // sessions_csv：單堂時帶 "uuid,uuid,uuid"；整期時空字串
   const sessionsCsv = (formData.get("sessions_csv") as string | null)?.trim() ?? "";
@@ -81,6 +82,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
   if (transfer_amount !== null && (!Number.isInteger(transfer_amount) || transfer_amount <= 0 || transfer_amount > 1_000_000)) {
     return { error: "匯款金額需為正整數" };
   }
+  if (notes && notes.length > 1000) return { error: "備註過長（上限 1000 字）" };
 
   // 解析 session_ids
   let sessionIds: string[] | null = null;
@@ -112,6 +114,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
     p_user_id: userId,
     p_session_ids: sessionIds,
     p_transfer_amount: transfer_amount,
+    p_notes: notes,
   });
 
   if (rpcErr) {
@@ -183,6 +186,14 @@ export async function submitRegistration(slug: string, formData: FormData) {
         ? `<p style="margin:0 0 12px;">已收到你填寫的匯款末四碼 <b>${escapeHtml(transfer_last4)}</b>，將與你的入帳記錄對照。</p>`
         : `<p style="margin:0 0 12px;">完成匯款後，可以直接回這封信告知<b>匯款末四碼</b>，協助我對帳。</p>`;
 
+      // 學生填了備註 → 回顯確認收到
+      const notesBlock = notes
+        ? `<div style="margin:0 0 16px;padding:12px 14px;background:#f6f7e4;border:1px solid #d8dba6;border-radius:4px;">
+            <p style="margin:0 0 6px;font-size:12px;letter-spacing:0.12em;color:#6d7220;">你的備註</p>
+            <p style="margin:0;white-space:pre-wrap;color:#333;">${escapeHtml(notes)}</p>
+          </div>`
+        : "";
+
       await sendEmail({
         to: email,
         reply_to: TEACHER_EMAIL,
@@ -195,6 +206,7 @@ export async function submitRegistration(slug: string, formData: FormData) {
               ${lines.join("\n              ")}
             </ul>
             ${paymentBlock}
+            ${notesBlock}
             <p style="margin:0 0 12px;">將在開課前再次與你聯繫上課細節。</p>
             <p style="margin:0 0 24px;color:#555;">有任何問題歡迎直接回信，會回到 ${TEACHER_EMAIL}。</p>
             <p style="margin:32px 0 0;color:#888;font-size:13px;">— ${TEACHER_NAME}</p>

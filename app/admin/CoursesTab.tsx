@@ -26,6 +26,7 @@ export type RegistrationRow = {
   line_id: string | null;
   transfer_last4: string | null;
   transfer_amount: number | null;
+  notes: string | null;
   status: "pending" | "confirmed" | "cancelled";
   created_at: string;
   session_ids: string[] | null;
@@ -348,6 +349,36 @@ function RegistrationItem({
                 </span>
               )}
               {reg.phone && <span>TEL · {reg.phone}</span>}
+            </div>
+          )}
+          {reg.notes && (
+            <div
+              style={{
+                marginTop: "0.4rem",
+                background: "rgba(190,194,63,0.06)",
+                border: "1px solid rgba(190,194,63,0.18)",
+                borderRadius: 3,
+                padding: "0.4rem 0.55rem",
+              }}
+            >
+              <p style={{
+                fontFamily: "var(--font-space-mono)",
+                fontSize: "0.5rem",
+                letterSpacing: "0.12em",
+                color: "rgba(190,194,63,0.55)",
+                marginBottom: "0.2rem",
+              }}>
+                備註
+              </p>
+              <p style={{
+                fontSize: "0.75rem",
+                color: "rgba(237,236,234,0.75)",
+                lineHeight: 1.55,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}>
+                {reg.notes}
+              </p>
             </div>
           )}
         </div>
