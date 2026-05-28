@@ -85,7 +85,7 @@ export default function MembersTab({
               <div className="flex-1 min-w-0">
                 <p style={{ fontSize: "0.875rem", color: "#edecea" }}>{m.display_name}</p>
                 <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.25)", letterSpacing: "0.08em", marginTop: "0.2rem" }}>
-                  {m.role.toUpperCase()} · {new Date(m.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short" }).toUpperCase()}
+                  {m.role.toUpperCase()} · {new Date(m.created_at).toLocaleDateString("en-US", { timeZone: "Asia/Taipei", year: "numeric", month: "short" }).toUpperCase()}
                 </p>
               </div>
             </Link>

@@ -78,7 +78,7 @@ export default function ApplicationsTab({ applications }: { applications: Applic
               )}
 
               <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", color: "rgba(237,236,234,0.2)", letterSpacing: "0.08em", marginBottom: app.status === "pending" ? "0.75rem" : 0 }}>
-                {new Date(app.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).toUpperCase()}
+                {new Date(app.created_at).toLocaleString("en-US", { timeZone: "Asia/Taipei", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).toUpperCase()}
               </p>
 
               {app.status === "pending" && (

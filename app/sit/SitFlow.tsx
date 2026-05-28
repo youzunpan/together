@@ -83,7 +83,9 @@ export default function SitFlow() {
 
   // 進站就先合成（頁面開啟即觸發，使用者按開始時已經 ready）
   useEffect(() => {
-    ensureBellPreloaded();
+    ensureBellPreloaded().catch(() => {
+      // 失敗也沒關係，ringBell 會 fallback 到 Web Audio 即時合成
+    });
     return () => {
       if (bellUrlRef.current) {
         try { URL.revokeObjectURL(bellUrlRef.current); } catch {}
