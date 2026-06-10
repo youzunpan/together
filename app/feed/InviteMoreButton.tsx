@@ -58,8 +58,12 @@ export default function InviteMoreButton({ callId }: { callId: string }) {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-          style={{ background: "rgba(26,27,24,0.85)", padding: "1rem" }}
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          style={{
+            background: "rgba(26,27,24,0.85)",
+            padding: "1rem",
+            paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
+          }}
           onClick={(e) => { if (e.target === e.currentTarget) close(); }}
         >
           <div
@@ -70,9 +74,10 @@ export default function InviteMoreButton({ callId }: { callId: string }) {
               padding: "1rem",
               maxWidth: 420,
               width: "100%",
-              maxHeight: "85vh",
+              maxHeight: "calc(100dvh - 4rem)",
               display: "flex",
               flexDirection: "column",
+              overflow: "hidden",
             }}
           >
             <p style={{
