@@ -315,7 +315,10 @@ export default function CourseFormDialog({
               placeholder="例：may-basic-2026"
               style={{ ...inputStyle, fontFamily: "var(--font-space-mono)", fontSize: "13px" }}
             />
-            <p style={helperStyle}>用於課程網址 /courses/[slug]，沒填會自動產生</p>
+            <p style={helperStyle}>
+              用於課程網址 /courses/[slug]，沒填會自動產生。<br />
+              只支援小寫英文、數字、連字號「-」；其他字元（大寫、斜線、空白、中文…）儲存時會自動被轉成連字號。
+            </p>
           </div>
 
           {error && (

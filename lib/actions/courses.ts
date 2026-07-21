@@ -57,6 +57,24 @@ type CourseInput = {
   status: "draft" | "published" | "closed";
 };
 
+// 把使用者填的 slug 洗成 URL-safe 版本：
+// - 大寫 → 小寫
+// - 只留 a-z / 0-9 / 「-」；其他一律變成 「-」
+// - 合併連續 「-」、剔除頭尾 「-」
+// - 洗完是空字串 → null，讓 DB default 幫你自動產生 course-XXXX
+// 之前 slug 直接吃使用者輸入，有人填「2026/AUS」→ 斜線讓 Next.js 動態路由
+// 對不到、公開頁 404。這裡守住。
+function sanitizeSlug(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || null;
+}
+
 // 把 input 的 datetime-local（台北牆上時間）轉成 UTC ISO
 // "2026-05-12T19:30" → 視為 +08:00 → toISOString
 function localToUtcIso(local: string | null | undefined): string | null {
@@ -125,7 +143,7 @@ function parseInput(formData: FormData): { error?: string; parsed?: ParsedInput 
   return {
     parsed: {
       data: {
-        slug: get("slug") || undefined,
+        slug: sanitizeSlug(get("slug")) || undefined,
         title,
         subtitle: get("subtitle"),
         description: get("description") ?? "",
