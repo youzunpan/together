@@ -6,7 +6,7 @@ import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { drawCard } from "@/lib/actions/cards";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import SitDurationScatter from "@/components/SitDurationScatter";
-import { CardFlip, CardFace } from "@/components/DailyCard";
+import { CardFlip, CardFace, CardBackMini } from "@/components/DailyCard";
 import type { Card } from "@/lib/cards";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -550,6 +550,25 @@ export default function SitFlow() {
           >
             Start
           </button>
+        </div>
+
+        {/* 抽卡預告：只露卡背，不破壞翻開的意外感。
+            放在 Start 下面 —— 使用者正在決定要不要坐的那一刻。 */}
+        <div
+          className="flex items-center justify-center gap-2.5"
+          style={{ marginTop: "1.75rem" }}
+        >
+          <CardBackMini width={26} />
+          <span
+            style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.62rem",
+              letterSpacing: "0.12em",
+              color: "rgba(237,236,234,0.35)",
+            }}
+          >
+            坐完，抽一張卡
+          </span>
         </div>
 
         {pushPromptOpen && (

@@ -48,6 +48,33 @@ function CardBack({ size = 1 }: { size?: number }) {
   );
 }
 
+/**
+ * 小張的卡背，給「坐完可以抽一張卡」這類預告用。
+ * 只露卡背不露卡文 —— 讓人知道有這件事，但不破壞翻開的意外感。
+ */
+export function CardBackMini({ width = 30, breathe = true }: { width?: number; breathe?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: "inline-block",
+        width,
+        height: width * 1.5,
+        flexShrink: 0,
+        animation: breathe ? "cardMiniBreathe 5s ease-in-out infinite" : "none",
+      }}
+    >
+      <CardBack />
+      <style>{`
+        @keyframes cardMiniBreathe {
+          0%, 100% { opacity: 0.75; }
+          50%      { opacity: 1; }
+        }
+      `}</style>
+    </span>
+  );
+}
+
 /** 一張翻開的卡 */
 export function CardFace({
   card,

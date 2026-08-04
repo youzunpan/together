@@ -31,8 +31,6 @@ export default async function MyCardsPage() {
   if (!user) redirect("/login");
 
   const collected = await getMyCards();
-  // 同一張卡可能在不同天重複抽到，收集進度看的是「不重複的張數」
-  const uniqueCount = new Set(collected.map((c) => c.card.id)).size;
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -50,15 +48,21 @@ export default async function MyCardsPage() {
         <span style={{ width: "3rem" }} aria-hidden />
       </header>
 
-      <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", fontWeight: 400, marginBottom: "0.25rem" }}>
+      <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", fontWeight: 400, marginBottom: "0.5rem" }}>
         卡冊
       </h1>
-      <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.1em", color: "#BEC23F", marginBottom: "2rem" }}>
-        {uniqueCount} / {CARDS.length}
-        <span style={{ color: "rgba(237,236,234,0.3)", marginLeft: "0.5rem" }}>
-          · 共 {collected.length} 次
-        </span>
+      <p style={{ fontSize: "0.78rem", color: "rgba(237,236,234,0.45)", lineHeight: 1.85, marginBottom: "0.75rem" }}>
+        每次靜坐完都可以抽一張。
+        {CARDS.length} 張卡出自瑜伽八肢 —— 從對世界的持戒、對自己的精進，
+        一路走到體位、調息、專注與靜默。
+        <br />
+        抽到哪一張沒有道理，重要的是你此刻怎麼讀它。
       </p>
+      {collected.length > 0 && (
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.62rem", letterSpacing: "0.1em", color: "rgba(237,236,234,0.3)", marginBottom: "2rem" }}>
+          抽過 {collected.length} 次
+        </p>
+      )}
 
       {collected.length === 0 ? (
         <div style={{ textAlign: "center", padding: "3rem 1rem" }}>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import SitReplies from "./SitReplies";
 import OwnReflection from "./OwnReflection";
-import { CardFace } from "@/components/DailyCard";
+import { CardFace, CardBackMini } from "@/components/DailyCard";
 import { getCard } from "@/lib/cards";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
@@ -168,7 +168,26 @@ export default async function FeedPage() {
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜心</p>
+              <div className="min-w-0">
+                <p style={{ fontSize: "0.875rem", color: "rgba(237,236,234,0.45)" }}>你還沒記錄今日的靜心</p>
+                {/* 抽卡預告：只露卡背，不破壞翻開的意外感 */}
+                <span
+                  className="inline-flex items-center gap-1.5"
+                  style={{ marginTop: "0.4rem" }}
+                >
+                  <CardBackMini width={14} />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-space-mono)",
+                      fontSize: "0.58rem",
+                      letterSpacing: "0.1em",
+                      color: "rgba(190,194,63,0.55)",
+                    }}
+                  >
+                    坐完可以抽一張卡
+                  </span>
+                </span>
+              </div>
               <Link href="/sit" prefetch className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
                 記錄今天
               </Link>
