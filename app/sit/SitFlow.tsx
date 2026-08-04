@@ -159,6 +159,7 @@ export default function SitFlow() {
   }, [step, paused, actualStart, selectedMin]);
   const [reflection, setReflection] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [recordError, setRecordError] = useState("");
   const [earlyEnd, setEarlyEnd] = useState(false);
   const [prepareLeft, setPrepareLeft] = useState(5);
   const prepareMinRef = useRef(0);
@@ -461,13 +462,20 @@ export default function SitFlow() {
   async function handleRecord(skip = false) {
     if (skip) { window.location.href = "/feed"; return; }
     setSubmitting(true);
+    setRecordError("");
     const fd = new FormData();
     fd.set("duration_min", String(actualMin || selectedMin));
     fd.set("reflection", reflection);
     fd.set("sat_at", actualStart?.toISOString() ?? new Date().toISOString());
     // 卡片是選填的：使用者可以只留心得、只附卡、兩個都要、或兩個都不要
     if (todayCard && attachCard) fd.set("card_id", String(todayCard.id));
-    await recordSit(fd);
+    // 成功時 recordSit 內部會 redirect("/feed")，不會走到下面。
+    // 失敗時要把錯誤顯示出來，否則畫面會停在「SAVING...」什麼都不說。
+    const res = await recordSit(fd);
+    if (res?.error) {
+      setRecordError(res.error);
+      setSubmitting(false);
+    }
   }
 
   // 進到 card step 就在背景抽卡（這時 sit 還沒寫進 DB，所以 skipSitCheck）。
@@ -901,6 +909,11 @@ export default function SitFlow() {
             </div>
           )}
 
+          {recordError && (
+            <p style={{ fontSize: "0.78rem", color: "#D65C6A", lineHeight: 1.6 }}>
+              {recordError}
+            </p>
+          )}
           <button onClick={() => handleRecord(false)} disabled={submitting}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             {submitting ? "SAVING..." : "記錄"}
