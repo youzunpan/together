@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getMyCards } from "@/lib/actions/cards";
-import { CardFace, CardBackMini } from "@/components/DailyCard";
+import { CardBackMini } from "@/components/DailyCard";
+import CardAlbum from "./CardAlbum";
 import { CARDS } from "@/lib/cards";
 import { APP_TZ } from "@/lib/tz";
 import RefreshOnVisible from "@/components/RefreshOnVisible";
@@ -81,24 +82,13 @@ export default async function MyCardsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-5">
-          {collected.map((c) => (
-            <div key={c.id}>
-              <p
-                style={{
-                  fontFamily: "var(--font-space-mono)",
-                  fontSize: "0.58rem",
-                  letterSpacing: "0.12em",
-                  color: "rgba(237,236,234,0.28)",
-                  marginBottom: "0.4rem",
-                }}
-              >
-                {formatDrawnAt(c.drawnAt)}
-              </p>
-              <CardFace card={c.card} />
-            </div>
-          ))}
-        </div>
+        <CardAlbum
+          entries={collected.map((c) => ({
+            id: c.id,
+            card: c.card,
+            label: formatDrawnAt(c.drawnAt),
+          }))}
+        />
       )}
     </div>
   );

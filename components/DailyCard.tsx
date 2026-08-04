@@ -6,7 +6,7 @@
 //
 // 動畫用 CSS 3D transform，不依賴任何動畫套件。
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Card } from "@/lib/cards";
 
 const GOLD = "#BEC23F";
@@ -87,20 +87,29 @@ function CardBack({ showWordmark = true }: { showWordmark?: boolean }) {
  * 小張的卡背，給「坐完可以抽一張卡」這類預告用。
  * 只露卡背不露卡文 —— 讓人知道有這件事，但不破壞翻開的意外感。
  */
-export function CardBackMini({ width = 30, breathe = true }: { width?: number; breathe?: boolean }) {
+export function CardBackMini({
+  width = 30,
+  breathe = true,
+  fill = false,
+}: {
+  width?: number;
+  breathe?: boolean;
+  /** 填滿容器寬度（卡冊網格用），維持 2:3 比例 */
+  fill?: boolean;
+}) {
   return (
     <span
       aria-hidden
       style={{
-        display: "inline-block",
-        width,
-        height: width * 1.5,
-        flexShrink: 0,
+        display: "block",
+        ...(fill
+          ? { width: "100%", aspectRatio: "2 / 3" }
+          : { width, height: width * 1.5, flexShrink: 0 }),
         animation: breathe ? "cardMiniBreathe 5s ease-in-out infinite" : "none",
       }}
     >
       {/* 太小的時候 wordmark 會糊成一團，直接不畫 */}
-      <CardBack showWordmark={width >= 44} />
+      <CardBack showWordmark={fill || width >= 44} />
       <style>{`
         @keyframes cardMiniBreathe {
           0%, 100% { opacity: 0.75; }
@@ -182,13 +191,23 @@ export function CardFlip({
   onFlip,
   disabled = false,
   hint = "點一下，翻開今天的卡",
+  autoFlip = false,
 }: {
   card: Card | null;
   onFlip?: () => void;
   disabled?: boolean;
   hint?: string;
+  /** 開啟後自動翻面（卡冊用：點格子就等於「開啟 + 翻開」，不用點兩次） */
+  autoFlip?: boolean;
 }) {
   const [flipped, setFlipped] = useState(false);
+
+  // 自動翻：延一下再翻，讓使用者看得到「從背面翻過來」的動作
+  useEffect(() => {
+    if (!autoFlip || flipped) return;
+    const t = setTimeout(() => setFlipped(true), 260);
+    return () => clearTimeout(t);
+  }, [autoFlip, flipped]);
 
   function handleFlip() {
     if (flipped || disabled) return;
