@@ -79,5 +79,10 @@ export async function recordSit(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  // 沒有這兩行的話，redirect 過去的 /feed 會是 client router cache 裡的舊版本，
+  // 剛記錄的那筆要等快取過期才看得到（實際踩過：卡片寫進 DB 了但時間軸沒出現）。
+  revalidatePath("/feed");
+  revalidatePath("/me");
   redirect("/feed");
 }
