@@ -5,11 +5,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { drawTodayCard } from "@/lib/actions/cards";
+import { drawCard } from "@/lib/actions/cards";
 import { CardFlip } from "@/components/DailyCard";
 import type { Card } from "@/lib/cards";
 
-export default function DrawCardButton() {
+export default function DrawCardButton({ remaining = 1 }: { remaining?: number }) {
   const [open, setOpen] = useState(false);
   const [card, setCard] = useState<Card | null>(null);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function DrawCardButton() {
     setOpen(true);
     setError("");
     start(async () => {
-      const res = await drawTodayCard();
+      const res = await drawCard();
       if (!res.ok) {
         setError(res.error);
         setOpen(false);
@@ -50,7 +50,7 @@ export default function DrawCardButton() {
             cursor: "pointer",
           }}
         >
-          + 抽今天的卡
+          + 抽一張卡{remaining > 1 ? `（還有 ${remaining} 次）` : ""}
         </button>
         {error && (
           <p style={{ fontSize: "0.72rem", color: "#D65C6A", marginTop: "0.5rem" }}>{error}</p>

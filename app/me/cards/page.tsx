@@ -12,13 +12,16 @@ import RefreshOnVisible from "@/components/RefreshOnVisible";
 
 export const dynamic = "force-dynamic";
 
-function formatDrawnOn(dateKey: string): string {
-  // drawn_on 是台北日期字串 "YYYY-MM-DD"，直接組回 +08:00 避免時區位移
-  return new Date(`${dateKey}T00:00:00+08:00`).toLocaleDateString("zh-TW", {
+// 一天可以抽很多張，所以連時間一起顯示，才分得出先後
+function formatDrawnAt(iso: string): string {
+  return new Date(iso).toLocaleString("zh-TW", {
     timeZone: APP_TZ,
     year: "numeric",
     month: "long",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   });
 }
 
@@ -74,7 +77,7 @@ export default async function MyCardsPage() {
       ) : (
         <div className="space-y-5">
           {collected.map((c) => (
-            <div key={`${c.drawnOn}-${c.card.id}`}>
+            <div key={c.id}>
               <p
                 style={{
                   fontFamily: "var(--font-space-mono)",
@@ -84,7 +87,7 @@ export default async function MyCardsPage() {
                   marginBottom: "0.4rem",
                 }}
               >
-                {formatDrawnOn(c.drawnOn)}
+                {formatDrawnAt(c.drawnAt)}
               </p>
               <CardFace card={c.card} />
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
-import { drawTodayCard } from "@/lib/actions/cards";
+import { drawCard } from "@/lib/actions/cards";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import SitDurationScatter from "@/components/SitDurationScatter";
 import { CardFlip, CardFace } from "@/components/DailyCard";
@@ -478,16 +478,15 @@ export default function SitFlow() {
     }
   }
 
-  // 進到 card step 就在背景抽卡（這時 sit 還沒寫進 DB，所以 skipSitCheck）。
-  // 今天已經抽過 → 不再演一次翻卡，直接進記錄畫面（卡片還是會帶到記錄畫面可選附上）。
+  // 進到 card step 就在背景抽卡。每次坐完都抽一張新的（同一天可以抽很多次）。
+  // 這時 sit 還沒寫進 DB，額度算不到它，所以 skipSitCheck。
   useEffect(() => {
     if (step !== "card" || drawStartedRef.current) return;
     drawStartedRef.current = true;
-    drawTodayCard(true)
+    drawCard(true)
       .then((res) => {
         if (!res.ok) { setStep("record"); return; }
         setTodayCard(res.card);
-        if (res.alreadyDrawn) setStep("record");
       })
       .catch(() => setStep("record"));
   }, [step]);
