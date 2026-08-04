@@ -6,44 +6,79 @@
 //
 // 動畫用 CSS 3D transform，不依賴任何動畫套件。
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Card } from "@/lib/cards";
 
 const GOLD = "#BEC23F";
 
-/** 卡背花紋：同心圓 + 中心點，呼應 app 的呼吸點 */
-function CardBack({ size = 1 }: { size?: number }) {
+/**
+ * 卡背：八肢輪。
+ * 八道光從中心射出，對應帕坦伽利八肢 —— 這副牌真正的骨架。
+ * 中心那顆點呼應 app 各處的呼吸點（splash、同心、21 天圓）。
+ *
+ * 純 SVG、無外部資源。useId 避免同頁多張卡時 gradient id 撞在一起。
+ */
+function CardBack({ showWordmark = true }: { showWordmark?: boolean }) {
+  const uid = useId();
+  const glowId = `cardGlow-${uid}`;
+
+  // 八個方位（度）。從正上方開始，每 45 度一道。
+  const spokes = [0, 45, 90, 135, 180, 225, 270, 315];
+
   return (
     <svg
       viewBox="0 0 120 180"
       style={{ width: "100%", height: "100%", display: "block" }}
       aria-hidden
     >
-      <rect x="0" y="0" width="120" height="180" rx="8" fill="#22231f" />
-      <rect x="5" y="5" width="110" height="170" rx="5" fill="none" stroke={GOLD} strokeOpacity="0.25" strokeWidth="0.6" />
-      {[34, 26, 18].map((r, i) => (
-        <circle
-          key={r}
-          cx="60"
-          cy="90"
-          r={r}
-          fill="none"
-          stroke={GOLD}
-          strokeOpacity={0.12 + i * 0.06}
-          strokeWidth="0.6"
-        />
-      ))}
-      <circle cx="60" cy="90" r="4" fill={GOLD} fillOpacity="0.75" />
-      <text
-        x="60"
-        y="163"
-        textAnchor="middle"
-        fill={GOLD}
-        fillOpacity="0.3"
-        style={{ fontSize: 6 * size, letterSpacing: 2, fontFamily: "var(--font-space-mono)" }}
-      >
-        TOGETHER
-      </text>
+      <defs>
+        <radialGradient id={glowId} cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor={GOLD} stopOpacity="0.10" />
+          <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect width="120" height="180" rx="8" fill="#22231f" />
+      <rect width="120" height="180" rx="8" fill={`url(#${glowId})`} />
+
+      {/* 雙層外框 */}
+      <rect x="5" y="5" width="110" height="170" rx="5" fill="none" stroke={GOLD} strokeOpacity="0.28" strokeWidth="0.6" />
+      <rect x="8.5" y="8.5" width="103" height="163" rx="3" fill="none" stroke={GOLD} strokeOpacity="0.12" strokeWidth="0.4" />
+
+      <g transform="translate(60,90)">
+        {/* 三層同心圓 */}
+        {[38, 29, 20].map((r, i) => (
+          <circle key={r} r={r} fill="none" stroke={GOLD} strokeOpacity={0.10 + i * 0.06} strokeWidth="0.5" />
+        ))}
+
+        {/* 八道光 + 末端的點 */}
+        <g stroke={GOLD} strokeOpacity="0.3" strokeWidth="0.6" strokeLinecap="round">
+          {spokes.map((deg) => (
+            <line key={deg} y1="-12" y2="-34" transform={`rotate(${deg})`} />
+          ))}
+        </g>
+        <g fill={GOLD} fillOpacity="0.35">
+          {spokes.map((deg) => (
+            <circle key={deg} cy="-38" r="1.3" transform={`rotate(${deg})`} />
+          ))}
+        </g>
+
+        {/* 中心：呼吸點 */}
+        <circle r="4" fill={GOLD} fillOpacity="0.8" />
+      </g>
+
+      {showWordmark && (
+        <text
+          x="60"
+          y="165"
+          textAnchor="middle"
+          fill={GOLD}
+          fillOpacity="0.3"
+          style={{ fontSize: 5, letterSpacing: 2, fontFamily: "var(--font-space-mono)" }}
+        >
+          TOGETHER
+        </text>
+      )}
     </svg>
   );
 }
@@ -64,7 +99,8 @@ export function CardBackMini({ width = 30, breathe = true }: { width?: number; b
         animation: breathe ? "cardMiniBreathe 5s ease-in-out infinite" : "none",
       }}
     >
-      <CardBack />
+      {/* 太小的時候 wordmark 會糊成一團，直接不畫 */}
+      <CardBack showWordmark={width >= 44} />
       <style>{`
         @keyframes cardMiniBreathe {
           0%, 100% { opacity: 0.75; }

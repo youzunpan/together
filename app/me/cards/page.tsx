@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getMyCards } from "@/lib/actions/cards";
-import { CardFace } from "@/components/DailyCard";
+import { CardFace, CardBackMini } from "@/components/DailyCard";
 import { CARDS } from "@/lib/cards";
 import { APP_TZ } from "@/lib/tz";
 import RefreshOnVisible from "@/components/RefreshOnVisible";
@@ -65,10 +65,12 @@ export default async function MyCardsPage() {
       )}
 
       {collected.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-          <p style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.9 }}>
+        <div className="flex flex-col items-center" style={{ padding: "1.5rem 1rem 3rem" }}>
+          {/* 一張蓋著的卡等在那裡 —— 比一行字更讓人想去坐 */}
+          <CardBackMini width={132} />
+          <p style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.35)", lineHeight: 1.9, textAlign: "center", marginTop: "1.75rem" }}>
             還沒有抽過卡。<br />
-            靜坐完，就可以抽今天的那一張。
+            靜坐完，就可以翻開一張。
           </p>
           <Link
             href="/sit"

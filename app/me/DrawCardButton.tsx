@@ -6,7 +6,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { drawCard } from "@/lib/actions/cards";
-import { CardFlip } from "@/components/DailyCard";
+import { CardFlip, CardBackMini } from "@/components/DailyCard";
 import type { Card } from "@/lib/cards";
 
 export default function DrawCardButton({ remaining = 1 }: { remaining?: number }) {
@@ -33,24 +33,40 @@ export default function DrawCardButton({ remaining = 1 }: { remaining?: number }
   if (!open) {
     return (
       <>
+        {/* 入口本身就是一張蓋著的卡 —— 你即將翻的東西已經在那裡了 */}
         <button
           type="button"
           onClick={openAndDraw}
           disabled={pending}
           style={{
             width: "100%",
-            background: "transparent",
-            border: "1px dashed rgba(190,194,63,0.35)",
-            color: "#BEC23F",
-            padding: "1.1rem",
-            fontFamily: "var(--font-space-mono)",
-            fontSize: "0.7rem",
-            letterSpacing: "0.15em",
+            background: "rgba(190,194,63,0.04)",
+            border: "1px solid rgba(190,194,63,0.18)",
             borderRadius: "var(--r-card)",
-            cursor: "pointer",
+            padding: "1.5rem 1rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.9rem",
+            cursor: pending ? "default" : "pointer",
           }}
         >
-          + 抽一張卡{remaining > 1 ? `（還有 ${remaining} 次）` : ""}
+          <CardBackMini width={78} />
+          <span
+            style={{
+              fontFamily: "var(--font-space-mono)",
+              fontSize: "0.68rem",
+              letterSpacing: "0.15em",
+              color: "#BEC23F",
+            }}
+          >
+            {pending ? "..." : "抽一張卡"}
+            {remaining > 1 && !pending && (
+              <span style={{ color: "rgba(237,236,234,0.35)", marginLeft: "0.5rem" }}>
+                還有 {remaining} 次
+              </span>
+            )}
+          </span>
         </button>
         {error && (
           <p style={{ fontSize: "0.72rem", color: "#D65C6A", marginTop: "0.5rem" }}>{error}</p>
