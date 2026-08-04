@@ -59,9 +59,15 @@ export async function recordSit(formData: FormData) {
   const duration_min = Number(formData.get("duration_min"));
   const reflection = (formData.get("reflection") as string)?.trim() || null;
   const sat_at = (formData.get("sat_at") as string) || new Date().toISOString();
+  // 今天抽到的卡（選填）。使用者可以只留心得、只附卡、都要、或都不要。
+  const cardRaw = formData.get("card_id") as string | null;
+  const card_id = cardRaw ? Number(cardRaw) : null;
 
   if (!duration_min || duration_min < 1 || duration_min > 240) {
     return { error: "時間不正確" };
+  }
+  if (card_id !== null && (!Number.isInteger(card_id) || card_id < 1 || card_id > 108)) {
+    return { error: "卡片資料異常" };
   }
 
   const { error } = await supabase.from("sits").insert({
@@ -69,6 +75,7 @@ export async function recordSit(formData: FormData) {
     duration_min,
     reflection,
     sat_at,
+    card_id,
   });
 
   if (error) return { error: error.message };

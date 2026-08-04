@@ -3,6 +3,8 @@ import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import SitReplies from "./SitReplies";
 import OwnReflection from "./OwnReflection";
+import { CardFace } from "@/components/DailyCard";
+import { getCard } from "@/lib/cards";
 import Avatar from "@/components/Avatar";
 import LiveSitters from "./LiveSitters";
 import CommunityCircle from "@/components/CommunityCircle";
@@ -408,6 +410,13 @@ function TimelineCard({
               </span>
             </div>
           </div>
+
+          {/* 附上的每日卡（有附才顯示） */}
+          {sit.card_id && getCard(sit.card_id) && (
+            <div style={{ marginTop: "0.6rem" }}>
+              <CardFace card={getCard(sit.card_id)!} compact />
+            </div>
+          )}
 
           {isSelf ? (
             <OwnReflection

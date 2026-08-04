@@ -3,12 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
+import { drawTodayCard } from "@/lib/actions/cards";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import SitDurationScatter from "@/components/SitDurationScatter";
+import { CardFlip, CardFace } from "@/components/DailyCard";
+import type { Card } from "@/lib/cards";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "record";
+// card = 坐完抽今天的卡（今天已抽過就直接跳過去 record）
+type Step = "pick" | "prepare" | "timer" | "tap_to_end" | "card" | "record";
 const inputStyle = {
   width: "100%", background: "#2c2c2a", border: "1px solid rgba(255,255,255,0.08)",
   // fontSize 必須 ≥ 16px，否則 iOS Safari 點進去會自動放大畫面而且不會自己縮回
@@ -25,6 +29,11 @@ export default function SitFlow() {
   const [paused, setPaused] = useState(false);
   const [actualStart, setActualStart] = useState<Date | null>(null);
   const [actualMin, setActualMin] = useState(0);
+  // 每日抽卡
+  const [todayCard, setTodayCard] = useState<Card | null>(null);
+  const [cardRevealed, setCardRevealed] = useState(false);
+  const [attachCard, setAttachCard] = useState(true); // 預設附上（卡文是公開內容，不涉隱私）
+  const drawStartedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const endTimeRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
@@ -263,7 +272,7 @@ export default function SitFlow() {
     // 這條路 = 學生鎖屏中時間到了，回來才點輕觸；我們不知道他實際坐了多久，
     // 紀錄就用原訂時間，不要把「離開 app 的時間」算進去
     setActualMin(selectedMin);
-    setTimeout(() => setStep("record"), 4500);
+    setTimeout(() => setStep("card"), 4500);
   }
 
   function beginPrepare(min: number) {
@@ -423,12 +432,12 @@ export default function SitFlow() {
     // 鈴已響過 = 已坐滿原訂時間，學生主動按停止 → 直接記錄（含超時）
     if (bellRangRef.current) {
       setActualMin(elapsed);
-      setStep("record");
+      setStep("card");
       return;
     }
     // 鈴沒響過 = 真的提前結束，少於 3 分鐘退回 pick
     if (elapsed < 3) { setEarlyEnd(true); setTimeout(() => { setEarlyEnd(false); setStep("pick"); }, 2500); }
-    else { setActualMin(elapsed); setStep("record"); }
+    else { setActualMin(elapsed); setStep("card"); }
   }
 
   useEffect(() => {
@@ -456,8 +465,24 @@ export default function SitFlow() {
     fd.set("duration_min", String(actualMin || selectedMin));
     fd.set("reflection", reflection);
     fd.set("sat_at", actualStart?.toISOString() ?? new Date().toISOString());
+    // 卡片是選填的：使用者可以只留心得、只附卡、兩個都要、或兩個都不要
+    if (todayCard && attachCard) fd.set("card_id", String(todayCard.id));
     await recordSit(fd);
   }
+
+  // 進到 card step 就在背景抽卡（這時 sit 還沒寫進 DB，所以 skipSitCheck）。
+  // 今天已經抽過 → 不再演一次翻卡，直接進記錄畫面（卡片還是會帶到記錄畫面可選附上）。
+  useEffect(() => {
+    if (step !== "card" || drawStartedRef.current) return;
+    drawStartedRef.current = true;
+    drawTodayCard(true)
+      .then((res) => {
+        if (!res.ok) { setStep("record"); return; }
+        setTodayCard(res.card);
+        if (res.alreadyDrawn) setStep("record");
+      })
+      .catch(() => setStep("record"));
+  }, [step]);
 
   const mins = showCustom ? Number(customMin) || 0 : selectedMin;
 
@@ -773,6 +798,40 @@ export default function SitFlow() {
     );
   }
 
+  // ── Step 2.5: 抽今天的卡 ───────────────────────
+  if (step === "card") {
+    return (
+      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col items-center justify-center gap-8">
+        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.25em", color: "rgba(237,236,234,0.25)" }}>
+          TODAY&apos;S CARD
+        </p>
+
+        <CardFlip
+          card={todayCard}
+          disabled={!todayCard}
+          onFlip={() => setTimeout(() => setCardRevealed(true), 900)}
+        />
+
+        {cardRevealed && (
+          <button
+            onClick={() => setStep("record")}
+            className="btn-primary"
+            style={{ letterSpacing: "0.12em", minWidth: 180, animation: "cardFadeUp 0.6s ease-out both" }}
+          >
+            繼續
+          </button>
+        )}
+
+        <style>{`
+          @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   // ── Step 3: 記錄 ──────────────────────────────
   if (step === "record") {
     const displayMin = actualMin || selectedMin;
@@ -798,6 +857,50 @@ export default function SitFlow() {
               {reflection.length >= 140 ? "再短一點。" : `${140 - reflection.length}`}
             </p>
           )}
+
+          {/* 今天的卡：要不要一起貼上去，使用者自己決定 */}
+          {todayCard && (
+            <div style={{ paddingTop: "0.25rem" }}>
+              <div style={{ opacity: attachCard ? 1 : 0.35, transition: "opacity 0.2s" }}>
+                <CardFace card={todayCard} compact />
+              </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                  marginTop: "0.7rem",
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 18, height: 18, flexShrink: 0,
+                    border: `1.5px solid ${attachCard ? "#BEC23F" : "rgba(255,255,255,0.2)"}`,
+                    background: attachCard ? "#BEC23F" : "transparent",
+                    borderRadius: 3,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#1a1b18", fontSize: "0.75rem", fontWeight: 700, lineHeight: 1,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {attachCard ? "✓" : ""}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={attachCard}
+                  onChange={(e) => setAttachCard(e.target.checked)}
+                  style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                />
+                <span style={{ fontSize: "0.8rem", color: "rgba(237,236,234,0.6)" }}>
+                  一起附上今天的卡
+                </span>
+              </label>
+            </div>
+          )}
+
           <button onClick={() => handleRecord(false)} disabled={submitting}
             className="btn-primary w-full" style={{ letterSpacing: "0.12em" }}>
             {submitting ? "SAVING..." : "記錄"}

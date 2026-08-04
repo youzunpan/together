@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AvatarUpload from "./AvatarUpload";
+import TodayCardSection from "./TodayCardSection";
 import Lamp from "@/components/Lamp";
 import TwentyOneCircle from "@/components/TwentyOneCircle";
 import RefreshOnVisible from "@/components/RefreshOnVisible";
@@ -128,6 +129,9 @@ export default async function MePage() {
           </p>
         </div>
       </div>
+
+      {/* 每日抽卡：今天坐過但還沒抽 → 給入口；已抽 → 顯示今天的卡 */}
+      <TodayCardSection />
 
       {/* 一盞燈 */}
       <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
