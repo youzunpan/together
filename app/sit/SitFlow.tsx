@@ -527,7 +527,8 @@ export default function SitFlow() {
           onTouchStart={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
           onTouchEnd={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <CardBackMini width={200} breathe={minsOk} />
+          {/* 用 min() 讓小螢幕自動縮，不會把輸入框擠出畫面 */}
+          <CardBackMini width="min(248px, 64vw)" breathe={minsOk} />
         </button>
         <p
           style={{
@@ -568,7 +569,6 @@ export default function SitFlow() {
             value={customMin}
             onChange={(e) => setCustomMin(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && minsOk) tryStart(mins); }}
-            placeholder="－－"
             style={{
               display: "block",
               margin: "0 auto",

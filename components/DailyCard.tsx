@@ -92,11 +92,13 @@ export function CardBackMini({
   breathe = true,
   fill = false,
 }: {
-  width?: number;
+  /** 數字 = 固定 px；字串 = 直接當 CSS width（例如 "min(240px, 62vw)"），高度用 aspect-ratio 撐 */
+  width?: number | string;
   breathe?: boolean;
   /** 填滿容器寬度（卡冊網格用），維持 2:3 比例 */
   fill?: boolean;
 }) {
+  const responsive = typeof width === "string";
   return (
     <span
       aria-hidden
@@ -104,12 +106,14 @@ export function CardBackMini({
         display: "block",
         ...(fill
           ? { width: "100%", aspectRatio: "2 / 3" }
-          : { width, height: width * 1.5, flexShrink: 0 }),
+          : responsive
+          ? { width, aspectRatio: "2 / 3", flexShrink: 0 }
+          : { width, height: (width as number) * 1.5, flexShrink: 0 }),
         animation: breathe ? "cardMiniBreathe 5s ease-in-out infinite" : "none",
       }}
     >
       {/* 太小的時候 wordmark 會糊成一團，直接不畫 */}
-      <CardBack showWordmark={fill || width >= 44} />
+      <CardBack showWordmark={fill || responsive || (width as number) >= 44} />
       <style>{`
         @keyframes cardMiniBreathe {
           0%, 100% { opacity: 0.75; }
