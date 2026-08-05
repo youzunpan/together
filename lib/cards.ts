@@ -48,6 +48,15 @@ export const LIMB_LABEL: Record<Limb, string> = {
  *
  * 羅馬轉寫刻意不用 IAST 變音符號（ā ś ṣ ṇ ṃ ī）：Space Mono 沒有這些字符，
  * 會 fallback 成別的字型，同一行字看起來會東拼西湊。
+ *
+ * 天城文拼寫已對照維基百科查證（2026-08）：
+ *   Yamas / Niyama / Ashtanga 三個總覽頁 + Aparigraha、Santosha 兩個專頁。
+ * 兩個要注意的變體（都採用專頁的寫法）：
+ *   - अपरिग्रह  Yamas 總覽頁作 अपरिग्रहः（主格帶 visarga），此處用詞幹形，
+ *              與其他項目一致，也與 Aparigraha 專頁一致。
+ *   - संतोष     Niyama 總覽頁作 सन्तोष（合體字 न्त），此處用鼻音符號 ं，
+ *              與 Santosha 專頁一致。兩種拼法古典文獻皆有。
+ * 要改這些字之前請先查證，不要憑印象改。
  */
 export type SanskritLabel = { dev: string; roman: string };
 
