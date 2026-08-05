@@ -41,6 +41,46 @@ export const LIMB_LABEL: Record<Limb, string> = {
   samadhi: "三摩地",
 };
 
+/**
+ * 卡片底部的出處標籤：天城文 + 羅馬轉寫，不放中文。
+ * 天城文對多數讀者是看不懂的符號，正好維持距離感 —— 讓人知道這句話有來歷，
+ * 但不會像中文標籤那樣先把答案講死。
+ *
+ * 羅馬轉寫刻意不用 IAST 變音符號（ā ś ṣ ṇ ṃ ī）：Space Mono 沒有這些字符，
+ * 會 fallback 成別的字型，同一行字看起來會東拼西湊。
+ */
+export type SanskritLabel = { dev: string; roman: string };
+
+/** Yama / Niyama 的十個子主題（比「持戒」「精進」更精確） */
+const THEME_SANSKRIT: Record<string, SanskritLabel> = {
+  非暴力: { dev: "अहिंसा", roman: "AHIMSA" },
+  真實: { dev: "सत्य", roman: "SATYA" },
+  不偷盜: { dev: "अस्तेय", roman: "ASTEYA" },
+  節制: { dev: "ब्रह्मचर्य", roman: "BRAHMACHARYA" },
+  不執取: { dev: "अपरिग्रह", roman: "APARIGRAHA" },
+  潔淨: { dev: "शौच", roman: "SAUCHA" },
+  知足: { dev: "संतोष", roman: "SANTOSHA" },
+  自律: { dev: "तपस्", roman: "TAPAS" },
+  自我研習: { dev: "स्वाध्याय", roman: "SVADHYAYA" },
+  交託: { dev: "ईश्वरप्रणिधान", roman: "ISHVARA PRANIDHANA" },
+};
+
+/** 內六肢沒有子主題，直接用肢名 */
+const LIMB_SANSKRIT: Record<Limb, SanskritLabel> = {
+  yama: { dev: "यम", roman: "YAMA" },
+  niyama: { dev: "नियम", roman: "NIYAMA" },
+  asana: { dev: "आसन", roman: "ASANA" },
+  pranayama: { dev: "प्राणायाम", roman: "PRANAYAMA" },
+  pratyahara: { dev: "प्रत्याहार", roman: "PRATYAHARA" },
+  dharana: { dev: "धारणा", roman: "DHARANA" },
+  dhyana: { dev: "ध्यान", roman: "DHYANA" },
+  samadhi: { dev: "समाधि", roman: "SAMADHI" },
+};
+
+export function cardSanskrit(card: Card): SanskritLabel {
+  return (card.theme && THEME_SANSKRIT[card.theme]) || LIMB_SANSKRIT[card.limb];
+}
+
 export const CARDS: Card[] = [
   // ── 持戒 Yama ─────────────────────────────
   // 非暴力 Ahimsa

@@ -7,7 +7,7 @@
 // 動畫用 CSS 3D transform，不依賴任何動畫套件。
 
 import { useEffect, useId, useState } from "react";
-import type { Card } from "@/lib/cards";
+import { cardSanskrit, type Card } from "@/lib/cards";
 
 const GOLD = "#BEC23F";
 
@@ -132,6 +132,7 @@ export function CardFace({
   card: Card;
   compact?: boolean;
 }) {
+  const sanskrit = cardSanskrit(card);
   return (
     <div
       style={{
@@ -181,6 +182,34 @@ export function CardFace({
       >
         {card.en}
       </p>
+
+      {/* 出處：放在最後才讀得到，先有自己的反應，再知道它出自哪一支。
+          放上面或跟句子並排就會先看標籤再讀句子，那就毀了。 */}
+      <div style={{ marginTop: compact ? "0.15rem" : "0.5rem", lineHeight: 1.5 }}>
+        <p
+          style={{
+            // app 的字型都沒有天城文，交給系統字型（iOS/Android/Windows 都有）
+            fontFamily: '"Noto Sans Devanagari", "Kohinoor Devanagari", "Devanagari MT", "Nirmala UI", serif',
+            fontSize: compact ? "0.7rem" : "0.95rem",
+            color: "rgba(190,194,63,0.55)",
+          }}
+        >
+          {sanskrit.dev}
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: compact ? "0.45rem" : "0.52rem",
+            letterSpacing: "0.22em",
+            // letterSpacing 會在最後一個字後面也加空隙，補一個左邊距讓它視覺置中
+            paddingLeft: "0.22em",
+            color: "rgba(237,236,234,0.28)",
+            marginTop: "0.2rem",
+          }}
+        >
+          {sanskrit.roman}
+        </p>
+      </div>
     </div>
   );
 }
