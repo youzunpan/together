@@ -5,7 +5,6 @@ import { recordSit } from "@/lib/actions/sits";
 import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { drawCard } from "@/lib/actions/cards";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
-import SitDurationScatter from "@/components/SitDurationScatter";
 import { CardFlip, CardFace, CardBackMini } from "@/components/DailyCard";
 import type { Card } from "@/lib/cards";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
@@ -24,7 +23,6 @@ export default function SitFlow() {
   const [step, setStep] = useState<Step>("pick");
   const [selectedMin, setSelectedMin] = useState(18);
   const [customMin, setCustomMin] = useState("");
-  const [showCustom, setShowCustom] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [paused, setPaused] = useState(false);
   const [actualStart, setActualStart] = useState<Date | null>(null);
@@ -167,8 +165,8 @@ export default function SitFlow() {
 
   function clearTimer() { if (intervalRef.current) clearInterval(intervalRef.current); }
 
-  // 從 ?duration= 預填時長（給「同心」邀坐用），有值就自動進入 prepare；
-  // 沒帶就隨機選一個 preset 高亮（每次進來不同）
+  // 從 ?duration= 預填時長（給「同心」邀坐用），有值就自動進入 prepare。
+  // 沒帶就留空，讓使用者自己填（原本會隨機高亮一個預設時間，已拿掉）。
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -179,10 +177,7 @@ export default function SitFlow() {
       window.history.replaceState({}, "", "/sit");
       // 進入 prepare（延一個 tick 讓 audioCtx 初始化完成）
       setTimeout(() => beginPrepare(d), 0);
-      return;
     }
-    const presets = [6, 12, 18, 24, 30, 36, 42, 60];
-    setSelectedMin(presets[Math.floor(Math.random() * presets.length)]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -491,12 +486,14 @@ export default function SitFlow() {
       .catch(() => setStep("record"));
   }, [step]);
 
-  const mins = showCustom ? Number(customMin) || 0 : selectedMin;
+  const mins = Number(customMin) || 0;
 
   // ── Step 1: 選時間 ──────────────────────────────
+  // 卡背當主視覺、時間自己填。原本散落的隨機預設時間全部拿掉。
   if (step === "pick") {
+    const minsOk = mins >= 1 && mins <= 240;
     return (
-      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col justify-center pb-8">
+      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col items-center justify-center pb-8">
         {earlyEnd && (
           <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "#1a1b18" }}>
             <p style={{ fontSize: "1rem", color: "rgba(237,236,234,0.4)", letterSpacing: "0.05em" }}>
@@ -505,44 +502,74 @@ export default function SitFlow() {
           </div>
         )}
 
-        <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)", marginBottom: "1.5rem" }}>
-          SELECT DURATION
+        {/* 主視覺：一張蓋著的卡在等你 */}
+        <CardBackMini width={148} />
+        <p
+          style={{
+            fontFamily: "var(--font-space-mono)",
+            fontSize: "0.6rem",
+            letterSpacing: "0.15em",
+            color: "rgba(237,236,234,0.3)",
+            marginTop: "1rem",
+          }}
+        >
+          坐完，翻開這張卡
         </p>
-        <h1 style={{ fontFamily: "var(--font-noto-serif)", fontSize: "1.5rem", color: "#edecea", marginBottom: "2rem", fontWeight: 400 }}>
+
+        <h1
+          style={{
+            fontFamily: "var(--font-noto-serif)",
+            fontSize: "1.4rem",
+            color: "#edecea",
+            fontWeight: 400,
+            marginTop: "2.75rem",
+          }}
+        >
           今天想坐多久？
         </h1>
 
-        <SitDurationScatter
-          selectedMin={selectedMin}
-          showCustom={showCustom}
-          onSelect={(m) => { setSelectedMin(m); setShowCustom(false); }}
-          onOther={() => setShowCustom(true)}
-        />
-
-        {showCustom && (
-          <input type="number" min={1} max={240} value={customMin}
-            onChange={e => setCustomMin(e.target.value)}
-            placeholder="1 – 240 分鐘" autoFocus
-            style={{ ...inputStyle, marginBottom: "1.5rem" }}
-            onFocus={e => e.target.style.borderColor = "#BEC23F"}
-            onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+        {/* 填空式輸入：只有一條底線，數字置中 */}
+        <div className="flex items-baseline justify-center gap-2" style={{ marginTop: "1.25rem" }}>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={240}
+            value={customMin}
+            onChange={(e) => setCustomMin(e.target.value)}
+            placeholder="－－"
+            style={{
+              width: "4.5rem",
+              background: "transparent",
+              border: "none",
+              borderBottom: `1px solid ${minsOk ? "rgba(190,194,63,0.6)" : "rgba(255,255,255,0.15)"}`,
+              padding: "0.3rem 0",
+              // ≥16px 否則 iOS Safari 點進去會自動放大且不會縮回
+              fontSize: "1.75rem",
+              fontFamily: "var(--font-space-mono)",
+              color: "#edecea",
+              textAlign: "center",
+              outline: "none",
+              transition: "border-color 0.2s",
+            }}
           />
-        )}
+          <span style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.4)" }}>分鐘</span>
+        </div>
 
-        <div className="mt-8 flex justify-center">
-          <button onClick={() => { if (mins >= 1 && mins <= 240) tryStart(mins); }}
-            disabled={mins < 1 || mins > 240}
+        <div style={{ marginTop: "2.5rem" }}>
+          <button onClick={() => { if (minsOk) tryStart(mins); }}
+            disabled={!minsOk}
             style={{
               width: 110, height: 110, borderRadius: "50%",
-              background: (mins < 1 || mins > 240) ? "rgba(190,194,63,0.25)" : "#BEC23F",
+              background: minsOk ? "#BEC23F" : "rgba(190,194,63,0.25)",
               color: "#1a1b18",
               border: "none",
               fontFamily: "var(--font-space-mono)",
               fontSize: "1.15rem",
               letterSpacing: "0.08em",
-              cursor: (mins < 1 || mins > 240) ? "default" : "pointer",
+              cursor: minsOk ? "pointer" : "default",
               transition: "transform 0.15s, background 0.2s",
-              boxShadow: "0 0 24px rgba(190,194,63,0.25)",
+              boxShadow: minsOk ? "0 0 24px rgba(190,194,63,0.25)" : "none",
             }}
             onMouseDown={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.transform = "scale(0.95)"; }}
             onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -550,25 +577,6 @@ export default function SitFlow() {
           >
             Start
           </button>
-        </div>
-
-        {/* 抽卡預告：只露卡背，不破壞翻開的意外感。
-            放在 Start 下面 —— 使用者正在決定要不要坐的那一刻。 */}
-        <div
-          className="flex items-center justify-center gap-2.5"
-          style={{ marginTop: "1.75rem" }}
-        >
-          <CardBackMini width={26} />
-          <span
-            style={{
-              fontFamily: "var(--font-space-mono)",
-              fontSize: "0.62rem",
-              letterSpacing: "0.12em",
-              color: "rgba(237,236,234,0.35)",
-            }}
-          >
-            坐完，抽一張卡
-          </span>
         </div>
 
         {pushPromptOpen && (
