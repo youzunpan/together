@@ -56,6 +56,8 @@ export default function SitFlow() {
   const [pushPromptOpen, setPushPromptOpen] = useState(false);
   const [pushPromptBusy, setPushPromptBusy] = useState(false);
   const pendingMinRef = useRef(0);
+  // 時間輸入框：卡片在它上面，所以還沒填就按卡片時把游標帶過來
+  const minInputRef = useRef<HTMLInputElement | null>(null);
 
   // 鈴聲播放：優先走 HTMLAudioElement（iOS 視為媒體，靜音鍵 + 螢幕鎖定皆可），
   // 失敗時 fallback 到原本的 Web Audio 即時合成。
@@ -502,18 +504,42 @@ export default function SitFlow() {
           </div>
         )}
 
-        {/* 主視覺：一張蓋著的卡在等你 */}
-        <CardBackMini width={148} />
+        {/* 卡片就是開始鍵：按下去就開始坐，坐完它才翻開。
+            時間還沒填的時候不會沒反應，而是把游標帶到輸入框。 */}
+        <button
+          type="button"
+          onClick={() => {
+            if (minsOk) tryStart(mins);
+            else minInputRef.current?.focus();
+          }}
+          aria-label={minsOk ? `開始靜坐 ${mins} 分鐘` : "先填上時間"}
+          style={{
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            opacity: minsOk ? 1 : 0.4,
+            transition: "opacity 0.25s, transform 0.15s",
+          }}
+          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          onTouchStart={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+        >
+          <CardBackMini width={148} breathe={minsOk} />
+        </button>
         <p
           style={{
             fontFamily: "var(--font-space-mono)",
             fontSize: "0.6rem",
             letterSpacing: "0.15em",
-            color: "rgba(237,236,234,0.3)",
+            color: minsOk ? "rgba(190,194,63,0.7)" : "rgba(237,236,234,0.25)",
             marginTop: "1rem",
+            transition: "color 0.25s",
           }}
         >
-          坐完，翻開這張卡
+          {minsOk ? "按一下卡片，開始" : "坐完，翻開這張卡"}
         </p>
 
         <h1
@@ -531,12 +557,14 @@ export default function SitFlow() {
         {/* 填空式輸入：只有一條底線，數字置中 */}
         <div className="flex items-baseline justify-center gap-2" style={{ marginTop: "1.25rem" }}>
           <input
+            ref={minInputRef}
             type="number"
             inputMode="numeric"
             min={1}
             max={240}
             value={customMin}
             onChange={(e) => setCustomMin(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && minsOk) tryStart(mins); }}
             placeholder="－－"
             style={{
               width: "4.5rem",
@@ -554,29 +582,6 @@ export default function SitFlow() {
             }}
           />
           <span style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.4)" }}>分鐘</span>
-        </div>
-
-        <div style={{ marginTop: "2.5rem" }}>
-          <button onClick={() => { if (minsOk) tryStart(mins); }}
-            disabled={!minsOk}
-            style={{
-              width: 110, height: 110, borderRadius: "50%",
-              background: minsOk ? "#BEC23F" : "rgba(190,194,63,0.25)",
-              color: "#1a1b18",
-              border: "none",
-              fontFamily: "var(--font-space-mono)",
-              fontSize: "1.15rem",
-              letterSpacing: "0.08em",
-              cursor: minsOk ? "pointer" : "default",
-              transition: "transform 0.15s, background 0.2s",
-              boxShadow: minsOk ? "0 0 24px rgba(190,194,63,0.25)" : "none",
-            }}
-            onMouseDown={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.transform = "scale(0.95)"; }}
-            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-          >
-            Start
-          </button>
         </div>
 
         {pushPromptOpen && (
