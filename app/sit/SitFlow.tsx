@@ -527,15 +527,15 @@ export default function SitFlow() {
           onTouchStart={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
           onTouchEnd={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <CardBackMini width={148} breathe={minsOk} />
+          <CardBackMini width={200} breathe={minsOk} />
         </button>
         <p
           style={{
             fontFamily: "var(--font-space-mono)",
-            fontSize: "0.6rem",
+            fontSize: "0.62rem",
             letterSpacing: "0.15em",
             color: minsOk ? "rgba(190,194,63,0.7)" : "rgba(237,236,234,0.25)",
-            marginTop: "1rem",
+            marginTop: "1.15rem",
             transition: "color 0.25s",
           }}
         >
@@ -545,17 +545,20 @@ export default function SitFlow() {
         <h1
           style={{
             fontFamily: "var(--font-noto-serif)",
-            fontSize: "1.4rem",
+            fontSize: "1.35rem",
             color: "#edecea",
             fontWeight: 400,
-            marginTop: "2.75rem",
+            marginTop: "2.25rem",
           }}
         >
           今天想坐多久？
         </h1>
 
-        {/* 填空式輸入：只有一條底線，數字置中 */}
-        <div className="flex items-baseline justify-center gap-2" style={{ marginTop: "1.25rem" }}>
+        {/* 填空式輸入。
+            數字要「真的」置中：如果把「分鐘」跟輸入框一起 flex 置中，
+            整組會被置中、數字反而偏左。所以輸入框自己置中，
+            「分鐘」用絕對定位掛在它右邊。 */}
+        <div style={{ position: "relative", width: "100%", marginTop: "1.1rem" }}>
           <input
             ref={minInputRef}
             type="number"
@@ -567,13 +570,15 @@ export default function SitFlow() {
             onKeyDown={(e) => { if (e.key === "Enter" && minsOk) tryStart(mins); }}
             placeholder="－－"
             style={{
-              width: "4.5rem",
+              display: "block",
+              margin: "0 auto",
+              width: "5rem",
               background: "transparent",
               border: "none",
               borderBottom: `1px solid ${minsOk ? "rgba(190,194,63,0.6)" : "rgba(255,255,255,0.15)"}`,
-              padding: "0.3rem 0",
+              padding: "0.25rem 0",
               // ≥16px 否則 iOS Safari 點進去會自動放大且不會縮回
-              fontSize: "1.75rem",
+              fontSize: "2rem",
               fontFamily: "var(--font-space-mono)",
               color: "#edecea",
               textAlign: "center",
@@ -581,7 +586,18 @@ export default function SitFlow() {
               transition: "border-color 0.2s",
             }}
           />
-          <span style={{ fontSize: "0.85rem", color: "rgba(237,236,234,0.4)" }}>分鐘</span>
+          <span
+            style={{
+              position: "absolute",
+              left: "calc(50% + 3rem)",
+              bottom: "0.5rem",
+              fontSize: "0.85rem",
+              color: "rgba(237,236,234,0.4)",
+              pointerEvents: "none",
+            }}
+          >
+            分鐘
+          </span>
         </div>
 
         {pushPromptOpen && (
