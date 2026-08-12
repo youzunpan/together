@@ -27,9 +27,34 @@ const CARD_BACK: "mountain" | "wheel" = "mountain";
  *
  * 純 SVG、無外部資源。useId 避免同頁多張卡時 gradient id 撞在一起。
  */
-function CardBack({ showWordmark = true }: { showWordmark?: boolean }) {
+function CardBack({
+  showWordmark = true,
+  tiny = false,
+}: {
+  showWordmark?: boolean;
+  /** 極小尺寸（feed 的提示，約 14px）—— 插畫在這裡會糊成一團深色，改用粗線版 */
+  tiny?: boolean;
+}) {
+  if (tiny) return <CardBackTiny />;
   if (CARD_BACK === "mountain") return <CardBackImage />;
   return <CardBackWheel showWordmark={showWordmark} />;
+}
+
+/**
+ * 14px 用的卡背。
+ * 關鍵是線要「粗到看得見」：viewBox 是 120 寬、實際畫 14px，縮放約 0.117 倍，
+ * 所以 1 單位的線只會畫出 0.1px（等於不存在）。這裡的線寬全部放大到 5–6 單位。
+ * 只留最低限度：一個框 + 中心一點光。
+ */
+function CardBackTiny() {
+  return (
+    <svg viewBox="0 0 120 180" style={{ width: "100%", height: "100%", display: "block" }} aria-hidden>
+      <rect width="120" height="180" rx="14" fill="#22231f" />
+      <rect x="7" y="7" width="106" height="166" rx="10" fill="none" stroke={GOLD} strokeOpacity="0.55" strokeWidth="5" />
+      <circle cx="60" cy="90" r="34" fill="none" stroke={GOLD} strokeOpacity="0.2" strokeWidth="4" />
+      <circle cx="60" cy="90" r="15" fill={GOLD} fillOpacity="0.85" />
+    </svg>
+  );
 }
 
 /** 插畫版卡背。用 next/image 讓 Next 自動轉 WebP/AVIF 並產生對應尺寸的變體。 */
@@ -153,8 +178,12 @@ export function CardBackMini({
         animation: breathe ? "cardMiniBreathe 5s ease-in-out infinite" : "none",
       }}
     >
-      {/* 太小的時候 wordmark 會糊成一團，直接不畫 */}
-      <CardBack showWordmark={fill || responsive || (width as number) >= 44} />
+      {/* 40px 以下換成粗線版（插畫在那個尺寸只會變成一團深色）；
+          44px 以下的 wordmark 也會糊，不畫 */}
+      <CardBack
+        tiny={!fill && !responsive && (width as number) < 40}
+        showWordmark={fill || responsive || (width as number) >= 44}
+      />
       <style>{`
         @keyframes cardMiniBreathe {
           0%, 100% { opacity: 0.75; }
