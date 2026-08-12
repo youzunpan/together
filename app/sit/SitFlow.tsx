@@ -527,8 +527,10 @@ export default function SitFlow() {
           onTouchStart={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
           onTouchEnd={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          {/* 用 min() 讓小螢幕自動縮，不會把輸入框擠出畫面 */}
-          <CardBackMini width="min(248px, 64vw)" breathe={minsOk} />
+          {/* 尺寸的限制其實是「高度」不是寬度：卡片 2:3，寬 300px 就有 450px 高，
+              下面還有提示、標題、輸入框約 155px。所以用 dvh 當主要上限，
+              vw 只是防止在窄螢幕上橫向爆掉。 */}
+          <CardBackMini width="min(300px, 38dvh, 76vw)" breathe={minsOk} />
         </button>
         <p
           style={{
