@@ -7,9 +7,18 @@
 // 動畫用 CSS 3D transform，不依賴任何動畫套件。
 
 import { useEffect, useId, useState } from "react";
+import Image from "next/image";
 import { cardSanskrit, type Card } from "@/lib/cards";
 
 const GOLD = "#BEC23F";
+
+/**
+ * 卡背樣式。
+ *   "mountain" = ChatGPT 生成的插畫（內在之山），public/cards/back-mountain.png
+ *   "wheel"    = 程式繪製的八肢輪 SVG（可隨尺寸自動簡化、無限放大）
+ * 目前在測試插畫版；想換回來改這一個字就好。
+ */
+const CARD_BACK: "mountain" | "wheel" = "mountain";
 
 /**
  * 卡背：八肢輪。
@@ -19,6 +28,38 @@ const GOLD = "#BEC23F";
  * 純 SVG、無外部資源。useId 避免同頁多張卡時 gradient id 撞在一起。
  */
 function CardBack({ showWordmark = true }: { showWordmark?: boolean }) {
+  if (CARD_BACK === "mountain") return <CardBackImage />;
+  return <CardBackWheel showWordmark={showWordmark} />;
+}
+
+/** 插畫版卡背。用 next/image 讓 Next 自動轉 WebP/AVIF 並產生對應尺寸的變體。 */
+function CardBackImage() {
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "block",
+        width: "100%",
+        height: "100%",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      <Image
+        src="/cards/back-mountain.png"
+        alt=""
+        fill
+        // 卡背最大只會用到 248px 寬（靜坐主畫面）
+        sizes="248px"
+        style={{ objectFit: "cover" }}
+        priority={false}
+      />
+    </span>
+  );
+}
+
+/** 程式繪製版卡背：八肢輪 */
+function CardBackWheel({ showWordmark = true }: { showWordmark?: boolean }) {
   const uid = useId();
   const glowId = `cardGlow-${uid}`;
 
