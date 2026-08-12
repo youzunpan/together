@@ -86,6 +86,22 @@ const LIMB_SANSKRIT: Record<Limb, SanskritLabel> = {
   samadhi: { dev: "समाधि", roman: "SAMADHI" },
 };
 
+/**
+ * 每一肢的插畫，當卡「正面」的底圖。
+ * 放在正面而不是背面：背面必須整副一樣（否則翻開前就先知道是哪一肢，
+ * 而且 /sit 上那張卡是在抽之前就顯示，那時還沒有肢），正面才是揭曉的地方。
+ */
+export const LIMB_ART: Record<Limb, string> = {
+  yama: "/cards/limbs/yama.png",
+  niyama: "/cards/limbs/niyama.png",
+  asana: "/cards/limbs/asana.png",
+  pranayama: "/cards/limbs/pranayama.png",
+  pratyahara: "/cards/limbs/pratyahara.png",
+  dharana: "/cards/limbs/dharana.png",
+  dhyana: "/cards/limbs/dhyana.png",
+  samadhi: "/cards/limbs/samadhi.png",
+};
+
 export function cardSanskrit(card: Card): SanskritLabel {
   return (card.theme && THEME_SANSKRIT[card.theme]) || LIMB_SANSKRIT[card.limb];
 }

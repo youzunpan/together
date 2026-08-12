@@ -8,7 +8,7 @@
 
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
-import { cardSanskrit, type Card } from "@/lib/cards";
+import { cardSanskrit, LIMB_ART, type Card } from "@/lib/cards";
 
 const GOLD = "#BEC23F";
 
@@ -19,6 +19,14 @@ const GOLD = "#BEC23F";
  * 目前在測試插畫版；想換回來改這一個字就好。
  */
 const CARD_BACK: "mountain" | "wheel" = "mountain";
+
+/**
+ * 卡「正面」的八肢插畫底圖強度。插畫密度很高，文字直接壓上去會讀不清楚，
+ * 所以壓低不透明度再加一層遮罩。想讓插畫更明顯就調高 ART_OPACITY、
+ * 調淡 ART_SCRIM —— 但每動一次都要回頭確認文字還讀得動。
+ */
+const ART_OPACITY = 0.5;
+const ART_SCRIM = "linear-gradient(180deg, rgba(26,27,24,0.62) 0%, rgba(26,27,24,0.78) 55%, rgba(26,27,24,0.7) 100%)";
 
 /**
  * 卡背：八肢輪。
@@ -203,9 +211,14 @@ export function CardFace({
   compact?: boolean;
 }) {
   const sanskrit = cardSanskrit(card);
+  // 插畫只用在大尺寸。compact 出現在 feed 時間軸跟記錄畫面，
+  // 那裡放八種密度很高的底圖會把版面弄吵。
+  const art = compact ? null : LIMB_ART[card.limb];
   return (
     <div
       style={{
+        position: "relative",
+        overflow: "hidden",
         background: "linear-gradient(160deg, #2f302b 0%, #26271f 100%)",
         border: `1px solid rgba(190,194,63,${compact ? 0.2 : 0.3})`,
         borderRadius: compact ? 6 : 10,
@@ -221,6 +234,38 @@ export function CardFace({
         boxSizing: "border-box",
       }}
     >
+      {art && (
+        <>
+          <Image
+            src={art}
+            alt=""
+            fill
+            sizes="320px"
+            style={{ objectFit: "cover", opacity: ART_OPACITY }}
+          />
+          {/* 遮罩：插畫密度高，文字直接壓上去會讀不清楚 */}
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: ART_SCRIM,
+            }}
+          />
+        </>
+      )}
+      {/* 內容包一層 position:relative —— 否則會被絕對定位的插畫與遮罩蓋住 */}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: compact ? "0.5rem" : "1.1rem",
+          width: "100%",
+        }}
+      >
       <p
         className="reflection-text"
         style={{
@@ -279,6 +324,7 @@ export function CardFace({
         >
           {sanskrit.roman}
         </p>
+      </div>
       </div>
     </div>
   );
