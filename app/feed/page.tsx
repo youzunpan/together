@@ -162,7 +162,15 @@ export default async function FeedPage() {
           {todaySit ? (
             <div className="flex items-center justify-between">
               <p style={{ fontSize: "0.9rem", color: "#edecea" }}>今天你坐了 <span style={{ fontFamily: "var(--font-space-mono)", color: "#BEC23F" }}>{todaySit.duration_min}</span> 分鐘。</p>
-              <Link href="/sit" prefetch style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)" }} className="hover:text-[#BEC23F] transition-colors">
+              {/* 已經坐過也還能再抽一張（規則是「一次靜坐 = 一次抽卡機會」），
+                  所以這裡也掛一個卡背暗示 */}
+              <Link
+                href="/sit"
+                prefetch
+                style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)", flexShrink: 0, whiteSpace: "nowrap" }}
+                className="hover:text-[#BEC23F] transition-colors inline-flex items-center gap-1.5"
+              >
+                <CardBackMini width={14} />
                 再坐一次 →
               </Link>
             </div>
