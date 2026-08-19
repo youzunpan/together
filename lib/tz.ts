@@ -62,6 +62,16 @@ export function taipeiMonthLabel(d: Date = new Date()): string {
   }).format(d);
 }
 
+// 抽卡日夜分界（台北牆上時間）：19:00 之後坐 → 夜晚卡。
+// 這個時間刻意寫在這裡，之後要改一個地方就好。
+export const NIGHT_HOUR = 19;
+
+/** 現在的台北時區是白天還是夜晚 */
+export function currentDayNight(d: Date = new Date()): "day" | "night" {
+  const p = taipeiParts(d);
+  return Number(p.hour) >= NIGHT_HOUR ? "night" : "day";
+}
+
 // 兩個日期在「台北日」上的差距（整數天），a 較新時為正
 export function taipeiDiffDays(a: Date, b: Date): number {
   const ka = taipeiDateKey(a);

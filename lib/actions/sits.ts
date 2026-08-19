@@ -62,6 +62,8 @@ export async function recordSit(formData: FormData) {
   // 今天抽到的卡（選填）。使用者可以只留心得、只附卡、都要、或都不要。
   const cardRaw = formData.get("card_id") as string | null;
   const card_id = cardRaw ? Number(cardRaw) : null;
+  const cardKindRaw = formData.get("card_kind") as string | null;
+  const card_kind = card_id !== null ? (cardKindRaw === "night" ? "night" : "day") : null;
 
   if (!duration_min || duration_min < 1 || duration_min > 240) {
     return { error: "時間不正確" };
@@ -76,6 +78,7 @@ export async function recordSit(formData: FormData) {
     reflection,
     sat_at,
     card_id,
+    card_kind,
   });
 
   if (error) return { error: error.message };

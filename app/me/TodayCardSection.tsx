@@ -10,9 +10,9 @@ import { CardFace } from "@/components/DailyCard";
 import DrawCardButton from "./DrawCardButton";
 
 export default async function TodayCardSection() {
-  const [card, remaining] = await Promise.all([getLatestCard(), remainingDrawsToday()]);
+  const [latest, remaining] = await Promise.all([getLatestCard(), remainingDrawsToday()]);
 
-  if (!card && remaining <= 0) return null;
+  if (!latest && remaining <= 0) return null;
 
   return (
     <section className="mb-8">
@@ -31,7 +31,7 @@ export default async function TodayCardSection() {
       {remaining > 0 ? (
         <DrawCardButton remaining={remaining} />
       ) : (
-        card && <CardFace card={card} />
+        latest && <CardFace card={latest.card} kind={latest.kind} />
       )}
     </section>
   );

@@ -206,9 +206,11 @@ export function CardBackMini({
 export function CardFace({
   card,
   compact = false,
+  kind, // "day" | "night"，只在 compact（卡冊網格）顯示小標，大卡不加視覺
 }: {
   card: Card;
   compact?: boolean;
+  kind?: "day" | "night";
 }) {
   const sanskrit = cardSanskrit(card);
   // 插畫只用在大尺寸。compact 出現在 feed 時間軸跟記錄畫面，

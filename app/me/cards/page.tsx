@@ -26,6 +26,11 @@ function formatDrawnAt(iso: string): string {
   });
 }
 
+// 日/夜混在同一卡冊裡，用小字 · 日 / · 夜 標出來
+function formatLabel(iso: string, kind: "day" | "night"): string {
+  return `${formatDrawnAt(iso)} · ${kind === "night" ? "夜" : "日"}`;
+}
+
 export default async function MyCardsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -86,7 +91,7 @@ export default async function MyCardsPage() {
           entries={collected.map((c) => ({
             id: c.id,
             card: c.card,
-            label: formatDrawnAt(c.drawnAt),
+            label: formatLabel(c.drawnAt, c.kind),
           }))}
         />
       )}
