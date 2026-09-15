@@ -132,14 +132,14 @@ export async function submitRegistration(slug: string, formData: FormData) {
   try {
     const { data: course } = await sb
       .from("courses")
-      .select("id,title,format,start_at,end_at,schedule_note,location,price_note,payment_info,duration_type")
+      .select("id,title,format,start_at,end_at,schedule_note,location,price_note,payment_info,duration_type,capacity")
       .eq("slug", slug)
       .single();
 
     if (course) {
       const { data: sessionRows } = await sb
         .from("course_sessions")
-        .select("session_at, note")
+        .select("id, session_at, note")
         .eq("course_id", course.id)
         .order("session_at", { ascending: true });
       const sessions = sessionRows ?? [];
@@ -213,6 +213,78 @@ export async function submitRegistration(slug: string, formData: FormData) {
           </div>
         `,
       });
+
+      // 通知老師 —— 自己一個 try，學生確認信失敗不該連帶讓這封也不寄（反之亦然）。
+      // reply_to 設成學生的信箱：收到通知直接按回覆就能聯絡學生。
+      try {
+        const { count: takenRaw } = await sb
+          .from("registrations")
+          .select("*", { count: "exact", head: true })
+          .eq("course_id", course.id)
+          .neq("status", "cancelled");
+        const taken = takenRaw ?? 0;
+
+        const row = (label: string, value: string) =>
+          `<tr>
+            <td style="padding:6px 14px 6px 0;color:#888;white-space:nowrap;vertical-align:top;">${label}</td>
+            <td style="padding:6px 0;color:#1a1b18;"><b>${value}</b></td>
+          </tr>`;
+
+        const info: string[] = [
+          row("名字", escapeHtml(name)),
+          row("Email", `<a href="mailto:${escapeHtml(email)}" style="color:#1a1b18;">${escapeHtml(email)}</a>`),
+        ];
+        if (line_id) info.push(row("Line ID", escapeHtml(line_id)));
+
+        // 單堂報名要講清楚選了哪幾堂，不然還要自己回去查
+        if (sessionIds && sessionIds.length > 0) {
+          const picked = sessions
+            .filter((s) => sessionIds!.includes(s.id as string))
+            .map((s) => escapeHtml(formatDateTime(s.session_at)))
+            .join("<br>");
+          info.push(row(`單堂 · ${sessionIds.length} 堂`, picked || "（找不到對應課堂）"));
+        } else {
+          info.push(row("報名", "整期"));
+        }
+
+        const money = [
+          transfer_last4 ? `末四碼 ${escapeHtml(transfer_last4)}` : null,
+          transfer_amount !== null ? `NT$ ${transfer_amount.toLocaleString("zh-TW")}` : null,
+        ].filter(Boolean).join(" · ");
+        info.push(row("匯款", money || '<span style="color:#b26b2e;">還沒填</span>'));
+        info.push(row("名額", `${taken} / ${course.capacity ?? "—"}`));
+
+        const teacherNotes = notes
+          ? `<div style="margin:18px 0 0;padding:12px 14px;background:#f6f7e4;border:1px solid #d8dba6;border-radius:4px;">
+              <p style="margin:0 0 6px;font-size:12px;letter-spacing:0.12em;color:#6d7220;">學員備註</p>
+              <p style="margin:0;white-space:pre-wrap;color:#333;">${escapeHtml(notes)}</p>
+            </div>`
+          : "";
+
+        await sendEmail({
+          to: TEACHER_EMAIL,
+          reply_to: email,
+          subject: `同在 · ${name} 報名了「${course.title}」`,
+          html: `
+            <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1b18;line-height:1.7;">
+              <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.14em;color:#999;">新報名</p>
+              <h2 style="font-weight:normal;font-size:1.15rem;margin:0 0 18px;">${escapeHtml(course.title)}</h2>
+              <table style="border-collapse:collapse;font-size:14px;">
+                ${info.join("\n                ")}
+              </table>
+              ${teacherNotes}
+              <p style="margin:24px 0 0;color:#555;font-size:13px;">
+                直接回覆這封信就會寄到 ${escapeHtml(email)}。
+              </p>
+              <p style="margin:6px 0 0;color:#888;font-size:13px;">
+                報名時間 ${escapeHtml(formatDateTime(new Date().toISOString()))}
+              </p>
+            </div>
+          `,
+        });
+      } catch (e) {
+        console.error("[registrations] notify teacher failed", e);
+      }
     }
   } catch (e) {
     console.error("[registrations] send confirmation email failed", e);
