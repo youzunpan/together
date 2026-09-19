@@ -128,7 +128,7 @@ export default async function FeedPage() {
     sat_at: `${k}T00:00:00+08:00`,
   }));
   const { circles: communityCircles, streak: communityStreak } =
-    compute21Day(communityVirtualSits);
+    compute21Day(communityVirtualSits, { allowMakeup: false }); // 補坐是個人規則，社群圓不適用
 
   const todayKey = taipeiDateKey(new Date());
   const todayMembers = dayMembers.get(todayKey)?.size ?? 0;

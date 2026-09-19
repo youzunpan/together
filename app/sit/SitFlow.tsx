@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { recordSit } from "@/lib/actions/sits";
 import { scheduleSitEndPush, cancelPushJob } from "@/lib/actions/push";
 import { drawCard } from "@/lib/actions/cards";
+import { MAKEUP_MIN } from "@/lib/streak";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import { CardFlip, CardFace, CardBackMini } from "@/components/DailyCard";
 import type { Card, CardKind } from "@/lib/cards";
@@ -19,7 +20,7 @@ const inputStyle = {
   borderRadius: 4,
 };
 
-export default function SitFlow() {
+export default function SitFlow({ makeupPending = false }: { makeupPending?: boolean }) {
   const [step, setStep] = useState<Step>("pick");
   const [selectedMin, setSelectedMin] = useState(18);
   const [customMin, setCustomMin] = useState("");
@@ -606,6 +607,24 @@ export default function SitFlow() {
             分鐘
           </span>
         </div>
+
+        {/* 昨天漏坐：跟著輸入的分鐘數即時說夠不夠補 */}
+        {makeupPending && (
+          <p
+            style={{
+              marginTop: "1.1rem",
+              fontSize: "0.8rem",
+              lineHeight: 1.7,
+              textAlign: "center",
+              color: mins >= MAKEUP_MIN ? "rgba(190,194,63,0.85)" : "rgba(237,236,234,0.45)",
+              transition: "color 0.25s",
+            }}
+          >
+            {mins >= MAKEUP_MIN
+              ? "這次坐完，昨天也會一起補上。"
+              : `昨天沒坐到。坐滿 ${MAKEUP_MIN} 分鐘，就能把昨天補上。`}
+          </p>
+        )}
 
         {pushPromptOpen && (
           <div

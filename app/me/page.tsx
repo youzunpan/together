@@ -22,7 +22,7 @@ export default async function MePage() {
     .eq("user_id", user.id).order("sat_at", { ascending: false });
 
   const totalMin = sits?.reduce((s, r) => s + r.duration_min, 0) ?? 0;
-  const { circles, streak } = compute21Day(sits ?? []);
+  const { circles, streak, makeup } = compute21Day(sits ?? []);
 
   // 收到的回應（其他人對「我發的 sit」的回應）—— 取最近 20 則
   // 用 last_replies_viewed_at 跟 created_at 比對，前 N 則標未讀
@@ -137,7 +137,7 @@ export default async function MePage() {
       <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
 
       {/* 21 天連續靜心圓圈 */}
-      <TwentyOneCircle circles={circles} streak={streak} />
+      <TwentyOneCircle circles={circles} streak={streak} makeup={makeup} />
 
       {/* 總分鐘 */}
       <div className="mb-8" style={{ background: "#1a1b18", padding: "1.25rem 1rem", borderRadius: "var(--r-cell)" }}>

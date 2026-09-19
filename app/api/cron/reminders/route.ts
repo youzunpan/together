@@ -2,6 +2,8 @@
 // 路由內檢查當前台北小時，只在 8 / 21 處理；其它小時 noop。
 //
 // 推送邏輯：
+// M. 補坐（8:00 / 21:00）：昨天漏坐、今天還沒坐滿 MAKEUP_MIN 分鐘 → 提醒今天可以補上
+//    （無論 reminder_time；優先於 A、B；今天坐過但太短也照推）
 // A. Streak-saver（21:00）：streak ≥ 3 且今天還沒坐 → 推鼓勵訊息（無論 reminder_time）
 // B. Personal rhythm：reminder_time = 'morning' (8:00) / 'evening' (21:00)
 //    今天還沒坐就推一般訊息
@@ -11,7 +13,7 @@
 import { NextRequest } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { sendPushToUser, type PushPayload } from "@/lib/web-push";
-import { compute21Day } from "@/lib/streak";
+import { compute21Day, MAKEUP_MIN } from "@/lib/streak";
 import { taipeiDateKey, APP_TZ } from "@/lib/tz";
 import { logError } from "@/lib/error-log";
 
@@ -71,18 +73,7 @@ export async function GET(req: NextRequest) {
 
   for (const p of profiles) {
     try {
-      // 1. 今天有沒有坐
-      const { data: todaySits } = await sb
-        .from("sits")
-        .select("id")
-        .eq("user_id", p.id)
-        .gte("sat_at", todayStartIso)
-        .limit(1);
-      if (todaySits && todaySits.length > 0) {
-        skipped++; bump("sat-already"); continue;
-      }
-
-      // 2. 今天是否已發過提醒
+      // 1. 今天是否已發過提醒
       const { data: log } = await sb
         .from("reminder_log")
         .select("user_id")
@@ -93,21 +84,34 @@ export async function GET(req: NextRequest) {
         skipped++; bump("already-sent"); continue;
       }
 
-      // 3. 計算 streak（撈最近 60 天足夠判斷連續日）
+      // 2. 計算 streak（撈最近 60 天足夠判斷連續日）
       const sixtyAgo = new Date(Date.now() - 60 * 86400_000).toISOString();
       const { data: userSits } = await sb
         .from("sits")
-        .select("sat_at")
+        .select("sat_at, duration_min")
         .eq("user_id", p.id)
         .gte("sat_at", sixtyAgo)
         .order("sat_at", { ascending: true });
-      const { streak } = compute21Day(userSits ?? []);
+      const { streak, makeup } = compute21Day(userSits ?? []);
+      const satToday = (userSits ?? []).some((s) => taipeiDateKey(new Date(s.sat_at)) === todayKey);
 
-      // 4. 決定要推什麼
+      // 3. 決定要推什麼
       let payload: PushPayload | null = null;
       let kind = "";
 
-      if (isEvening && streak >= 3) {
+      if (makeup === "pending") {
+        // 補坐提醒：昨天漏了、今天還沒坐滿。優先於下面所有規則，
+        // 而且今天坐過短的也要推（短的補不了）。
+        payload = {
+          title: "昨天沒坐到",
+          body: `今天坐滿 ${MAKEUP_MIN} 分鐘就能補上 · 連續 ${streak} 天接得回來`,
+          url: "/sit",
+          tag: "reminder-makeup",
+        };
+        kind = "makeup";
+      } else if (satToday) {
+        skipped++; bump("sat-already"); continue;
+      } else if (isEvening && streak >= 3) {
         // A. Streak-saver
         payload = {
           title: `連續坐了 ${streak} 天`,
@@ -140,7 +144,7 @@ export async function GET(req: NextRequest) {
         skipped++; bump("no-rule-match"); continue;
       }
 
-      // 5. 推 + 寫 log
+      // 4. 推 + 寫 log
       const res = await sendPushToUser(p.id, payload);
       if (res.sent > 0) {
         await sb.from("reminder_log").insert({ user_id: p.id, kind });
