@@ -7,11 +7,11 @@
 // 中英對照，語氣溫柔、留給讀者解讀空間。全部原創（市售彩虹卡有版權，
 // 不可引用或改寫）。歷代版本都在 git 歷史裡。
 //
-// 版本（2026-09）：
-//   - 白天卡：2026-09-18 換成樽自己整理的「彩虹卡語感」版，原文照收，不要潤稿。
-//   - 夜晚卡：2026-09-15 的版本。寫法規則是「單句不用逗號、陳述句一律肯定、
-//     口語不書面」，問句保留（反思要靠提問打開）。
+// 版本：2026-09-18 換成樽自己整理的「彩虹卡語感」版，原文照收。
 // 卡文由樽在 app 外改稿、交 markdown 表格回來整批換，不要自行改字。
+//
+// 2026-09-24：拿掉日夜兩副牌的設計，統一只留這 108 張。
+// 夜晚卡的卡文留在 git 歷史裡（commit f9f190a 之前）。
 //
 // limb / theme 只給後台跟卡冊分類用，抽卡時「不對使用者顯示」——
 // 讓讀者自己把卡投射到當下的狀態。
@@ -112,8 +112,7 @@ export function cardSanskrit(card: Card): SanskritLabel {
   return (card.theme && THEME_SANSKRIT[card.theme]) || LIMB_SANSKRIT[card.limb];
 }
 
-// 白天卡（108）：靜坐後的意圖與方向。
-// 19:00 前的靜坐會抽這一組。
+// 108 張卡。靜坐完抽一張。
 export const CARDS: Card[] = [
   // ── 持戒 Yama ─
   // 非暴力
@@ -243,150 +242,9 @@ export const CARDS: Card[] = [
   { id: 108, limb: 'samadhi', theme: null, en: 'Be fully here.', zh: '全心待在這一刻。' },
 ];
 
-// 夜晚卡（108）：靜坐後的回看與反省。
-// 19:00 後的靜坐會抽這一組。
-// id 與白天卡對齊（1..108），共用同一套 limb / theme。
-export const NIGHT_CARDS: Card[] = [
-  // ── 持戒 Yama ─
-  // 非暴力
-  { id: 1, limb: 'yama', theme: '非暴力', en: 'Did you push too hard today?', zh: '今天逼太緊了嗎？' },
-  { id: 2, limb: 'yama', theme: '非暴力', en: 'Today took a lot to hold up.', zh: '今天撐得很辛苦吧。' },
-  { id: 3, limb: 'yama', theme: '非暴力', en: 'You can let yourself off today.', zh: '今天可以放過自己。' },
-  { id: 4, limb: 'yama', theme: '非暴力', en: 'What\'s still unsaid?', zh: '還有什麼話沒說？' },
-  { id: 5, limb: 'yama', theme: '非暴力', en: 'You can set down what you carried.', zh: '揹著的可以放下了。' },
-  { id: 6, limb: 'yama', theme: '非暴力', en: 'You worked hard enough today.', zh: '你今天夠努力了。' },
-  { id: 7, limb: 'yama', theme: '非暴力', en: 'What would you say to yourself back there?', zh: '回到那一刻你想說什麼？' },
-  { id: 8, limb: 'yama', theme: '非暴力', en: 'That fight can stop.', zh: '那場仗可以停了。' },
-  // 真實
-  { id: 9, limb: 'yama', theme: '真實', en: 'What surfaced?', zh: '什麼浮上來了？' },
-  { id: 10, limb: 'yama', theme: '真實', en: 'What did you already know?', zh: '你早就知道什麼？' },
-  { id: 11, limb: 'yama', theme: '真實', en: 'That\'s enough said.', zh: '說到這裡就好。' },
-  { id: 12, limb: 'yama', theme: '真實', en: 'What got clearer?', zh: '什麼變清楚了？' },
-  { id: 13, limb: 'yama', theme: '真實', en: 'Which truth is still unsaid?', zh: '哪句真話還沒說？' },
-  { id: 14, limb: 'yama', theme: '真實', en: 'Seeing it was enough.', zh: '看見了就夠了。' },
-  { id: 15, limb: 'yama', theme: '真實', en: 'Let the feeling stay a while.', zh: '讓感覺待一會兒。' },
-  // 不偷盜
-  { id: 16, limb: 'yama', theme: '不偷盜', en: 'Where did your attention go?', zh: '注意力去哪了？' },
-  { id: 17, limb: 'yama', theme: '不偷盜', en: 'The comparing ends here.', zh: '比較到這裡。' },
-  { id: 18, limb: 'yama', theme: '不偷盜', en: 'You have more than you remember.', zh: '你有的比你記得的多。' },
-  { id: 19, limb: 'yama', theme: '不偷盜', en: 'Who got your time?', zh: '時間都給誰了？' },
-  { id: 20, limb: 'yama', theme: '不偷盜', en: 'What\'s theirs stays at the door.', zh: '別人的事留在門外。' },
-  { id: 21, limb: 'yama', theme: '不偷盜', en: 'Give yourself back.', zh: '把自己還給自己。' },
-  // 節制
-  { id: 22, limb: 'yama', theme: '節制', en: 'Where did your strength go?', zh: '力氣花到哪去了？' },
-  { id: 23, limb: 'yama', theme: '節制', en: 'Half is enough for some things.', zh: '有些事做一半就好。' },
-  { id: 24, limb: 'yama', theme: '節制', en: 'Save what\'s left for sleep.', zh: '剩下的力氣留著睡。' },
-  { id: 25, limb: 'yama', theme: '節制', en: 'Did you say yes too fast?', zh: '是不是答應太快了？' },
-  { id: 26, limb: 'yama', theme: '節制', en: 'Less would have been lighter.', zh: '少做一點就輕了。' },
-  { id: 27, limb: 'yama', theme: '節制', en: 'What drained you most?', zh: '哪件事最耗你？' },
-  { id: 28, limb: 'yama', theme: '節制', en: 'This is enough.', zh: '這樣就夠了。' },
-  // 不執取
-  { id: 29, limb: 'yama', theme: '不執取', en: 'What\'s still in your hand?', zh: '手裡還抓著什麼？' },
-  { id: 30, limb: 'yama', theme: '不執取', en: 'What if you just left it?', zh: '就放著會怎樣？' },
-  { id: 31, limb: 'yama', theme: '不執取', en: 'It left. You\'re still here.', zh: '東西走了人還在。' },
-  { id: 32, limb: 'yama', theme: '不執取', en: 'Leave the thought at the door.', zh: '把念頭留在門口。' },
-  { id: 33, limb: 'yama', theme: '不執取', en: 'Leave the unfinished here.', zh: '沒做完的留在這裡。' },
-  { id: 34, limb: 'yama', theme: '不執取', en: 'Loosen a little.', zh: '鬆開一點。' },
-  { id: 35, limb: 'yama', theme: '不執取', en: 'Carry what you can carry.', zh: '扛得動的再扛。' },
-  { id: 36, limb: 'yama', theme: '不執取', en: 'What\'s left after you let go?', zh: '放下後還剩什麼？' },
-  // ── 精進 Niyama ─
-  // 潔淨
-  { id: 37, limb: 'niyama', theme: '潔淨', en: 'Leave the noise at the door.', zh: '把雜音留在門外。' },
-  { id: 38, limb: 'niyama', theme: '潔淨', en: 'Wash a little of today off.', zh: '把今天洗掉一點。' },
-  { id: 39, limb: 'niyama', theme: '潔淨', en: 'What\'s taking up too much room?', zh: '什麼佔了太多位置？' },
-  { id: 40, limb: 'niyama', theme: '潔淨', en: 'Leave the old things with today.', zh: '舊東西留給今天。' },
-  { id: 41, limb: 'niyama', theme: '潔淨', en: 'One corner is enough.', zh: '收一個角落就好。' },
-  { id: 42, limb: 'niyama', theme: '潔淨', en: 'Leave some blank before sleep.', zh: '睡前留點空白。' },
-  // 知足
-  { id: 43, limb: 'niyama', theme: '知足', en: 'Take one good thing with you.', zh: '帶一件好事走。' },
-  { id: 44, limb: 'niyama', theme: '知足', en: 'Thank the ordinary things too.', zh: '平常的事也要謝。' },
-  { id: 45, limb: 'niyama', theme: '知足', en: 'There was a moment you were full.', zh: '有一刻你是滿的。' },
-  { id: 46, limb: 'niyama', theme: '知足', en: 'What was always there still is.', zh: '一直在的都還在。' },
-  { id: 47, limb: 'niyama', theme: '知足', en: 'Remember what you had today.', zh: '記得你今天有什麼。' },
-  { id: 48, limb: 'niyama', theme: '知足', en: 'Today was whole.', zh: '今天是完整的。' },
-  { id: 49, limb: 'niyama', theme: '知足', en: 'Today had what it needed.', zh: '今天該有的都有了。' },
-  { id: 50, limb: 'niyama', theme: '知足', en: 'Take something good to sleep.', zh: '帶著好的事去睡。' },
-  // 自律
-  { id: 51, limb: 'niyama', theme: '自律', en: 'You held on today.', zh: '你今天撐住了。' },
-  { id: 52, limb: 'niyama', theme: '自律', en: 'It was hard and you got through.', zh: '很辛苦你也過來了。' },
-  { id: 53, limb: 'niyama', theme: '自律', en: 'Growth happens where you can\'t see.', zh: '看不見的地方在長。' },
-  { id: 54, limb: 'niyama', theme: '自律', en: 'Today\'s effort counts.', zh: '今天的努力算數。' },
-  { id: 55, limb: 'niyama', theme: '自律', en: 'What did the ache show you?', zh: '難受帶你看見什麼？' },
-  { id: 56, limb: 'niyama', theme: '自律', en: 'Results can come later.', zh: '結果可以晚點來。' },
-  { id: 57, limb: 'niyama', theme: '自律', en: 'Today ends here.', zh: '今天到這裡就好。' },
-  // 自我研習
-  { id: 58, limb: 'niyama', theme: '自我研習', en: 'What got under your skin?', zh: '哪件事戳到你了？' },
-  { id: 59, limb: 'niyama', theme: '自我研習', en: 'What\'s under the reaction?', zh: '反應底下是什麼？' },
-  { id: 60, limb: 'niyama', theme: '自我研習', en: 'Same pattern again?', zh: '老樣子又來了嗎？' },
-  { id: 61, limb: 'niyama', theme: '自我研習', en: 'Did you meet a self you hadn\'t met?', zh: '看到沒看過的自己嗎？' },
-  { id: 62, limb: 'niyama', theme: '自我研習', en: 'What did today teach you?', zh: '今天教了你什麼？' },
-  { id: 63, limb: 'niyama', theme: '自我研習', en: 'Name it tomorrow.', zh: '名字明天再說。' },
-  { id: 64, limb: 'niyama', theme: '自我研習', en: 'The answer comes on its own.', zh: '答案會自己來。' },
-  // 交託
-  { id: 65, limb: 'niyama', theme: '交託', en: 'You did what you could.', zh: '能做的你做了。' },
-  { id: 66, limb: 'niyama', theme: '交託', en: 'Hand the rest over.', zh: '剩下的交出去。' },
-  { id: 67, limb: 'niyama', theme: '交託', en: 'Handle what you can tomorrow.', zh: '管得動的明天再管。' },
-  { id: 68, limb: 'niyama', theme: '交託', en: 'You can sleep without the answer.', zh: '沒答案也能睡。' },
-  { id: 69, limb: 'niyama', theme: '交託', en: 'Set the worry down.', zh: '擔心先放著。' },
-  { id: 70, limb: 'niyama', theme: '交託', en: 'Tomorrow has its own tomorrow.', zh: '明天還有明天。' },
-  { id: 71, limb: 'niyama', theme: '交託', en: 'The answer has its own timing.', zh: '答案有它的時間。' },
-  { id: 72, limb: 'niyama', theme: '交託', en: 'Open your hand on the outcome.', zh: '把結果放開。' },
-  // ── 體位 Asana ─
-  { id: 73, limb: 'asana', theme: null, en: 'What\'s still holding on?', zh: '哪裡還在撐？' },
-  { id: 74, limb: 'asana', theme: null, en: 'There was a moment you stood firm.', zh: '有一刻你站穩了。' },
-  { id: 75, limb: 'asana', theme: null, en: 'Did the body know first?', zh: '身體先知道了嗎？' },
-  { id: 76, limb: 'asana', theme: null, en: 'What can soften now?', zh: '現在可以鬆哪裡？' },
-  { id: 77, limb: 'asana', theme: null, en: 'Back in the body the circling stops.', zh: '回到身體念頭就停了。' },
-  { id: 78, limb: 'asana', theme: null, en: 'Let the weight reach the ground.', zh: '讓重量落到地上。' },
-  { id: 79, limb: 'asana', theme: null, en: 'The posture can dissolve.', zh: '姿勢可以散了。' },
-  // ── 調息 Pranayama ─
-  { id: 80, limb: 'pranayama', theme: null, en: 'Was there a moment you forgot to breathe?', zh: '有一刻忘了呼吸嗎？' },
-  { id: 81, limb: 'pranayama', theme: null, en: 'One breath brought you back.', zh: '有一口氣把你帶回來。' },
-  { id: 82, limb: 'pranayama', theme: null, en: 'Breathe today out.', zh: '把今天吐出去。' },
-  { id: 83, limb: 'pranayama', theme: null, en: 'What\'s still on your chest?', zh: '胸口還壓著什麼？' },
-  { id: 84, limb: 'pranayama', theme: null, en: 'Empty this breath out.', zh: '把這口氣吐乾淨。' },
-  { id: 85, limb: 'pranayama', theme: null, en: 'Let the breath close it.', zh: '讓呼吸收尾。' },
-  { id: 86, limb: 'pranayama', theme: null, en: 'The next breath is enough.', zh: '下一口氣就夠了。' },
-  // ── 制感 Pratyahara ─
-  { id: 87, limb: 'pratyahara', theme: null, en: 'Which voice stayed with you too long?', zh: '哪個聲音跟你太久了？' },
-  { id: 88, limb: 'pratyahara', theme: null, en: 'Switch off today\'s voices.', zh: '把今天的聲音關掉。' },
-  { id: 89, limb: 'pratyahara', theme: null, en: 'Reply tomorrow.', zh: '話明天再回。' },
-  { id: 90, limb: 'pratyahara', theme: null, en: 'Let the sound settle.', zh: '讓聲音沉下去。' },
-  { id: 91, limb: 'pratyahara', theme: null, en: 'The world can find you later.', zh: '世界晚點再找你。' },
-  { id: 92, limb: 'pratyahara', theme: null, en: 'Your mind can come back now.', zh: '心可以收回來了。' },
-  // ── 專注 Dharana ─
-  { id: 93, limb: 'dharana', theme: null, en: 'Where did your mind go most?', zh: '心最常跑去哪？' },
-  { id: 94, limb: 'dharana', theme: null, en: 'What was worth your attention?', zh: '什麼才值得看？' },
-  { id: 95, limb: 'dharana', theme: null, en: 'There was a moment you were all here.', zh: '有一刻你全在這裡。' },
-  { id: 96, limb: 'dharana', theme: null, en: 'What kept pulling you off?', zh: '什麼一直拉走你？' },
-  { id: 97, limb: 'dharana', theme: null, en: 'Coming back at all was enough.', zh: '有回來過就好。' },
-  { id: 98, limb: 'dharana', theme: null, en: 'Keep one thing for sleep.', zh: '睡前只留一件事。' },
-  // ── 禪那 Dhyana ─
-  { id: 99, limb: 'dhyana', theme: null, en: 'When did the quiet arrive on its own?', zh: '哪一刻安靜自己來了？' },
-  { id: 100, limb: 'dhyana', theme: null, en: 'Just sitting was enough.', zh: '只是坐著也很好。' },
-  { id: 101, limb: 'dhyana', theme: null, en: 'Was there space between thoughts?', zh: '念頭中間有空白嗎？' },
-  { id: 102, limb: 'dhyana', theme: null, en: 'Thoughts can leave on their own.', zh: '念頭可以自己走。' },
-  { id: 103, limb: 'dhyana', theme: null, en: 'The mind settles by itself.', zh: '心會自己靜下來。' },
-  // ── 三摩地 Samadhi ─
-  { id: 104, limb: 'samadhi', theme: null, en: 'There was a moment you forgot the time.', zh: '有一刻你忘了時間。' },
-  { id: 105, limb: 'samadhi', theme: null, en: 'There was a moment you were part of it all.', zh: '有一刻你跟一切在一起。' },
-  { id: 106, limb: 'samadhi', theme: null, en: 'Some feelings can just stay.', zh: '有些感覺就這樣留著。' },
-  { id: 107, limb: 'samadhi', theme: null, en: 'Let the edges loosen.', zh: '讓邊界鬆一點。' },
-  { id: 108, limb: 'samadhi', theme: null, en: 'Only this breath left.', zh: '只剩這一口氣。' },
-];
-
-/** id -> Card，給抽卡紀錄回查用。
- * 舊 API：預設查白天卡；帶 kind='night' 查夜晚卡。
- * DB 的 daily_cards 存 (card_id, kind)，回查時用 getCard(id, kind)。 */
+/** id -> Card，給抽卡紀錄回查用。DB 的 daily_cards 只存 card_id。 */
 export const CARD_BY_ID = new Map(CARDS.map((c) => [c.id, c]));
-export const NIGHT_CARD_BY_ID = new Map(NIGHT_CARDS.map((c) => [c.id, c]));
 
-export type CardKind = "day" | "night";
-
-export function getCard(id: number, kind: CardKind = "day"): Card | undefined {
-  return kind === "night" ? NIGHT_CARD_BY_ID.get(id) : CARD_BY_ID.get(id);
-}
-
-export function cardsFor(kind: CardKind): Card[] {
-  return kind === "night" ? NIGHT_CARDS : CARDS;
+export function getCard(id: number): Card | undefined {
+  return CARD_BY_ID.get(id);
 }

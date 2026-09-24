@@ -31,7 +31,7 @@ export default async function TodayCardSection() {
       {remaining > 0 ? (
         <DrawCardButton remaining={remaining} />
       ) : (
-        latest && <CardFace card={latest.card} kind={latest.kind} />
+        latest && <CardFace card={latest} />
       )}
     </section>
   );

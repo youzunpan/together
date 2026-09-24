@@ -439,13 +439,9 @@ function TimelineCard({
           </div>
 
           {/* 附上的每日卡（有附才顯示） */}
-          {sit.card_id && getCard(sit.card_id, sit.card_kind ?? "day") && (
+          {sit.card_id && getCard(sit.card_id) && (
             <div style={{ marginTop: "0.6rem" }}>
-              <CardFace
-                card={getCard(sit.card_id, sit.card_kind ?? "day")!}
-                kind={sit.card_kind ?? "day"}
-                compact
-              />
+              <CardFace card={getCard(sit.card_id)!} compact />
             </div>
           )}
 

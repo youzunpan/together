@@ -7,7 +7,7 @@ import { drawCard } from "@/lib/actions/cards";
 import { MAKEUP_MIN } from "@/lib/streak";
 import { playBell, createBellContext, renderBellWavUrl } from "@/components/BellSound";
 import { CardFlip, CardFace, CardBackMini } from "@/components/DailyCard";
-import type { Card, CardKind } from "@/lib/cards";
+import type { Card } from "@/lib/cards";
 import { createClient as createSupabase } from "@/lib/supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -30,7 +30,6 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
   const [actualMin, setActualMin] = useState(0);
   // 每日抽卡
   const [todayCard, setTodayCard] = useState<Card | null>(null);
-  const [todayCardKind, setTodayCardKind] = useState<CardKind | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
   const [attachCard, setAttachCard] = useState(true); // 預設附上（卡文是公開內容，不涉隱私）
   const drawStartedRef = useRef(false);
@@ -467,10 +466,7 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
     fd.set("reflection", reflection);
     fd.set("sat_at", actualStart?.toISOString() ?? new Date().toISOString());
     // 卡片是選填的：使用者可以只留心得、只附卡、兩個都要、或兩個都不要
-    if (todayCard && attachCard) {
-      fd.set("card_id", String(todayCard.id));
-      if (todayCardKind) fd.set("card_kind", todayCardKind);
-    }
+    if (todayCard && attachCard) fd.set("card_id", String(todayCard.id));
     // 成功時 recordSit 內部會 redirect("/feed")，不會走到下面。
     // 失敗時要把錯誤顯示出來，否則畫面會停在「SAVING...」什麼都不說。
     const res = await recordSit(fd);
@@ -489,7 +485,6 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
       .then((res) => {
         if (!res.ok) { setStep("record"); return; }
         setTodayCard(res.card);
-        setTodayCardKind(res.kind);
       })
       .catch(() => setStep("record"));
   }, [step]);
