@@ -255,8 +255,10 @@ export default async function FeedPage() {
       </div>
       </div>
 
-      {/* 主欄：時間軸 */}
-      <div className="pb-6 lg:col-start-1 lg:row-start-1 lg:pt-4">
+      {/* 主欄：時間軸。
+          時間軸是左右交錯的版型，欄一寬卡片就被推得離中線很遠、看起來散，
+          所以內容維持原本的寬度上限，多出來的空間留白。 */}
+      <div className="pb-6 lg:col-start-1 lg:row-start-1 lg:pt-4 lg:max-w-[30rem] lg:mx-auto lg:w-full">
         {(!sits || sits.length === 0) && (
           <div className="text-center py-12" style={{ color: "rgba(237,236,234,0.35)" }}>
             <p style={{ fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "0.5rem" }}>

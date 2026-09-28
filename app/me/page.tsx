@@ -119,9 +119,11 @@ export default async function MePage() {
         </Link>
       </header>
 
-      <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start">
-      {/* ── 左欄：頭像、今天的卡、一盞燈 ── */}
-      <div>
+      <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
+      {/* ── 左欄：頭像、今天的卡、一盞燈 ──
+          內容維持原本的寬度上限，不跟著欄寬拉開 ——
+          卡片是 width:100% 的，欄變寬它就被拉成橫的。 */}
+      <div className="lg:max-w-[23rem] lg:mx-auto lg:w-full">
       {/* 頭像 + 名字 */}
       <div className="flex items-center gap-5 mb-8">
         <AvatarUpload userId={user.id} currentUrl={profile.avatar_url} letter={profile.avatar_letter} color={profile.avatar_color} />
@@ -143,12 +145,12 @@ export default async function MePage() {
       </div>
 
       {/* ── 右欄：21 天圓、總分鐘、新回應 ── */}
-      <div>
+      <div className="lg:max-w-[22rem] lg:mx-auto lg:w-full">
       {/* 21 天連續靜心圓圈 */}
       <TwentyOneCircle circles={circles} streak={streak} makeup={makeup} />
 
       {/* 總分鐘 */}
-      <div className="mb-8" style={{ background: "#1a1b18", padding: "1.25rem 1rem", borderRadius: "var(--r-cell)" }}>
+      <div className="mb-8 lg:text-center" style={{ background: "#1a1b18", padding: "1.25rem 1rem", borderRadius: "var(--r-cell)" }}>
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.25)", marginBottom: "0.5rem" }}>TOTAL</p>
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "1.75rem", color: "#BEC23F", lineHeight: 1 }}>
           {totalMin}<span style={{ fontSize: "0.65rem", color: "rgba(237,236,234,0.3)", marginLeft: "0.3rem" }}>min</span>

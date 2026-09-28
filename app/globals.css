@@ -219,7 +219,7 @@ button, a, [role="button"], label[for], input[type="submit"], input[type="button
   :root {
     --nav-h: 0rem;
     --nav-w: 13rem;
-    --page-w: 34rem;
+    --page-w: 32rem;
   }
 }
 
@@ -241,5 +241,5 @@ button, a, [role="button"], label[for], input[type="submit"], input[type="button
   margin-inline: auto;
 }
 @media (min-width: 1024px) {
-  .page-wide { max-width: 58rem; }
+  .page-wide { max-width: 56rem; }
 }
