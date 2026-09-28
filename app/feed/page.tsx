@@ -144,11 +144,13 @@ export default async function FeedPage() {
       {/* 首次登入引導（新用戶才顯示） */}
       <WelcomeOverlay alreadyMember={alreadyMember} />
 
-      {/* 側欄群組：今日狀態、公告、同心、社群圓 */}
-      <div className="lg:col-start-2 lg:row-start-1">
+      {/* 側欄群組：今日狀態、公告、同心、社群圓。
+          桌機時整欄固定不捲；內容若比螢幕高就在欄內自己捲（捲軸隱藏）。 */}
+      <div className="lg:col-start-2 lg:row-start-1 lg:sticky lg:top-0 lg:self-start lg:max-h-[100dvh] lg:overflow-y-auto lg:pt-4 lg:pb-6 hide-scrollbar">
 
       {/* Sticky header */}
-      <header className="sticky z-10 pt-4 pb-3"
+      {/* 手機：貼頂不動。桌機：整個側欄已經是 sticky，這裡再 sticky 會打架 */}
+      <header className="sticky z-10 pt-4 pb-3 lg:static lg:pt-0"
         style={{
           top: "env(safe-area-inset-top)",
           background: "rgba(26,27,24,0.92)",
