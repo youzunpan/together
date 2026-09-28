@@ -66,10 +66,13 @@ function TabContent({
   const lit = active || pending;
   return (
     <div
-      className="flex flex-col items-center gap-0.5 min-w-[56px]"
+      // 手機：icon 在上、字在下的直式小格
+      // 桌機：icon 在左、字在右的一整列，點擊區域拉到整欄寬
+      className="flex flex-col items-center gap-0.5 min-w-[56px] lg:flex-row lg:gap-3 lg:min-w-0 lg:w-full lg:px-3 lg:py-2.5 lg:rounded"
       style={{
         color: lit ? "#BEC23F" : "rgba(237,236,234,0.3)",
-        transition: "color 0.1s",
+        background: lit ? "rgba(190,194,63,0.08)" : "transparent",
+        transition: "color 0.1s, background 0.15s",
       }}
     >
       {/* icon 包一層 inline-flex + lineHeight:0：消除 SVG 的 inline baseline
@@ -103,7 +106,7 @@ function TabContent({
           </span>
         )}
       </span>
-      <span style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>{label}</span>
+      <span className="text-[0.6rem] lg:text-[0.82rem]" style={{ letterSpacing: "0.1em" }}>{label}</span>
     </div>
   );
 }
@@ -182,19 +185,32 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50"
+      // 手機：貼底的 tab bar。桌機（lg↑）：貼左的直向導覽，寬度對齊 --nav-w
+      className="fixed z-50 bottom-0 left-0 right-0 border-t border-white/[0.06] lg:top-0 lg:bottom-0 lg:right-auto lg:w-[13rem] lg:border-t-0 lg:border-r"
       style={{
         background: "rgba(26,27,24,0.92)",
         backdropFilter: "blur(12px)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <div className="flex items-center justify-around max-w-md mx-auto h-14 px-4">
+      {/* 桌機才有的品牌標：手機頂部已經有「同在 · TOGETHER」，不重複 */}
+      <p
+        className="hidden lg:block px-6 pt-7 pb-6"
+        style={{
+          fontFamily: "var(--font-noto-serif)",
+          fontSize: "1.05rem",
+          letterSpacing: "0.22em",
+          color: "rgba(237,236,234,0.75)",
+        }}
+      >
+        同在
+      </p>
+
+      <div className="flex items-center justify-around max-w-md mx-auto h-14 px-4 lg:flex-col lg:items-stretch lg:justify-start lg:h-auto lg:max-w-none lg:mx-0 lg:px-3 lg:gap-1">
         {navItems.map(({ href, label, icon }) => {
           const active = isActive(href, pathname);
           return (
-            <Link key={href} href={href} prefetch>
+            <Link key={href} href={href} prefetch className="lg:w-full">
               <TabContent
                 label={label}
                 icon={icon}

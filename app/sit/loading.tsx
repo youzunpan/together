@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="max-w-md mx-auto px-4 py-6 flex flex-col items-center">
+    <div className="page px-4 py-6 flex flex-col items-center">
       <p
         style={{
           fontFamily: "var(--font-space-mono)",

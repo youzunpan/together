@@ -68,11 +68,14 @@ export default function RootLayout({
         <ErrorReporter />
         <SWNavigationListener />
         <Splash />
+        {/* 導覽在手機是底部 bar、桌機是左側欄，兩種尺寸都從 globals.css
+            的 --nav-h / --nav-w 來，這裡只負責讓開位置 */}
         <main
           className="flex-1"
           style={{
             paddingTop: "env(safe-area-inset-top)",
-            paddingBottom: "calc(4rem + env(safe-area-inset-bottom))",
+            paddingBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom))",
+            paddingLeft: "var(--nav-w)",
           }}
         >
           {children}

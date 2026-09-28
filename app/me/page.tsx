@@ -88,7 +88,9 @@ export default async function MePage() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
+    // 桌機（lg↑）兩欄：左邊「我是誰 + 今天」、右邊「進度 + 回應」。
+    // 兩個 wrapper 的 DOM 順序等於手機的排列順序，手機版不受影響。
+    <div className="page-wide px-4 py-6">
       <RefreshOnVisible />
       <header className="mb-8 flex items-center justify-between">
         {profile.role === "admin" ? (
@@ -117,6 +119,9 @@ export default async function MePage() {
         </Link>
       </header>
 
+      <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start">
+      {/* ── 左欄：頭像、今天的卡、一盞燈 ── */}
+      <div>
       {/* 頭像 + 名字 */}
       <div className="flex items-center gap-5 mb-8">
         <AvatarUpload userId={user.id} currentUrl={profile.avatar_url} letter={profile.avatar_letter} color={profile.avatar_color} />
@@ -135,7 +140,10 @@ export default async function MePage() {
 
       {/* 一盞燈 */}
       <Lamp lastSatAt={sits?.[0]?.sat_at ?? null} />
+      </div>
 
+      {/* ── 右欄：21 天圓、總分鐘、新回應 ── */}
+      <div>
       {/* 21 天連續靜心圓圈 */}
       <TwentyOneCircle circles={circles} streak={streak} makeup={makeup} />
 
@@ -206,6 +214,8 @@ export default async function MePage() {
           </div>
         </section>
       )}
+      </div>
+      </div>
     </div>
   );
 }

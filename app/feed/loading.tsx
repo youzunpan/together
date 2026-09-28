@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="max-w-md mx-auto px-4">
+    <div className="page px-4">
       <header className="pt-4 pb-3">
         <p
           className="text-center mb-3"

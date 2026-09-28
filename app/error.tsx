@@ -24,7 +24,7 @@ export default function RouteError({
   }, [error]);
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12 text-center">
+    <div className="page px-4 py-12 text-center">
       <p style={{ fontSize: "1rem", color: "#edecea", marginBottom: "0.5rem" }}>
         這個頁面出了點問題
       </p>

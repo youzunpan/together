@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   if (!profile) redirect("/login");
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
+    <div className="page px-4 py-6">
       <header className="mb-8 flex items-center justify-between">
         <Link href="/me" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)" }}>
           ← BACK

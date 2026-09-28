@@ -496,7 +496,7 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
   if (step === "pick") {
     const minsOk = mins >= 1 && mins <= 240;
     return (
-      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col items-center justify-center pb-8">
+      <div className="page px-4 screen-h flex flex-col items-center justify-center pb-8">
         {earlyEnd && (
           <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "#1a1b18" }}>
             <p style={{ fontSize: "1rem", color: "rgba(237,236,234,0.4)", letterSpacing: "0.05em" }}>
@@ -877,7 +877,7 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
   // ── Step 2.5: 抽今天的卡 ───────────────────────
   if (step === "card") {
     return (
-      <div className="max-w-md mx-auto px-4 min-h-[calc(100dvh-8rem)] flex flex-col items-center justify-center gap-8">
+      <div className="page px-4 screen-h flex flex-col items-center justify-center gap-8">
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.25em", color: "rgba(237,236,234,0.25)" }}>
           TODAY&apos;S CARD
         </p>
@@ -912,7 +912,7 @@ export default function SitFlow({ makeupPending = false }: { makeupPending?: boo
   if (step === "record") {
     const displayMin = actualMin || selectedMin;
     return (
-      <div className="max-w-md mx-auto px-4 py-10">
+      <div className="page px-4 py-10">
         <p style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(237,236,234,0.2)", marginBottom: "1rem" }}>
           SESSION COMPLETE
         </p>

@@ -204,3 +204,42 @@ button, a, [role="button"], label[for], input[type="submit"], input[type="button
 .hide-scrollbar::-webkit-scrollbar {
   display: none;                  /* Safari/Chrome */
 }
+
+/* ── 桌機版面 ─────────────────────────────────────────
+   手機：底部 tab bar，內容單欄 28rem。
+   桌機（≥1024px）：導覽移到左側直向欄，內容欄放寬到好讀的寬度。
+   導覽的尺寸放在變數裡，layout 的留白與 /sit 的滿版高度都靠它算，
+   改寬度只要動這裡一處。 */
+:root {
+  --nav-h: 4rem;   /* 底部 tab bar 高度（桌機為 0） */
+  --nav-w: 0rem;   /* 左側導覽寬度（手機為 0） */
+  --page-w: 28rem; /* 內容欄最大寬度，等同 max-w-md */
+}
+@media (min-width: 1024px) {
+  :root {
+    --nav-h: 0rem;
+    --nav-w: 13rem;
+    --page-w: 34rem;
+  }
+}
+
+/* 全站內容欄。取代原本各頁寫死的 max-w-md mx-auto。 */
+.page {
+  max-width: var(--page-w);
+  margin-inline: auto;
+}
+
+/* 扣掉導覽之後的可用高度（/sit 用來做垂直置中） */
+.screen-h {
+  min-height: calc(100dvh - var(--nav-h) - 4rem);
+}
+
+/* 資訊量大的頁面（/feed、/me）在桌機排成兩欄，容器要比 .page 寬。
+   手機維持跟 .page 一樣的單欄寬度。 */
+.page-wide {
+  max-width: var(--page-w);
+  margin-inline: auto;
+}
+@media (min-width: 1024px) {
+  .page-wide { max-width: 58rem; }
+}

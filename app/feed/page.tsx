@@ -136,10 +136,16 @@ export default async function FeedPage() {
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
 
   return (
-    <div className="max-w-md mx-auto px-4">
+    // 桌機（lg↑）排成兩欄：左邊時間軸、右邊側欄。
+    // 兩個 wrapper 的 DOM 順序就是手機的排列順序，桌機再用 col-start 對調左右，
+    // 所以手機版完全不受影響。
+    <div className="page-wide px-4 lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-x-10 lg:items-start">
       <RefreshOnVisible />
       {/* 首次登入引導（新用戶才顯示） */}
       <WelcomeOverlay alreadyMember={alreadyMember} />
+
+      {/* 側欄群組：今日狀態、公告、同心、社群圓 */}
+      <div className="lg:col-start-2 lg:row-start-1">
 
       {/* Sticky header */}
       <header className="sticky z-10 pt-4 pb-3"
@@ -229,7 +235,7 @@ export default async function FeedPage() {
         )}
       </header>
 
-      <div className="mt-4 pb-6">
+      <div className="mt-4 pb-6 lg:pb-0">
         {/* Admin 公告（active 才有資料） */}
         {announcement && (
           <AnnouncementBanner id={announcement.id} body={announcement.body} />
@@ -246,7 +252,11 @@ export default async function FeedPage() {
           streak={communityStreak}
           todayMembers={todayMembers}
         />
+      </div>
+      </div>
 
+      {/* 主欄：時間軸 */}
+      <div className="pb-6 lg:col-start-1 lg:row-start-1 lg:pt-4">
         {(!sits || sits.length === 0) && (
           <div className="text-center py-12" style={{ color: "rgba(237,236,234,0.35)" }}>
             <p style={{ fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "0.5rem" }}>

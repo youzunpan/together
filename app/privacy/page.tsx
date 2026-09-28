@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="max-w-md mx-auto px-5 py-8">
+    <div className="page px-5 py-8">
       <header className="mb-6">
         <Link
           href="/feed"

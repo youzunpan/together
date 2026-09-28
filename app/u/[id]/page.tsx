@@ -24,7 +24,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
   const { circles, streak } = compute21Day(sits ?? []);
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
+    <div className="page px-4 py-6">
       <header className="mb-8 flex items-center justify-between">
         <Link href="/feed" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(237,236,234,0.4)", width: "3rem" }}>
           ← BACK

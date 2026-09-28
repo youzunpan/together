@@ -88,7 +88,7 @@ export default async function MyCoursesPage() {
   const openCourses = openRaw ?? [];
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
+    <div className="page px-4 py-6">
       <RefreshOnVisible />
       <header className="mb-8 flex items-center justify-between">
         <Link
