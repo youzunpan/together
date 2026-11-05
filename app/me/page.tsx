@@ -31,24 +31,22 @@ export default async function MePage() {
     sit_id: string;
     body: string;
     created_at: string;
-    sit: { duration_min: number; sat_at: string } | null;
+    sit: { user_id: string; duration_min: number; sat_at: string } | null;
     author: { display_name: string; avatar_letter: string; avatar_color: string } | null;
   };
-  // 先撈自己所有 sit id
-  const { data: mySitIds } = await supabase
-    .from("sits").select("id").eq("user_id", user.id);
-  const sitIdList = (mySitIds ?? []).map((s) => s.id);
+  // 原本是先撈自己全部 sit 的 id、再用 .in(461 個 id) 查回應 —— 兩趟全表掃描，
+  // 而且 IN 清單會隨紀錄數一直長大。改成用 !inner join 直接在 sits 上過濾 user_id。
   let receivedReplies: Array<{
     id: string; sit_id: string; body: string; created_at: string;
     sitDurationMin: number; sitSatAt: string;
     authorName: string; authorLetter: string; authorColor: string;
     unread: boolean;
   }> = [];
-  if (sitIdList.length > 0) {
+  {
     const { data: replies } = await supabase
       .from("sit_replies")
-      .select("id, sit_id, body, created_at, sit:sits(duration_min, sat_at), author:profiles(display_name, avatar_letter, avatar_color)")
-      .in("sit_id", sitIdList)
+      .select("id, sit_id, body, created_at, sit:sits!inner(user_id, duration_min, sat_at), author:profiles(display_name, avatar_letter, avatar_color)")
+      .eq("sit.user_id", user.id)
       .neq("user_id", user.id) // 排除自己留給自己的（理論上不會發生）
       .order("created_at", { ascending: false })
       .limit(20)

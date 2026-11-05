@@ -13,23 +13,19 @@ import PWAInstallBanner from "@/components/PWAInstallBanner";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import RefreshOnVisible from "@/components/RefreshOnVisible";
-import { taipeiTodayStartISO, taipeiDiffDays, taipeiDateKey, APP_TZ } from "@/lib/tz";
-import { compute21Day } from "@/lib/streak";
+import { taipeiTodayStartISO, taipeiDiffDays, APP_TZ } from "@/lib/tz";
+import { getCommunityStats } from "@/lib/community";
 
 export default async function FeedPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 為避免全表掃描，限制最近一年資料（社群連續日 / 共修圓在這個窗口內準確即可）
-  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString();
-
-  // 8 個 query 全部並行（之前是循序累加，慢的時候會超過 1 秒）
+  // 其餘 query 全部並行（之前是循序累加，慢的時候會超過 1 秒）
   const [
     summaryRes,
     todaySitRes,
     ownSitCountRes,
     sitsRes,
-    allSitsRes,
     announcementRes,
     openCoursesRes,
   ] = await Promise.all([
@@ -52,11 +48,6 @@ export default async function FeedPage() {
       .order("sat_at", { ascending: false })
       .limit(30),
     supabase
-      .from("sits")
-      .select("user_id, sat_at")
-      .gte("sat_at", oneYearAgo)
-      .order("sat_at", { ascending: true }),
-    supabase
       .from("announcements")
       .select("id, body")
       .eq("active", true)
@@ -74,7 +65,6 @@ export default async function FeedPage() {
   const todaySit = todaySitRes.data;
   const ownSitCount = ownSitCountRes.count;
   const sits = sitsRes.data;
-  const allSits = allSitsRes.data;
   const announcement = announcementRes.data;
   const openCourses = openCoursesRes.data;
   const alreadyMember = (ownSitCount ?? 0) > 0;
@@ -116,22 +106,12 @@ export default async function FeedPage() {
     }
   }
 
-  const dayMembers = new Map<string, Set<string>>();
-  for (const s of (allSits ?? []) as { user_id: string; sat_at: string }[]) {
-    const k = taipeiDateKey(new Date(s.sat_at));
-    const set = dayMembers.get(k) ?? new Set<string>();
-    set.add(s.user_id);
-    dayMembers.set(k, set);
-  }
-  const activeDayKeys = [...dayMembers.keys()].sort();
-  const communityVirtualSits = activeDayKeys.map((k) => ({
-    sat_at: `${k}T00:00:00+08:00`,
-  }));
-  const { circles: communityCircles, streak: communityStreak } =
-    compute21Day(communityVirtualSits, { allowMakeup: false }); // 補坐是個人規則，社群圓不適用
-
-  const todayKey = taipeiDateKey(new Date());
-  const todayMembers = dayMembers.get(todayKey)?.size ?? 0;
+  // 社群數字對每個人都一樣，所以快取起來共用（見 lib/community.ts）
+  const {
+    circles: communityCircles,
+    streak: communityStreak,
+    todayMembers,
+  } = await getCommunityStats();
 
   const dateStr = new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", timeZone: APP_TZ });
 

@@ -3,7 +3,8 @@
 import { createClient } from "@/lib/supabase-server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { COMMUNITY_TAG } from "@/lib/community";
 
 function serviceClient() {
   return createServiceClient(
@@ -27,6 +28,7 @@ export async function deleteSit(id: string) {
   revalidatePath("/admin");
   revalidatePath("/feed");
   revalidatePath("/me");
+  updateTag(COMMUNITY_TAG);
   return { ok: true };
 }
 
@@ -84,5 +86,8 @@ export async function recordSit(formData: FormData) {
   // 剛記錄的那筆要等快取過期才看得到（實際踩過：卡片寫進 DB 了但時間軸沒出現）。
   revalidatePath("/feed");
   revalidatePath("/me");
+  // 社群圓的數字是跨使用者快取的，revalidatePath 打不到它。用 updateTag 而不是
+  // revalidateTag：後者是 stale-while-revalidate，記錄完跳回 feed 會先看到舊數字。
+  updateTag(COMMUNITY_TAG);
   redirect("/feed");
 }
