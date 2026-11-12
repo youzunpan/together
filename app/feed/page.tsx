@@ -152,9 +152,11 @@ export default async function FeedPage() {
               <p style={{ fontSize: "0.9rem", color: "#edecea" }}>今天你坐了 <span style={{ fontFamily: "var(--font-space-mono)", color: "#BEC23F" }}>{todaySit.duration_min}</span> 分鐘。</p>
               {/* 已經坐過也還能再抽一張（規則是「一次靜坐 = 一次抽卡機會」），
                   所以這裡也掛一個卡背暗示 */}
+              {/* 不寫 prefetch：那會讓伺服器在使用者還沒點之前就整頁跑一次 /sit
+                  （含那支 60 天的 sits 查詢）。/sit 有 loading.tsx，預設的
+                  部分預取已經夠讓點擊立刻出骨架。 */}
               <Link
                 href="/sit"
-                prefetch
                 style={{ fontSize: "0.75rem", letterSpacing: "0.08em", color: "rgba(237,236,234,0.35)", flexShrink: 0, whiteSpace: "nowrap" }}
                 className="hover:text-[#BEC23F] transition-colors inline-flex items-center gap-1.5"
               >
@@ -184,7 +186,7 @@ export default async function FeedPage() {
                   </span>
                 </span>
               </div>
-              <Link href="/sit" prefetch className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
+              <Link href="/sit" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "0.75rem", letterSpacing: "0.08em", textDecoration: "none", flexShrink: 0 }}>
                 記錄今天
               </Link>
             </div>
@@ -196,7 +198,6 @@ export default async function FeedPage() {
           <p className="text-center mt-2.5" style={{ fontFamily: "var(--font-space-mono)", fontSize: "0.62rem", letterSpacing: "0.12em" }}>
             <Link
               href={openCourses.length === 1 ? `/courses/${openCourses[0].slug}` : "/courses"}
-              prefetch
               style={{ color: "rgba(190,194,63,0.65)", textDecoration: "none" }}
             >
               {openCourses.length === 1

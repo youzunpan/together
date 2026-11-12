@@ -157,12 +157,24 @@ export default function BottomNav() {
       if (!cancelled) setUnreadReplies(data?.unread_count ?? 0);
     }
     fetchUnread();
-    const interval = setInterval(fetchUnread, 60_000);
-    document.addEventListener("visibilitychange", fetchUnread);
+    // 分頁被藏起來（切到別的 app、鎖屏、背景分頁）的時候不要查。
+    // 原本是不管看不看得到都每分鐘查一次，一個整天掛著的 PWA 就是一天 1440 次
+    // 全表掃描 —— my_unread_replies 這個 view 每次都把所有人的未讀數算完才篩。
+    // 回到前景時下面的 visibilitychange 會補查，所以不會看到過期的數字。
+    const interval = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      fetchUnread();
+    }, 60_000);
+    // visibilitychange 會在「變可見」和「變隱藏」兩邊都觸發，
+    // 隱藏那一次查了沒人看，白查。
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchUnread();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       clearInterval(interval);
-      document.removeEventListener("visibilitychange", fetchUnread);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [authed, pathname]);
 
@@ -210,7 +222,15 @@ export default function BottomNav() {
         {navItems.map(({ href, label, icon }) => {
           const active = isActive(href, pathname);
           return (
-            <Link key={href} href={href} prefetch className="lg:w-full">
+            // 這裡刻意不寫 prefetch。裸寫 `prefetch` 等於 prefetch={true}，
+            // 文件上那是「完整預取，動態路由也一樣」—— 導覽在 layout 裡，等於
+            // 每開一頁伺服器就額外整整跑四次頁面（/feed /sit /me/courses /me），
+            // 每次把裡面的 DB 查詢全跑一遍。人還沒點就先燒掉五倍的 IO。
+            //
+            // 留白（預設 "auto"）的話，動態路由只預取到最近的 loading.tsx 邊界 ——
+            // 四個目標頁都有 loading.tsx，所以點下去照樣立刻出骨架，手感沒差，
+            // 但預取階段一個查詢都不會跑。
+            <Link key={href} href={href} className="lg:w-full">
               <TabContent
                 label={label}
                 icon={icon}
